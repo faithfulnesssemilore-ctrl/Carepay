@@ -1,0 +1,544 @@
+/* Custom Utility Classes for CarePay */
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient Background */
+.gradient-bg-primary {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+}
+
+.gradient-bg-dark {
+  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a24 100%);
+}
+
+/* Glass Effect */
+.glass-effect {
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Custom Shadows */
+.shadow-primary {
+  box-shadow: 0 10px 40px rgba(168, 85, 247, 0.2);
+}
+
+.shadow-primary-lg {
+  box-shadow: 0 20px 60px rgba(168, 85, 247, 0.3);
+}
+
+/* Custom Borders */
+.border-gradient {
+  border: 1px solid transparent;
+  background-image: linear-gradient(#141420, #141420), 
+                    linear-gradient(135deg, #a855f7, #c084fc);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Hover Effects */
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(168, 85, 247, 0.3);
+}
+
+/* Custom Card Styles */
+.card-luxury {
+  background: linear-gradient(135deg, #141420 0%, #1a1a24 100%);
+  border: 1px solid #2a2a3a;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card-luxury:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.2);
+}
+
+/* Custom Button Styles */
+.btn-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+  color: white;
+}
+
+.btn-outline-gradient {
+  background: transparent;
+  border: 2px solid #a855f7;
+  color: #a855f7;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-gradient:hover {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  color: white;
+  border-color: transparent;
+}
+
+/* Icon Containers */
+.icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(192, 132, 252, 0.2) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.icon-container-sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+}
+
+.icon-container-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 1rem;
+}
+
+/* Blur Backgrounds */
+.blur-circle-primary {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.3);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.blur-circle-accent {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(192, 132, 252, 0.3);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* Text Colors */
+.text-muted-custom {
+  color: #ffffff !important;
+}
+
+.text-primary-custom {
+  color: #a855f7 !important;
+}
+
+.text-accent-custom {
+  color: #c084fc !important;
+}
+
+/* Background Colors */
+.bg-dark-custom {
+  background-color: #0a0a0f !important;
+}
+
+.bg-secondary-custom {
+  background-color: #1a1a24 !important;
+}
+
+.bg-card-custom {
+  background-color: #141420 !important;
+}
+
+/* Stat Cards */
+.stat-card {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(192, 132, 252, 0.1) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  transform: translateY(-3px);
+}
+
+/* Transaction Items */
+.transaction-item {
+  background: #141420;
+  border: 1px solid #2a2a3a;
+}
+
+/* ============ RESPONSIVE FONT SIZES ============ */
+
+/* Responsive Display Sizes - Scales properly on all devices */
+.display-3 {
+  font-size: clamp(1.75rem, 8vw, 3.5rem) !important;
+  line-height: 1.2 !important;
+}
+
+.display-4 {
+  font-size: clamp(1.5rem, 7vw, 2.5rem) !important;
+  line-height: 1.2 !important;
+}
+
+.display-5 {
+  font-size: clamp(1.25rem, 6vw, 2rem) !important;
+  line-height: 1.2 !important;
+}
+
+/* Responsive Heading Sizes */
+.h1 { font-size: clamp(1.5rem, 5vw, 2.5rem) !important; }
+.h2 { font-size: clamp(1.25rem, 4.5vw, 2rem) !important; }
+.h3 { font-size: clamp(1rem, 4vw, 1.75rem) !important; }
+.h4 { font-size: clamp(0.95rem, 3.5vw, 1.5rem) !important; }
+.h5 { font-size: clamp(0.9rem, 3vw, 1.25rem) !important; }
+
+/* Responsive Font Sizes */
+.fs-1 { font-size: clamp(1.25rem, 4vw, 2rem) !important; }
+.fs-2 { font-size: clamp(1.1rem, 3.5vw, 1.8rem) !important; }
+.fs-3 { font-size: clamp(1rem, 3vw, 1.6rem) !important; }
+.fs-4 { font-size: clamp(0.95rem, 2.5vw, 1.4rem) !important; }
+.fs-5 { font-size: clamp(0.9rem, 2vw, 1.1rem) !important; }
+.fs-6 { font-size: clamp(0.85rem, 1.8vw, 0.95rem) !important; }
+
+/* ============ RESPONSIVE SPACING ============ */
+
+/* Responsive Padding Utilities */
+@media (max-width: 576px) {
+  /* Small screens (phone) */
+  .px-lg { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .py-lg { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+  
+  /* Override Bootstrap spacing for mobile */
+  .p-4 { padding: 1rem !important; }
+  .p-5 { padding: 1.5rem !important; }
+  .px-5 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .py-5 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+  
+  /* Responsive gaps */
+  .g-5 { gap: 1rem !important; }
+  .gap-5 { gap: 1rem !important; }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  /* Tablet (small) */
+  .p-4 { padding: 1.25rem !important; }
+  .p-5 { padding: 1.75rem !important; }
+  .px-5 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+}
+
+@media (min-width: 768px) {
+  /* Tablet (large) and desktop */
+  .p-4 { padding: 1.5rem !important; }
+  .p-5 { padding: 3rem !important; }
+}
+
+/* Responsive Button Sizing */
+@media (max-width: 576px) {
+  .btn-lg {
+    padding: 0.65rem 1.25rem !important;
+    font-size: 0.95rem !important;
+  }
+  
+  .px-5 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .py-3 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+}
+
+/* ============ RESPONSIVE LAYOUT ============ */
+
+/* Full width containers on mobile */
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Responsive sections */
+@media (max-width: 768px) {
+  section {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+  
+  section.py-5 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+}
+
+/* Responsive grid gaps */
+@media (max-width: 576px) {
+  .row { 
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+  
+  .row.g-4 {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+  
+  .row.g-5 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
+}
+
+/* ============ RESPONSIVE TEXT ============ */
+
+/* Responsive paragraph spacing */
+@media (max-width: 576px) {
+  p { line-height: 1.6 !important; }
+  .lh-lg { line-height: 1.6 !important; }
+}
+
+/* ============ NAVBAR RESPONSIVE ============ */
+
+@media (max-width: 576px) {
+  .navbar-brand { font-size: 1.25rem !important; }
+  .navbar { padding: 0.75rem 0 !important; }
+}
+
+/* ============ MOBILE-FIRST RESPONSIVE UTILITIES ============ */
+
+/* Responsive Icon Sizes */
+.w-4 { width: clamp(0.8rem, 2vw, 1.5rem) !important; }
+.h-4 { height: clamp(0.8rem, 2vw, 1.5rem) !important; }
+.w-5 { width: clamp(1rem, 2.5vw, 1.75rem) !important; }
+.h-5 { height: clamp(1rem, 2.5vw, 1.75rem) !important; }
+.w-6 { width: clamp(1.2rem, 3vw, 2rem) !important; }
+.h-6 { height: clamp(1.2rem, 3vw, 2rem) !important; }
+.w-10 { width: clamp(1.5rem, 4vw, 2.5rem) !important; }
+.h-10 { height: clamp(1.5rem, 4vw, 2.5rem) !important; }
+
+/* Responsive Margin/Padding on Mobile */
+@media (max-width: 576px) {
+  .mb-4, .my-4 { margin-bottom: 1rem !important; }
+  .mb-5, .my-5 { margin-bottom: 1.5rem !important; }
+  .mt-4, .mt-md-5 { margin-top: 1rem !important; }
+  .mt-5 { margin-top: 1.5rem !important; }
+  
+  .pt-5 { padding-top: 1.5rem !important; }
+  .pb-5 { padding-bottom: 1.5rem !important; }
+  
+  .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+}
+
+/* Better text wrapping and overflow handling */
+@media (max-width: 576px) {
+  .text-truncate { 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .text-break {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Responsive offcanvas sizing */
+@media (max-width: 576px) {
+  .offcanvas {
+    width: 100% !important;
+  }
+}
+
+/* Responsive badge sizing */
+@media (max-width: 576px) {
+  .badge { font-size: 0.7rem !important; }
+}
+
+/* Optimize flex layouts for mobile */
+@media (max-width: 576px) {
+  .d-flex { flex-wrap: wrap; }
+  
+  .justify-content-between { 
+    justify-content: space-between !important;
+  }
+}
+
+/* ============ TABLET RESPONSIVE ============ */
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .display-3 { font-size: 2.5rem !important; }
+  .display-4 { font-size: 1.9rem !important; }
+  .display-5 { font-size: 1.5rem !important; }
+}
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+  background: #1a1a24;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a24;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c084fc;
+}
+
+/* Smooth Transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+button, a, .btn {
+  transition: all 0.3s ease;
+}
+
+/* Custom Border Radius */
+.rounded-xl {
+  border-radius: 0.75rem !important;
+}
+
+.rounded-2xl {
+  border-radius: 1rem !important;
+}
+
+.rounded-3xl {
+  border-radius: 1.5rem !important;
+}
+
+/* Spacing Utilities */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
+
+.gap-4 {
+  gap: 1.5rem;
+}
+
+/* Flex Utilities */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Loading Spinner */
+.spinner-custom {
+  border: 3px solid rgba(168, 85, 247, 0.2);
+  border-top-color: #a855f7;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Badge Variants */
+.badge-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.badge-success-custom {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-warning-custom {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-danger-custom {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Focus States */
+.form-control:focus,
+.form-select:focus,
+.btn:focus {
+  box-shadow: 0 0 0 0.25rem rgba(168, 85, 247, 0.25) !important;
+}
+
+/* Disable default Bootstrap focus ring on some elements */
+.nav-link:focus {
+  box-shadow: none;
+}
