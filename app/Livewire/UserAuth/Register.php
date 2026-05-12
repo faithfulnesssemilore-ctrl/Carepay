@@ -10,22 +10,39 @@ use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\File;
-
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
 
 class Register extends Component
 {
     use WithFileUploads; // Trait for handling file uploads in Livewire
     // Declare public properties for the form steps and current step
-    public $currentStep = 1;
+    public int $currentStep = 1;
 
     // Declare public properties for form data binding
-    public $firstName, $lastName, $email, $phone, $password, $password_confirmation, $pin, $pin_confirmation,
-           $idDocument, $idType, $idNumber, $termsAccepted = false, $kycVerified = false;
+    public string $firstName = '';
+    public string $lastName = '';
+    public string $email = '';
+    public string $phone = '';
+    public string $password = '';
+    public string $password_confirmation = '';
+    public string $pin = '';
+    public string $pin_confirmation = '';
+    public $idDocument = null;
+    public string $idType = '';
+    public string $idNumber = '';
+    public bool $termsAccepted = false;
+    public bool $kycVerified = false;
 
     // OTP related properties
-    public $verificationCode, $emailVerified = false, $verificationSent = false,
-           $otpAttempts = 0, $lastOtpSentAt, $canResendOtp = true, $otpVerified = false;
+    public string $verificationCode = '';
+    public bool $emailVerified = false;
+    public bool $verificationSent = false;
+    public int $otpAttempts = 0;
+    public $lastOtpSentAt = null;
+    public bool $canResendOtp = true;
+    public bool $otpVerified = false;
 
     // Method to go to the next step
     public function nextStep()
@@ -237,7 +254,7 @@ public function submit()
 app(VirtualAccountService::class)->create($user);// This will create a virtual account for the user after registration
 
     // 4. Login
-    auth()->login($user);
+    Auth::login($user);
 
     return redirect()->route('dashboard');
 }
@@ -265,9 +282,9 @@ app(VirtualAccountService::class)->create($user);// This will create a virtual a
         'termsAccepted.accepted' => 'You must accept the terms and conditions.',
     ];
 
+    #[Layout('components.layouts.app')]
     public function render()
     {
-        return view('livewire.user-auth.register')
-        ->layout('components.layouts.app'); // Use auth layout for consistent styling
+        return view('livewire.user-auth.register');
     }
 }
