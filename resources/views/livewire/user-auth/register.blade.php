@@ -91,7 +91,8 @@
                                     <label class="form-label">Phone Number</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-phone" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="tel" wire:model="phone" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('phone') is-invalid @enderror" placeholder="+1 (555) 000-0000" required>
+                                        <input type="tel" wire:model="phone" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('phone') is-invalid @enderror" placeholder="+234 90xxxxx
+                                        " maxlength="11" required>
                                     </div>
                                     @error('phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>

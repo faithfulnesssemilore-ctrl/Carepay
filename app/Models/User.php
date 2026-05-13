@@ -6,9 +6,16 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Encrypted;
+
+//  this is the main User model - every person using the app is here
+// we keep their name, email, password all those there details here 
+// also keep encrypted data so if someone breaks in they cant see the real stuff
+
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes; // SoftDeletes means we dont actually delete users, just hide them 
     protected $table = 'users';
     protected $guard = 'web';
 
@@ -46,6 +53,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'registration_complete' => 'boolean',
             'terms_accepted' => 'boolean',
             'role' => 'integer',
+            // we encrypted this to protect sensitive info - even if someone gets the database, they cant see this stuff
+            'id_number' => Encrypted::class,
+            'phone' => Encrypted::class,
         ];
     }
 
@@ -65,9 +75,47 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(VirtualAccount::class);
     }
 
+    // get all audit logs for this user
+    // tracks everything they did
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
+    // get transfer limits for this user
+    public function limits()
+    {
+        return $this->hasOne(UserLimit::class);
+    }
+
+    // when creating a new user, also make their limits
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            // create default limits for new users
+            $user->limits()->create([
+                'single_transaction_limit' => 100000, // 100k
+                'daily_transfer_limit' => 500000, // 500k
+                'limit_reset_date' => now()->toDateString(),
+            ]);
+        });
+    }
+
     // Full name helper (useful in UI)
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    // check if user is admin
+    public function isAdmin()
+    {
+        return $this->role >= 1; // 0 = regular user, 1 = admin
+    }
+
+    // check if user is moderator
+    public function isModerator()
+    {
+        return $this->role >= 1;
     }
 }

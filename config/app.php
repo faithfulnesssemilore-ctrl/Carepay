@@ -33,9 +33,10 @@ return [
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
-    | When your application is in debug mode, detailed error messages with
-    | stack traces will be shown on every error that occurs within your
-    | application. If disabled, a simple generic error page is shown.
+    |  IMPORTANT: debug mode shows EVERYTHING when there's an error
+    | like all your api keys, passwords, database queries, EVERYTHING
+    | NEVER set this to true in production - attackers will steal ur secrets
+    | set to false (default is already false which is good)
     |
     */
 

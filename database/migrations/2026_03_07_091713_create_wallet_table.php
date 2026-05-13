@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
       Schema::create('wallet', function (Blueprint $table) {
-    $table->uuid('id')->primary();
+    $table->uuid('id')->primary(); // Use UUID for better security and scalability
     $table->foreignId('user_id')->constrained()->onDelete('cascade');
     $table->bigInteger('balance')->default(0);
     $table->string('currency', 10)->default('NGN');

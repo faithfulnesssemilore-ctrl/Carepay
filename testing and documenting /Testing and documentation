@@ -1,0 +1,65 @@
+Testing the web appilication and documenting the problem and observation
+|>.      Fullstack testing 
+                    |> The landing page the frontpage: 
+    Problems: the ui design is it a conversation killer 
+and also no  Hero Image  to Generic stock photo, doesn't explain the product, Then TextLong paragraphs instead of bullet points. it does not follow the High-Priority "Conversion Killers" (The 3-Second Rule) of a web designed page finally it doesnt talk about the company Landing pages should have one specific goal talking about the company.
+
+|>Clicks Registration
+
+observersation: the route GET/register worked workss fast  Return success (200 OK) immediately from checking the network tab ,|>Step 1- All form fields for first step works okay, Step2 otps generate and sends , step3 forms works Step 4 also forms works  okay but got update 500 issues just in a not shell the Whole resgistration process needs a change in the frontend and ui then Uers can not register 
+
+          Problems:
+|>step 1 the Phone number form is a string variable but we mst set it to input 11 digit only and in numbers that floats, 
+
+|>Step 2 the email A 60-second wait time to move to the next form step is a major issue, likely caused by waiting for the email provider to respond before continuing so it synchronous but it should be blocking process to an asynchronous, non-blocking process and and the resend button is reading 59 hours instead of minutes,The "59 hours" bug usually happens when your code calculates the difference between now and a time in the past (like when the OTP was created), instead of counting down to a future expiry time. the  math is calculating "how long has it been since the email was sent" rather than "how long until I can resend then  Clicks the back button 
+Copy as Markdown
+TypeError
+app/Livewire/UserAuth/Register.php:119
+Cannot assign null to property App\Livewire\UserAuth\Register::$verificationCode of type string ,Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException
+vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php:130
+The GET method is not supported for route livewire/update. Supported methods: POST.
+
+|>Step 3 KYC Verification needed and ID NUBMER form fields and Upload id documente needs imporvement 
+
+|>Step 4 : frontend 
+
+|> Step 5:
+
+Illuminate\Database\QueryException
+vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+SQLSTATE[HY000]: General error: 1364 Field 'id' doesn't have a default value (Connection: mysql, Host: 127.0.0.1, Port: 3307, Database: semilorelearn, SQL: insert into `wallet` (`balance`, `currency`, `user_id`, `updated_at`, `created_at`) values (0, NGN, 4, 2026-05-10 17:29:40, 2026-05-10 17:29:40))
+
+Fixes : 
+|>step1 the Phone number Fields ,
+|>Step 2:  Optimize DB and Caching Using Redis  ensure it implements the ShouldQueue interface , The Likely Fix: Invert Your Logic and back button errors 
+
+|>Step 3: Integration of Sandbox/Testing (Free): Almost all KYC vendors (e.g., Shufti Pro, Smile ID) provide free access to a sandbox environment to test integrations, API calls, and simulation flows.
+
+|>Step 4:The frontend ux needs imporvment, The "Eye" Icon: A toggle (eye icon)
+
+|>Step 5:The "Eye" Icon: A toggle (eye icon) and he frontend ux needs imporvment
+then Illuminate\Database\QueryException
+vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+SQLSTATE[HY000]: General error: 1364 Field 'id' doesn't have a default value (Connection: mysql, Host: 127.0.0.1, Port: 3307, Database: semilorelearn, SQL: insert into `wallet` (`balance`, `currency`, `user_id`, `updated_at`, `created_at`) values (0, NGN, 4, 2026-05-10 17:29:40, 2026-05-10 17:29:40))
+
+This error occurs because your database expects a value for the id column, but it isn't receiving one. In Laravel, this usually means your table's primary key is not set to Auto-Increment.
+
+USERS CAN NOT REGISTER 
+
+|>.      LOGIN ROUTE
+  PROBLEMS:-
+  Mostly the frontend  like icons and the rest  and security testing like rate limiting and sessions log out 
+
+
+
+  FIXES 
+
+work on the frontend  and sercirity consequences 
+
+    OBSERVATION 
+Everthing is working fine from the authentication , the login routes works perfectly  , controller runs validation and the Db updates and am thinking of adding TWOFA
+and the middleware  works for authorisation the particu lar fields  works 
+ 
+  |>.     Authetication and Authorisation  fixes (codes)
+   
+

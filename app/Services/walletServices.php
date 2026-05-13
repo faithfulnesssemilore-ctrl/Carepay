@@ -1,286 +1,253 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Wallet;
-use App\Models\User;
 use App\Models\Transaction;
-use App\Models\LedgerEntry;             
-use Illuminate\Support\Facades\Auth;
+use App\Models\LedgerEntry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
 
-class WalletService 
+class WalletService
 {
-    /**
-     * Create new wallet for user during registration
-     * Prevents duplicate wallets per currency
-     */
-    public function createWalletForUser(User $user, $currency = 'NGN')
-    {
-        $currency = strtoupper($currency);
-        
-        // Security: prevent duplicate wallets for the same currency per user
-        if (Wallet::where('user_id', $user->id)->where('currency', $currency)->exists()) {
-            throw new Exception('Wallet for this currency already exists for the user.');
-        }
-        
-        // Use DB transaction to ensure wallet creation is atomic
-        return DB::transaction(function () use ($user, $currency) {
-            return Wallet::create([
-                'id' => (string) Str::uuid(),
-                'user_id' => $user->id,
-                'balance' => 0.00,
-                'currency' => $currency,
-                'status' => 'active',
-            ]);
-        });
-    }
-
-    /**
-     * Get wallet balance by user ID
-     */
-    public function getBalance($userId)
-    {
-        return Wallet::where('user_id', $userId)->firstOrFail();
-    }
-
-    /**
-     * Get wallet by user ID
-     */
-    public function getWalletByUserId($userId)
-    {
-        return Wallet::where('user_id', $userId)->first();
-    }
-
-    /**
-     * Deposit funds into wallet
-     * Locks wallet to prevent race conditions
-     */
-    public function deposit($walletId, $amount)
-    {
-        if ($amount <= 0) {
-            throw new Exception('Deposit amount must be greater than zero');
-        }
-
-        return DB::transaction(function() use ($walletId, $amount) {
-            // Lock the wallet record for update to prevent race conditions
-            $wallet = Wallet::where('id', $walletId)->lockForUpdate()->firstOrFail();
-
-            $transaction = Transaction::create([
-                'reference' => (string) Str::uuid(),
-                'wallet_id' => $wallet->id,
-                'type' => 'deposit',
-                'amount' => $amount,
-                'status' => 'success'
-            ]);
-
-            LedgerEntry::create([
-                'transaction_id' => $transaction->id,
-                'wallet_id' => $wallet->id,
-                'entry_type' => 'credit',
-                'amount' => $amount
-            ]);
-
-            $wallet->increment('balance', $amount);
-
-            return $transaction;
-        });
-    }
-
-    /**
-     * Withdraw funds from wallet to bank account
-     */
-    public function withdraw($walletId, $amount)
-    {
-        if ($amount <= 0) {
-            throw new Exception('Withdrawal amount must be greater than zero');
-        }
-
-        return DB::transaction(function() use ($walletId, $amount) {
-            $wallet = Wallet::where('id', $walletId)->lockForUpdate()->firstOrFail();
-
-            if ($wallet->balance < $amount) {
-                throw new Exception('Insufficient funds in wallet');
-            }
-
-            $transaction = Transaction::create([
-                'reference' => (string) Str::uuid(),
-                'wallet_id' => $wallet->id,
-                'type' => 'withdrawal',
-                'amount' => $amount,
-                'status' => 'pending'
-            ]);
-
-            LedgerEntry::create([
-                'transaction_id' => $transaction->id,
-                'wallet_id' => $wallet->id,
-                'entry_type' => 'debit',
-                'amount' => $amount
-            ]);
-
-            $wallet->decrement('balance', $amount);
-
-            return $transaction;
-        });
-    }
-
-    /**
-     * Transfer funds between two users
-     */
-    public function transfer($senderId, $receiverId, $amount, $description = null)
-    {
-        if ($amount <= 0) {
-            throw new Exception('Transfer amount must be greater than zero');
-        }
-
-        if ($senderId === $receiverId) {
-            throw new Exception('Cannot transfer to the same wallet');
-        }
-
-        return DB::transaction(function() use ($senderId, $receiverId, $amount, $description) {
-            $sender = Wallet::where('id', $senderId)->lockForUpdate()->firstOrFail();
-            $receiver = Wallet::where('id', $receiverId)->lockForUpdate()->firstOrFail();
-
-            if ($sender->balance < $amount) {
-                throw new Exception('Insufficient funds');
-            }
-
-            if ($sender->currency !== $receiver->currency) {
-                throw new Exception('Cannot transfer between different currencies');
-            }
-
-            $reference = (string) Str::uuid();
-
-            $transaction = Transaction::create([
-                'reference' => $reference,
-                'wallet_id' => $sender->id,
-                'type' => 'transfer',
-                'amount' => $amount,
-                'status' => 'success',
-                'description' => $description
-            ]);
-
-            $sender->decrement('balance', $amount);
-            $receiver->increment('balance', $amount);
-
-            // Debit entry for sender
-            LedgerEntry::create([
-                'transaction_id' => $transaction->id,
-                'wallet_id' => $sender->id,
-                'entry_type' => 'debit',
-                'amount' => $amount
-            ]);
-
-            // Credit entry for receiver
-            LedgerEntry::create([
-                'transaction_id' => $transaction->id,
-                'wallet_id' => $receiver->id,
-                'entry_type' => 'credit',
-                'amount' => $amount
-            ]);
-
-            return $transaction;
-        });
-    }
-
-    /**
-     * Check if user has sufficient balance
-     */
-    public function hasSufficientBalance($userId, $amount)
+    // Get a user's wallet (or throw an error if not found)
+    public function getWallet($userId): Wallet
     {
         $wallet = Wallet::where('user_id', $userId)->first();
-        
+
         if (!$wallet) {
-            return false;
+            throw new Exception('Wallet not found for this user.');
         }
 
-        return $wallet->balance >= $amount;
-    }
-
-    /**
-     * Get available balance (excluding pending and reserved)
-     */
-    public function getAvailableBalance($walletId)
-    {
-        $wallet = Wallet::findOrFail($walletId);
-        return $wallet->balance;
-    }
-
-    /**
-     * Get formatted balance
-     */
-    public function getFormattedBalance($walletId, $currency = '₦')
-    {
-        $wallet = Wallet::findOrFail($walletId);
-        return $currency . number_format($wallet->balance, 2);
-    }
-
-    /**
-     * Update wallet balance directly
-     */
-    public function updateWalletBalance(Wallet $wallet, $amount)
-    {
-        if ($wallet->balance + $amount < 0) {
-            throw new Exception('Insufficient funds for this operation');
-        }
-
-        $wallet->balance += $amount;
-        $wallet->save();
-        
         return $wallet;
     }
 
-    /**
-     * Get wallet transaction history
-     */
-    public function getTransactionHistory($walletId, $limit = 10, $offset = 0)
+    // Create a wallet for a new user during registration
+    public function createForUser($userId, string $currency = 'NGN'): Wallet
     {
-        return Transaction::where('wallet_id', $walletId)
-            ->orderBy('created_at', 'desc')
-            ->skip($offset)
-            ->take($limit)
-            ->get();
+        // Prevent duplicate wallets
+        if (Wallet::where('user_id', $userId)->exists()) {
+            throw new Exception('Wallet already exists for this user.');
+        }
+
+        return Wallet::create([
+            'user_id'  => $userId,
+            'balance'  => 0,          // stored in kobo (100 kobo = ₦1)
+            'currency' => $currency,
+            'status'   => 'active',
+        ]);
     }
 
-    /**
-     * Get wallet ledger entries
-     */
-    public function getLedgerEntries($walletId, $limit = 20)
+    // Credit (add money to) a wallet
+    // This is called ONLY after payment is verified
+    public function credit($userId, int $amountInKobo, string $reference, string $description = 'Credit'): Transaction
     {
-        return LedgerEntry::where('wallet_id', $walletId)
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
-    }
+        // Make sure we are not crediting 0 or negative
+        if ($amountInKobo <= 0) {
+            throw new Exception('Credit amount must be greater than zero.');
+        }
 
-    /**
-     * Get transaction statistics for period
-     */
-    public function getTransactionStats($walletId, $days = 30)
-    {
-        $startDate = now()->subDays($days);
+        return DB::transaction(function () use ($userId, $amountInKobo, $reference, $description) {
 
-        $stats = Transaction::where('wallet_id', $walletId)
-            ->where('created_at', '>=', $startDate)
-            ->selectRaw('type, COUNT(*) as count, SUM(amount) as total')
-            ->groupBy('type')
-            ->get();
+            // Check if this reference was already processed
+            // This prevents double-crediting from duplicate webhooks
+            if (Transaction::where('reference', $reference)->exists()) {
+                throw new Exception('This transaction has already been processed.');
+            }
 
-        return $stats->mapWithKeys(function ($stat) {
-            return [$stat->type => [
-                'count' => $stat->count,
-                'total' => $stat->total
-            ]];
+            // Lock the wallet row so no other request can touch it right now
+            $wallet = Wallet::where('user_id', $userId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($wallet->status !== 'active') {
+                throw new Exception('Wallet is not active.');
+            }
+
+            // Add the money
+            $wallet->increment('balance', $amountInKobo);
+
+            // Record the transaction
+            $transaction = Transaction::create([
+                'user_id'     => $userId,
+                'wallet_id'   => $wallet->id,
+                'type'        => 'credit',
+                'amount'      => $amountInKobo,
+                'currency'    => $wallet->currency,
+                'reference'   => $reference,
+                'status'      => 'success',
+                'description' => $description,
+            ]);
+
+            // Record in ledger for accounting
+            LedgerEntry::create([
+                'wallet_id'      => $wallet->id,
+                'transaction_id' => $transaction->id,
+                'entry_type'     => 'credit',
+                'amount'         => $amountInKobo,
+            ]);
+
+            return $transaction;
         });
     }
 
-    /**
-     * Verify wallet ownership
-     */
-    public function verifyWalletOwnership($walletId, $userId)
+    // Debit (remove money from) a wallet
+    // Used for transfers and withdrawals
+    public function debit($userId, int $amountInKobo, string $reference, string $description = 'Debit'): Transaction
     {
-        $wallet = Wallet::where('id', $walletId)->where('user_id', $userId)->first();
-        return $wallet !== null;
+        if ($amountInKobo <= 0) {
+            throw new Exception('Debit amount must be greater than zero.');
+        }
+
+        return DB::transaction(function () use ($userId, $amountInKobo, $reference, $description) {
+
+            // Check for duplicate
+            if (Transaction::where('reference', $reference)->exists()) {
+                throw new Exception('This transaction has already been processed.');
+            }
+
+            // Lock the wallet row
+            $wallet = Wallet::where('user_id', $userId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($wallet->status !== 'active') {
+                throw new Exception('Wallet is not active.');
+            }
+
+            // Check balance AFTER locking (prevents race conditions)
+            if ($wallet->balance < $amountInKobo) {
+                throw new Exception('Insufficient balance.');
+            }
+
+            // Remove the money
+            $wallet->decrement('balance', $amountInKobo);
+
+            // Record the transaction
+            $transaction = Transaction::create([
+                'user_id'     => $userId,
+                'wallet_id'   => $wallet->id,
+                'type'        => 'debit',
+                'amount'      => $amountInKobo,
+                'currency'    => $wallet->currency,
+                'reference'   => $reference,
+                'status'      => 'success',
+                'description' => $description,
+            ]);
+
+            // Record in ledger
+            LedgerEntry::create([
+                'wallet_id'      => $wallet->id,
+                'transaction_id' => $transaction->id,
+                'entry_type'     => 'debit',
+                'amount'         => $amountInKobo,
+            ]);
+
+            return $transaction;
+        });
+    }
+
+    
+    // Transfer money from one user to another
+    // Both debit and credit happen together atomically
+    public function transfer($senderId, $recipientId, int $amountInKobo, string $description = ''): array
+    {
+        if ($senderId === $recipientId) {
+            throw new Exception('You cannot send money to yourself.');
+        }
+
+        if ($amountInKobo < 100) { // minimum ₦1
+            throw new Exception('Minimum transfer amount is ₦1.');
+        }
+
+        return DB::transaction(function () use ($senderId, $recipientId, $amountInKobo, $description) {
+
+            // Generate one shared reference for this transfer
+            $reference = 'TRF_' . strtoupper(Str::random(16));
+
+            // Lock BOTH wallets — lock in consistent order to prevent deadlocks
+            // Always lock lower ID first
+            $ids = [$senderId, $recipientId];
+            sort($ids);
+
+            $wallets = Wallet::whereIn('user_id', $ids)
+                ->lockForUpdate()
+                ->orderBy('user_id')
+                ->get()
+                ->keyBy('user_id');
+
+            $senderWallet    = $wallets[$senderId]    ?? null;
+            $recipientWallet = $wallets[$recipientId] ?? null;
+
+            if (!$senderWallet || !$recipientWallet) {
+                throw new Exception('One or both wallets not found.');
+            }
+
+            if ($senderWallet->status !== 'active' || $recipientWallet->status !== 'active') {
+                throw new Exception('One or both wallets are not active.');
+            }
+
+            if ($senderWallet->balance < $amountInKobo) {
+                throw new Exception('Insufficient balance.');
+            }
+
+            // Debit sender
+            $senderWallet->decrement('balance', $amountInKobo);
+
+            $debitTx = Transaction::create([
+                'user_id'     => $senderId,
+                'wallet_id'   => $senderWallet->id,
+                'type'        => 'debit',
+                'amount'      => $amountInKobo,
+                'currency'    => $senderWallet->currency,
+                'reference'   => $reference,
+                'status'      => 'success',
+                'description' => $description ?: 'Transfer sent',
+                'recipient_id' => $recipientId,
+            ]);
+
+            LedgerEntry::create([
+                'wallet_id'      => $senderWallet->id,
+                'transaction_id' => $debitTx->id,
+                'entry_type'     => 'debit',
+                'amount'         => $amountInKobo,
+            ]);
+
+            // Credit recipient
+            $recipientWallet->increment('balance', $amountInKobo);
+
+            $creditTx = Transaction::create([
+                'user_id'     => $recipientId,
+                'wallet_id'   => $recipientWallet->id,
+                'type'        => 'credit',
+                'amount'      => $amountInKobo,
+                'currency'    => $recipientWallet->currency,
+                'reference'   => $reference . '_IN',
+                'status'      => 'success',
+                'description' => $description ?: 'Transfer received',
+                'recipient_id' => $senderId,
+            ]);
+
+            LedgerEntry::create([
+                'wallet_id'      => $recipientWallet->id,
+                'transaction_id' => $creditTx->id,
+                'entry_type'     => 'credit',
+                'amount'         => $amountInKobo,
+            ]);
+
+            return [
+                'reference'    => $reference,
+                'debit_tx'     => $debitTx,
+                'credit_tx'    => $creditTx,
+            ];
+        });
+    }
+
+    // Get balance in Naira (human-readable)
+    public function getBalanceInNaira($userId): float
+    {
+        $wallet = $this->getWallet($userId);
+        return $wallet->balance / 100;
     }
 }

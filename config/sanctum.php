@@ -41,13 +41,15 @@ return [
     | Expiration Minutes
     |--------------------------------------------------------------------------
     |
-    | This value controls the number of minutes until an issued token will be
-    | considered expired. This will override any values set in the token's
-    | "expires_at" attribute, but first-party sessions are not affected.
+    | yo so tokens are like access passes right?
+    | if someone steals a token, we want it to die after a bit
+    | otherwise theyd have access forever lol
+    | so we set it to 60 minutes - after that they gotta login again
+    | 60 mins is security best practice for fintech apps
     |
     */
 
-    'expiration' => null,
+    'expiration' => 60, // 60 minutes - pretty standard for security
 
     /*
     |--------------------------------------------------------------------------

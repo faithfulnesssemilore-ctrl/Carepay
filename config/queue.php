@@ -7,12 +7,15 @@ return [
     | Default Queue Connection Name
     |--------------------------------------------------------------------------
     |
-    | Laravel's queue supports a variety of backends via a single, unified
-    | API, giving you convenient access to each backend using identical
-    | syntax for each. The default queue connection is defined below.
+    | so we use queues to process heavy tasks in the background
+    | like sending emails or processing payments
+    | if we use redis and redis breaks, everything breaks 
+    | so we use database instead - more reliable
+    | database is slower but its not gonna disappear
+    | best for production fintech apps
     |
     */
-'default' => env('QUEUE_CONNECTION', 'redis'),
+'default' => env('QUEUE_CONNECTION', 'database'),
 
     /*
     |--------------------------------------------------------------------------
