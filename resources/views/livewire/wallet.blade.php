@@ -27,7 +27,7 @@
                         <x-lucide-trending-up class="w-3 h-3 d-inline me-1" />
                         Ready to use
                     @elseif($loop->index === 1)
-                        <x-lucide-hourglass-2 class="w-3 h-3 d-inline me-1" />
+                        <x-lucide-hourglass class="w-3 h-3 d-inline me-1" />
                         Processing
                     @else
                         <x-lucide-lock class="w-3 h-3 d-inline me-1" />

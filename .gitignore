@@ -15,3 +15,5 @@
 .phpunit.result.cache
 !storage/certs/
 !storage/certs/aiven-ca.pem
+!public/build/
+!public/build/**
