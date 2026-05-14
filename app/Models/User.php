@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Casts\Encrypted;
+use Illuminate\Database\Eloquent\Casts\encrypted;
 
 //  this is the main User model - every person using the app is here
 // we keep their name, email, password all those there details here 
@@ -55,7 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'terms_accepted' => 'boolean',
             'role' => 'integer',
             // we encrypted this to protect sensitive info - even if someone breaks in they cant see the real stuff
-            'id_number' => Encrypted::class,
+            'id_number' =>'encrypted',
             
     'phone' => 'encrypted', // Use the string alias
 ];
