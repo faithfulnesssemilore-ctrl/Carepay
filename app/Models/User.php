@@ -110,15 +110,29 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Transaction::class);
     }
 
-    // when creating a new user, also make their limits
+    // when creating a new user, also create wallet, virtual account, and limits
     protected static function booted()
     {
         static::created(function ($user) {
+            // create wallet with zero balance (stored in kobo internally)
+            $user->wallet()->create([
+                'balance' => 0,
+            ]);
+            
             // create default limits for new users
             $user->limits()->create([
-                'single_transaction_limit' => 100000, // 100k
-                'daily_transfer_limit' => 500000, // 500k
+                'single_transaction_limit' => 100000, // 100k naira
+                'daily_transfer_limit' => 500000, // 500k naira
+                'daily_transfer_used' => 0,
                 'limit_reset_date' => now()->toDateString(),
+            ]);
+            
+            // create virtual account for receiving transfers
+            $user->virtualAccount()->create([
+                'account_number' => 'VIRT' . str_pad($user->id, 10, '0', STR_PAD_LEFT),
+                'account_name' => $user->first_name . ' ' . $user->last_name,
+                'bank_name' => 'CarePay Virtual Account',
+                'provider' => 'carepay',
             ]);
         });
     }

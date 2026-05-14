@@ -1,21 +1,8 @@
 
 {{-- 
-    Send Money Component - Multi-step transfer flow
-    Matches React SendMoney.tsx functionality with Livewire state management
-    Steps: recipient -> amount -> method -> confirm -> success
-    
-    CSS Files Used:
-    - resources/css/app.css - Bootstrap import
-    - resources/css/custom.css - Custom utilities (gradient, shadows, hover effects, card-luxury, btn-gradient)
-    - resources/css/bootstrap-custom.css (if exists) - Theme overrides
-    
-    UI Components Used:
-    - x-ui.card - Reusable card component with luxury variant
-    - x-ui.button - Button with variants and sizes
-    - x-ui.input - Text input component
-    - x-ui.textarea - Textarea component
-    - x-ui.alert - Alert/notification component
-    - x-ui.badge - Badge component for status
+    Send Money Component - Multi-step wallet-to-wallet transfer flow
+    Steps: recipient -> amount -> confirm -> success
+    All transfers are internal wallet transfers (no method selection)
 --}}
 
 <div class="container" style="max-width: 900px;">
@@ -27,7 +14,7 @@
             <p class="text-muted-custom">Transfer money to anyone, anywhere</p>
         </div>
 
-        {{-- Progress Steps Indicator --}}
+        {{-- Progress Steps Indicator (4 steps) --}}
         <div class="d-flex align-items-center justify-content-between mb-4">
             {{-- Step 1: Recipient --}}
             <div class="d-flex align-items-center flex-fill">
@@ -69,7 +56,7 @@
                 <div class="flex-fill mx-2" style="height: 2px; background: {{ $this->getStepIndex($currentStep) > 1 ? '#a855f7' : '#2a2a3a' }}; transition: all 0.3s ease;"></div>
             </div>
 
-            {{-- Step 3: Method --}}
+            {{-- Step 3: Confirm (was Method, now Confirm) --}}
             <div class="d-flex align-items-center flex-fill">
                 <div class="d-flex flex-column align-items-center flex-fill">
                     <div 
@@ -84,12 +71,12 @@
                             transition: all 0.3s ease;
                         "
                     >{{ $this->getStepIndex($currentStep) >= 2 ? '✓' : '3' }}</div>
-                    <span class="small mt-2 d-none d-sm-block text-muted-custom">Method</span>
+                    <span class="small mt-2 d-none d-sm-block text-muted-custom">Confirm</span>
                 </div>
                 <div class="flex-fill mx-2" style="height: 2px; background: {{ $this->getStepIndex($currentStep) > 2 ? '#a855f7' : '#2a2a3a' }}; transition: all 0.3s ease;"></div>
             </div>
 
-            {{-- Step 4: Confirm --}}
+            {{-- Step 4: Success --}}
             <div class="d-flex align-items-center flex-fill">
                 <div class="d-flex flex-column align-items-center flex-fill">
                     <div 
@@ -104,7 +91,7 @@
                             transition: all 0.3s ease;
                         "
                     >{{ $this->getStepIndex($currentStep) >= 3 ? '✓' : '4' }}</div>
-                    <span class="small mt-2 d-none d-sm-block text-muted-custom">Confirm</span>
+                    <span class="small mt-2 d-none d-sm-block text-muted-custom">Success</span>
                 </div>
             </div>
         </div>
@@ -115,25 +102,20 @@
                 
                 {{-- STEP 1: Recipient Selection --}}
                 @if ($currentStep === 'recipient')
-                    @include('livewire.steps.recipient-step', ['recentContacts' => $recentContacts])
+                    @include('livewire.steps.recipient-step', ['recentContacts' => $recentContacts, 'searchResults' => $searchResults])
                 @endif
 
                 {{-- STEP 2: Amount Input --}}
                 @if ($currentStep === 'amount')
-                    @include('livewire.steps.amount-step')
+                    @include('livewire.steps.amount-step', ['dailyLimit' => $dailyLimit, 'dailyUsed' => $dailyUsed, 'singleLimit' => $singleLimit])
                 @endif
 
-                {{-- STEP 3: Transfer Method Selection --}}
-                @if ($currentStep === 'method')
-                    @include('livewire.steps.method-step')
-                @endif
-
-                {{-- STEP 4: Confirmation --}}
+                {{-- STEP 3: Confirmation --}}
                 @if ($currentStep === 'confirm')
                     @include('livewire.steps.confirm-step')
                 @endif
 
-                {{-- STEP 5: Success --}}
+                {{-- STEP 4: Success --}}
                 @if ($currentStep === 'success')
                     @include('livewire.steps.success-step')
                 @endif

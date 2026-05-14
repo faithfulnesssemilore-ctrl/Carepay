@@ -40,10 +40,20 @@
             />
         </div>
         
-        {{-- Available Balance Info --}}
-        <div class="mt-2 small text-muted-custom">
-            Available balance: 
-            <span class="text-primary-custom fw-semibold">₦{{ number_format($walletBalance, 2) }}</span>
+        {{-- Balance & Limits Info --}}
+        <div class=\"mt-3 small text-muted-custom\">
+            <div class=\"d-flex justify-content-between mb-2\">
+                <span>Available balance:</span>
+                <span class=\"text-primary-custom fw-semibold\">₦{{ number_format($walletBalance, 2) }}</span>
+            </div>
+            <div class=\"d-flex justify-content-between mb-2\">
+                <span>Single transfer limit:</span>
+                <span class=\"fw-semibold\">₦{{ number_format($singleLimit, 2) }}</span>
+            </div>
+            <div class=\"d-flex justify-content-between\">
+                <span>Daily limit remaining:</span>
+                <span class=\"fw-semibold\">₦{{ number_format($dailyLimit - $dailyUsed, 2) }} / ₦{{ number_format($dailyLimit, 2) }}</span>
+            </div>
         </div>
     </div>
 
