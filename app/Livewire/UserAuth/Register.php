@@ -29,11 +29,11 @@ class Register extends Component
     public string $password_confirmation = '';
     public string $pin = '';
     public string $pin_confirmation = '';
-    public $idDocument = null;
+        public $idDocument = null;
     public string $idType = '';
     public string $idNumber = '';
-    public bool $termsAccepted = false;
-    public bool $kycVerified = false;
+        public bool $termsAccepted = false;
+public bool $kycVerified = false;
 
     // OTP related properties
     public string $verificationCode = '';
@@ -42,26 +42,26 @@ class Register extends Component
     public int $otpAttempts = 0;
     public $lastOtpSentAt = null;
     public bool $canResendOtp = true;
-    public bool $otpVerified = false;
+public bool $otpVerified = false;
 
     // Method to go to the next step
     public function nextStep()
     {
         if ($this->currentStep === 1) {
-            $this->validate([
+                        $this->validate([
                 'firstName' => 'required|string|min:2|max:255',
                 'lastName'  => 'required|string|min:2|max:255',
                 'email'     => 'required|email|unique:users,email',
                 'phone'     => 'required|string|min:11|max:20',
             ]);
 
-            $this->sendOtp();
+                        $this->sendOtp();
             $this->currentStep++;
             return;
         }
 
-        if ($this->currentStep === 2) {
-            // Check if OTP is verified before proceeding
+                if ($this->currentStep === 2) {
+// Check if OTP is verified before proceeding
             if (!$this->otpVerified) {
                 $this->addError('verificationCode', 'Please verify your email code first.');
                 return;
@@ -71,21 +71,21 @@ class Register extends Component
             return;
         }
 
-        if ($this->currentStep === 3) {
+                if ($this->currentStep === 3) {
             $this->validate([
                 'idDocument' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
                 'idType' => 'required|in:passport,drivers_license,national_id',
                 'idNumber' => 'required|string|max:255',
             ]);
-        }
+                    }
 
-        if ($this->currentStep === 4) {
+                if ($this->currentStep === 4) {
             $this->validate([
                 'pin' => 'required|digits:4|confirmed',
             ]);
-        }
+                    }
 
-        if ($this->currentStep === 5) {
+                if ($this->currentStep === 5) {
             $this->validate([
                 'password' => [
                     'required',
@@ -93,9 +93,9 @@ class Register extends Component
                     Password::min(8)->mixedCase()->numbers()->symbols(),
                 ],
             ]);
-        }
+                    }
 
-        if ($this->currentStep === 6) {
+                if ($this->currentStep === 6) {
             $this->validate([
                 'termsAccepted' => 'accepted',
             ]);
@@ -131,7 +131,7 @@ class Register extends Component
             return;
         }
 
-        $otp = (new Otp)->generate($this->email, 'numeric', 6, 300); // 5 minutes = 300 seconds
+                $otp = (new Otp)->generate($this->email, 'numeric', 6, 300);         // 5 minutes = 300 seconds
 
         // Send email
         Mail::raw("Your verification code is: {$otp->token}", function ($message) {
@@ -162,12 +162,12 @@ $this->lastOtpSentAt = now();
             return;
         }
 
-        $otp = new Otp();
+                $otp = new Otp();
         $result = $otp->validate($this->email, $this->verificationCode);
 
         if (!$result->status) {
             $this->otpAttempts++;
-            $this->addError('verificationCode', 'Invalid or expired OTP. ' . (5 - $this->otpAttempts) . ' attempts remaining.');
+                        $this->addError('verificationCode', 'Invalid or expired OTP. ' . (5 - $this->otpAttempts) . ' attempts remaining.');
             return;
         }
 
@@ -201,63 +201,63 @@ $this->lastOtpSentAt = now();
 
 
     // Method to submit the registration
-public function submit()
-{
-    $this->validate([
-        'firstName' => 'required|string|max:255',
-        'lastName' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'phone' => 'required|string|max:20',
-        'pin' => 'required|digits:4|confirmed',
-        'password' => [
-            'required',
-            'confirmed',
-            Password::min(8)->mixedCase()->numbers()->symbols(),
-        ],
-        'idDocument' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        'idType' => 'required|in:passport,drivers_license,national_id',
-        'idNumber' => 'required|string|max:255',
-        'termsAccepted' => 'accepted',
-    ]);
+    public function submit()
+    {
+                $this->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|string|max:20',
+            'pin' => 'required|digits:4|confirmed',
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)->mixedCase()->numbers()->symbols(),
+            ],
+            'idDocument' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'idType' => 'required|in:passport,drivers_license,national_id',
+            'idNumber' => 'required|string|max:255',
+            'termsAccepted' => 'accepted',
+        ]);
 
-    // 1. Create user first
-    $user = \App\Models\User::create([
-        'first_name' => $this->firstName,
-        'last_name' => $this->lastName,
-        'email' => $this->email,
-        'phone' => $this->phone,
-        'password' => Hash::make($this->password),
-        'id_type' => $this->idType,
-        'id_number' => $this->idNumber,
-        'kyc_verified' => false,
-        'pin' => Hash::make($this->pin),
-        'registration_complete' => true,
-        'terms_accepted' => $this->termsAccepted,
-        'email_verified_at' => now(),
-        'role' => 0,
-        'status' => 'active',
-    ]);
+        // 1. Create user first
+        $user = \App\Models\User::create([
+            'first_name' => $this->firstName,
+            'last_name' => $this->lastName,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'password' => Hash::make($this->password),
+            'id_type' => $this->idType,
+            'id_number' => $this->idNumber,
+            'kyc_verified' => false,
+            'pin' => Hash::make($this->pin),
+            'registration_complete' => true,
+            'terms_accepted' => $this->termsAccepted,
+            'email_verified_at' => now(),
+            'role' => 0,
+            'status' => 'active',
+        ]);
 
-    // 2. Store KYC document
-    if ($this->idDocument) {
-        $path = $this->idDocument->store('id_documents', 'public');
-        $user->update(['id_document' => $path]);
-    }
+        // 2. Store KYC document
+        if ($this->idDocument) {
+            $path = $this->idDocument->store('id_documents', 'public');
+            $user->update(['id_document' => $path]);
+        }
 
-    // 3. Create wallet
-    $user->wallet()->create([
-        'balance' => 0,
-        'currency' => 'NGN'
-    ]);
+        // 3. Create wallet
+        $user->wallet()->create([
+            'balance' => 0,
+            'currency' => 'NGN'
+        ]);
 
-
-app(VirtualAccountService::class)->create($user);// This will create a virtual account for the user after registration
+        
+            app(VirtualAccountService::class)->create($user);// This will create a virtual account for the user after registration
 
     // 4. Login
-    Auth::login($user);
-
-    return redirect()->route('dashboard');
-}
+        Auth::login($user);
+        
+        return redirect()->route('dashboard');
+    }
     // Validation messages
     protected $messages = [
         'firstName.required' => 'First name is required.',

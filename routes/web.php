@@ -42,19 +42,14 @@ Route::get('/login', Login::class)->name('login');
 Route::get('/register', Register::class)->name('register');
 
 
-//LOGOUT
-
-Route::get('/logout', function () {
+//LOGOUT - Use POST to prevent CSRF attacks
+Route::post('/logout', function () {
     Auth::logout();
     session()->invalidate();
     session()->regenerateToken();
 
     return redirect('/login');
-});
-
-   Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware('auth')->name('dashboard');
+})->name('logout');
 
 //USER DASHBOARD (Protected)
 
@@ -117,6 +112,8 @@ Route::prefix('super-admin')
 
 /*
 |--------------------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
 | PAYMENT CALLBACK
 |--------------------------------------------------------------------------
 */
@@ -125,18 +122,28 @@ Route::get('/payment/callback', function () {
         ->with('success', 'Payment successful');
 })->name('payment.callback');
 
-/*
-|--------------------------------------------------------------------------
-| TEST ROUTE (REMOVE IN PRODUCTION)
-|--------------------------------------------------------------------------
-*/
-Route::get('/test', function () {
-    return User::first();
-});
-
-Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handle']);
+// Paystack webhook route - NO AUTH because Paystack calls it from their servers
+// webhook is verified by signature, not by auth token
+Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handleEvent']);
 
 Route::get('verify-pin', VerifyPin::class)->name('pin-verify');
-Route::get('/payment/callback', function () {
-    return redirect()->route('dashboard')->with('success', 'Payment successful');
-});
+
+/*
+|--------------------------------------------------------------------------
+| EMAIL VERIFICATION ROUTES
+|--------------------------------------------------------------------------
+*/
+
+// user clicks verification link in email
+// link looks like: /email/verify/user-id/hash
+Route::get('/email/verify/{user}/{hash}', [
+    \App\Http\Controllers\Auth\VerifyEmailController::class, 
+    'verify'
+])->name('verification.verify');
+
+// user can request new verification email if they didn't get first one
+Route::post('/email/verification-notification', [
+    \App\Http\Controllers\Auth\VerifyEmailController::class, 
+    'resend'
+])->middleware('auth')
+  ->name('verification.resend');

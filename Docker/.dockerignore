@@ -1,0 +1,6 @@
+/node_modules
+/public/hot
+/.git
+.env
+.env.*
+*.log

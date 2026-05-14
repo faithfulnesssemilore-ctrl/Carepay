@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Casts\Encrypted;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, SoftDeletes; // SoftDeletes means we dont actually delete users, just hide them 
+    use HasFactory, Notifiable;
     protected $table = 'users';
     protected $guard = 'web';
 
@@ -49,11 +49,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pin' => 'hashed',
             'kyc_verified' => 'boolean',
             'registration_complete' => 'boolean',
             'terms_accepted' => 'boolean',
             'role' => 'integer',
-            // we encrypted this to protect sensitive info - even if someone gets the database, they cant see this stuff
+            // we encrypted this to protect sensitive info - even if someone breaks in they cant see the real stuff
             'id_number' => Encrypted::class,
             'phone' => Encrypted::class,
         ];
@@ -117,5 +118,28 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isModerator()
     {
         return $this->role >= 1;
+    }
+
+    // MustVerifyEmail implementation
+    public function getEmailForVerification()
+    {
+        return $this->email;
+    }
+
+    public function hasVerifiedEmail()
+    {
+        return $this->email_verified_at !== null;
+    }
+
+    public function markEmailAsVerified()
+    {
+        return $this->forceFill([
+            'email_verified_at' => $this->freshTimestamp(),
+        ])->save();
+    }
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\VerifyEmail());
     }
 }

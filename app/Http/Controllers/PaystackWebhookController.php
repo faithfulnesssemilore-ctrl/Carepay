@@ -15,7 +15,7 @@ use App\Notifications\DepositSuccessful;
 
 class PaystackWebhookController extends Controller
 {
-    public function handle(Request $request)
+    public function handleEvent(Request $request)
     {
         // Verify Paystack signature
         $signature = $request->header('x-paystack-signature');

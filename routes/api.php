@@ -1,89 +1,60 @@
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WalletController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\ScheduledPaymentController;
-use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaystackWebhookController;
 use App\Http\Middleware\IdempotencyMiddleware;
-use App\Http\Controllers\DepositController;
+
+/*
+|--------------------------------------------------------------------------
+| API ROUTES
+|--------------------------------------------------------------------------
+|
+these are the endpoints that the mobile app or frontend calls
+they need auth tokens (sanctum) or webhook signatures to work
+*/
+
 // WALLET ENDPOINTS
+// all need to be logged in
 
+Route::middleware(['auth:sanctum'])->group(function () {
+    // get wallet balance and info
+    Route::get('/wallet', [WalletController::class, 'getBalance'])
+        ->name('wallet.balance');
 
-// Get user's wallet
-Route::middleware(['auth:sanctum'])->get('/wallet', [WalletController::class, 'getWallet'])->name('wallet.get');
+    // get transaction history
+    Route::get('/transactions', [WalletController::class, 'getTransactions'])
+        ->name('transactions.history');
 
-// Deposit funds with idempotency protection
-Route::middleware(['auth:sanctum', IdempotencyMiddleware::class])->post('/wallet/deposit', [WalletController::class, 'deposit'])->name('wallet.deposit');
+    // transfer money to another user
+    Route::post('/wallet/transfer', [WalletController::class, 'transfer'])
+        ->middleware('throttle:5,1') // max 5 per minute
+        ->name('wallet.transfer');
 
-// Withdraw funds with idempotency protection
-Route::middleware(['auth:sanctum', IdempotencyMiddleware::class])->post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');
+    // start a deposit from paystack
+    Route::post('/wallet/deposit/initiate', [WalletController::class, 'initiateDeposit'])
+        ->middleware('throttle:10,1') // max 10 per minute (might retry)
+        ->name('wallet.deposit');
 
-// Transfer funds with idempotency protection
-Route::middleware(['auth:sanctum', IdempotencyMiddleware::class])->post('/wallet/transfer', [WalletController::class, 'transfer'])->name('wallet.transfer');
+    // withdraw to bank account
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])
+        ->middleware('throttle:5,1') // max 5 per minute
+        ->name('wallet.withdraw');
 
-// TRANSACTION ENDPOINTS
+    // test endpoint - add test money (development only)
+    Route::post('/wallet/test/add-money', [WalletController::class, 'testAddMoney'])
+        ->name('wallet.test.add');
+});
 
-// Get transaction history
-Route::middleware(['auth:sanctum'])->get('/transactions', [TransactionController::class, 'history'])->name('transactions.history');
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK ENDPOINTS
+|--------------------------------------------------------------------------
+|
+these dont need auth - they use signatures instead
+*/
 
-// Get transaction history (legacy route)
-Route::middleware(['auth:sanctum'])->get('/transactions/history', [TransactionController::class, 'history'])->name('transactions.history.legacy');
-
-// Get recent transactions
-Route::middleware(['auth:sanctum'])->get('/transactions/recent', [TransactionController::class, 'recent'])->name('transactions.recent');
-
-// Get single transaction
-Route::middleware(['auth:sanctum'])->get('/transactions/{id}', [TransactionController::class, 'show'])->name('transactions.show');
-
-// Create transaction
-Route::middleware(['auth:sanctum', IdempotencyMiddleware::class])->post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
-
-// SCHEDULED PAYMENTS ENDPOINTS
-
-
-// Get all scheduled payments
-Route::middleware(['auth:sanctum'])->get('/scheduled-payments', [ScheduledPaymentController::class, 'index'])->name('scheduled-payments.index');
-
-// Get upcoming scheduled payments
-Route::middleware(['auth:sanctum'])->get('/scheduled-payments/upcoming', [ScheduledPaymentController::class, 'upcoming'])->name('scheduled-payments.upcoming');
-
-// Create scheduled payment
-Route::middleware(['auth:sanctum'])->post('/scheduled-payments', [ScheduledPaymentController::class, 'store'])->name('scheduled-payments.store');
-
-// Update scheduled payment
-Route::middleware(['auth:sanctum'])->put('/scheduled-payments/{id}', [ScheduledPaymentController::class, 'update'])->name('scheduled-payments.update');
-
-// Cancel scheduled payment
-Route::middleware(['auth:sanctum'])->delete('/scheduled-payments/{id}', [ScheduledPaymentController::class, 'cancel'])->name('scheduled-payments.cancel');
-
-// ============================================
-// NOTIFICATIONS ENDPOINTS
-// ============================================
-
-// Get all notifications
-Route::middleware(['auth:sanctum'])->get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-
-// Get notification count
-Route::middleware(['auth:sanctum'])->get('/notifications/count', [NotificationController::class, 'count'])->name('notifications.count');
-
-// ============================================
-// USER ENDPOINTS
-// ============================================
-
-// Get current user information
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return response()->json([
-        'success' => true,
-        'user' => $request->user(),
-        'wallet' => $request->user()->wallet
-    ]);
-})->name('user.show');
-
-//Deposit endpoints
-Route::post('/deposits/initialize', [DepositController::class, 'initialize']);
-Route::post('/payments/webhook', [DepositController::class, 'webhook']);
-Route::get('/transactions/{reference}/verify', [DepositController::class, 'verify']);
-Route::get('/payments/callback', function () {
-    return view('payment.success');
-})->name('payment.callback');
+// paystack webhook for deposit confirmation
+Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handleEvent'])
+    ->name('webhook.paystack');

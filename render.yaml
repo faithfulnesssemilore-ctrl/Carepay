@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: fintech-app
+    env: php
+    region: us-oregon  # Change to nearest region: us-oregon, eu-frankfurt, ap-singapore, etc
+    plan: free
+    
+    # Build command to install dependencies and build assets
+    buildCommand: |
+      composer install --no-dev --no-interaction --no-progress --prefer-dist
+      npm ci
+      npm run build
+      php artisan migrate --force
+      php artisan optimize
+      php artisan storage:link
+    
+    # Start command
+    startCommand: vendor/bin/heroku-php-apache2 public/
+    
+    # Environment variables (set these in Render dashboard or via CLI)
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stack
+      - key: CACHE_STORE
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: DB_CONNECTION
+        scope: build,runtime
+        fromService:
+          type: pserv
+          name: fintech-mysql
+          property: connectionString
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: PAYSTACK_SECRET_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: MAIL_MAILER
+        value: smtp
+      # Other environment variables will be set via Render dashboard
+
+  - type: pserv
+    name: fintech-mysql
+    ipAllowList: []  # Restrict to web service
+    plan: free
+    
+    # MySQL on Aiven (not managed by Render - using external)
+    # Connection info from .env will be used instead
+    # Uncomment below if using Render's PostgreSQL instead:
+    # dbName: fintech_db
+    # user: fintech_user
+    # postgresMajorVersion: 15

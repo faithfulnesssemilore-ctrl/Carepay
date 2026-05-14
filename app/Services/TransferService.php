@@ -44,7 +44,7 @@ class TransferService
                 'user_id' => $sender->id,
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'transaction_type' => 'transfer',
+                'type' => 'transfer',
                 'status' => 'completed',
                 'reference' => $reference,
                 'description' => $description ?? "Transfer to {$recipient->phone}"
@@ -58,7 +58,7 @@ class TransferService
                 'user_id' => $recipient->id,
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'transaction_type' => 'received',
+                'type' => 'transfer',
                 'status' => 'completed',
                 'reference' => $reference,
                 'description' => "Received from {$sender->phone}"
