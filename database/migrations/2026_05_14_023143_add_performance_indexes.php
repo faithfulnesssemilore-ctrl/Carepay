@@ -35,9 +35,7 @@ return new class extends Migration
             if (!Schema::hasIndex('users', 'users_email_unique')) {
                 $table->unique('email');
             }
-            if (!Schema::hasIndex('users', 'users_username_unique')) {
-                $table->unique('username');
-            }
+            // username column may not exist in all environments, skip for now
         });
     }
 
