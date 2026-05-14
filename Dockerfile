@@ -27,11 +27,8 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-RUN php artisan config:cache || true
-RUN php artisan route:cache || true
-RUN php artisan view:cache || true
 RUN php artisan storage:link || true
 
 EXPOSE 8080
 
-CMD ["/bin/sh", "-c", "php artisan migrate --force && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/bin/sh", "-c", "php artisan config:clear && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache || true && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
