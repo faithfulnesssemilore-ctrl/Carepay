@@ -56,8 +56,11 @@ class User extends Authenticatable implements MustVerifyEmail
             'role' => 'integer',
             // we encrypted this to protect sensitive info - even if someone breaks in they cant see the real stuff
             'id_number' => Encrypted::class,
-            'phone' => Encrypted::class,
-        ];
+            
+    'phone' => 'encrypted', // Use the string alias
+];
+
+        
     }
 
     // One wallet per user (fintech standard)
