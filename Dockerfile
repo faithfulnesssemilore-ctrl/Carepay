@@ -1,6 +1,8 @@
 FROM php:8.2-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor curl git unzip nodejs npm
+RUN apk add --no-cache \
+    nginx supervisor curl git unzip nodejs npm \
+    oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev
 
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath opcache
 
