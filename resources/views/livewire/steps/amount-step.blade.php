@@ -43,7 +43,7 @@
         {{-- Available Balance Info --}}
         <div class="mt-2 small text-muted-custom">
             Available balance: 
-            <span class="text-primary-custom fw-semibold">₦12,450.00</span>
+            <span class="text-primary-custom fw-semibold">₦{{ number_format($walletBalance, 2) }}</span>
         </div>
     </div>
 

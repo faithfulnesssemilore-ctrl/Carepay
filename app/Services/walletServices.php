@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\LedgerEntry;
+use App\Models\UserLimit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
@@ -159,6 +160,37 @@ class WalletService
 
         if ($amountInKobo < 100) { // minimum ₦1
             throw new Exception('Minimum transfer amount is ₦1.');
+        }
+
+        // Check transfer limits before processing
+        $limits = UserLimit::where('user_id', $senderId)->first();
+        
+        if (!$limits) {
+            // Create default limits if they don't exist
+            $limits = UserLimit::create([
+                'user_id' => $senderId,
+                'single_transaction_limit' => 100000,  // NGN not kobo
+                'daily_transfer_limit' => 500000,
+                'limit_reset_date' => now()->toDateString(),
+            ]);
+        }
+
+        // Check single transaction limit (convert to kobo for comparison)
+        $singleLimitKobo = $limits->singleLimitInKobo();
+        if ($amountInKobo > $singleLimitKobo) {
+            throw new Exception('Transfer exceeds single transaction limit of ₦' . $limits->single_transaction_limit);
+        }
+
+        // Check daily transfer limit
+        $todaySpent = Transaction::where('user_id', $senderId)
+            ->where('type', 'debit')
+            ->whereDate('created_at', now()->toDateDate())
+            ->sum('amount');
+
+        $dailyLimitKobo = $limits->dailyLimitInKobo();
+        if (($todaySpent + $amountInKobo) > $dailyLimitKobo) {
+            $remaining = $dailyLimitKobo - $todaySpent;
+            throw new Exception('Daily transfer limit exceeded. Remaining: ₦' . round($remaining / 100, 2));
         }
 
         return DB::transaction(function () use ($senderId, $recipientId, $amountInKobo, $description) {

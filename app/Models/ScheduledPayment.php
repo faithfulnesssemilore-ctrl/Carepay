@@ -22,7 +22,7 @@ class ScheduledPayment extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount' => 'integer',  // stored in kobo
         'scheduled_date' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'

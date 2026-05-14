@@ -6,12 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
-            use App\Jobs\ProcessPaystackWebhook;
-
-
+use App\Jobs\ProcessPaystackWebhook;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\DepositSuccessful;
+use App\Services\WalletService;
 
 class PaystackWebhookController extends Controller
 {
@@ -41,38 +40,27 @@ class PaystackWebhookController extends Controller
                 return response()->json(['message' => 'No account number'], 200);
             }
 
-            DB::transaction(function () use ($data, $accountNumber) {
+            // Use WalletService for idempotency - same reference = single credit
+            $virtual = VirtualAccount::where('account_number', $accountNumber)->first();
 
-                $virtual = VirtualAccount::where('account_number', $accountNumber)->first();
-
-                if (!$virtual) return;
-
-                $wallet = Wallet::where('user_id', $virtual->user_id)->first();
-
-                $amount = $data['amount'] / 100;
-
-                // Prevent duplicate credit
-                if (Transaction::where('reference', $data['reference'])->exists()) {
-                    return;
+            if ($virtual) {
+                $amountInKobo = (int) $data['amount'];
+                $reference = $data['reference'];
+                
+                try {
+                    (new WalletService())->credit(
+                        $virtual->user_id,
+                        $amountInKobo,
+                        $reference,
+                        'Paystack Deposit'
+                    );
+                    
+                    $user = User::find($virtual->user_id);
+                    $user->notify(new DepositSuccessful($amountInKobo / 100));
+                } catch (\Exception $e) {
+                    // Log error but return 200 so Paystack doesn't retry
                 }
-
-                // Credit wallet
-                $wallet->increment('balance', $amount);
-
-                // Save transaction
-                Transaction::create([
-                    'user_id' => $virtual->user_id,
-                    'type' => 'credit',
-                    'amount' => $amount,
-                    'reference' => $data['reference'],
-                    'description' => 'Bank Transfer Deposit',
-                    'status' => 'success'
-                ]);
-
-                // Send notification
-                $user = User::find($virtual->user_id);
-                $user->notify(new DepositSuccessful($amount));
-            });
+            }
         }
 
         return response()->json(['status' => 'queued']);

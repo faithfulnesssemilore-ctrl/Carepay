@@ -89,6 +89,24 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(UserLimit::class);
     }
 
+    // get all transactions sent by this user (debits)
+    public function sentTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id')->where('type', 'debit');
+    }
+
+    // get all transactions received by this user (credits to recipient_id)
+    public function receivedTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'recipient_id')->where('type', 'credit');
+    }
+
+    // get all transactions (both sent and received)
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     // when creating a new user, also make their limits
     protected static function booted()
     {

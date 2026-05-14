@@ -8,6 +8,9 @@
 <body>
     <h1>Super Admin Dashboard</h1>
     <p>Welcome, Super Admin!</p>
-    <a href="{{ route('logout') }}">Logout</a>
+    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+        @csrf
+        <button type="submit" class="btn btn-link">Logout</button>
+    </form>
 </body>
 </html>

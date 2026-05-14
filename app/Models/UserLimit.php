@@ -79,4 +79,16 @@ class UserLimit extends Model
         $nextReset = $this->limit_reset_date->copy()->addDay()->startOfDay();
         return $nextReset->diffInHours(now());
     }
+
+    // convert daily limit to kobo (amounts stored in kobo in DB)
+    public function dailyLimitInKobo()
+    {
+        return $this->daily_transfer_limit * 100;
+    }
+
+    // convert single transaction limit to kobo
+    public function singleLimitInKobo()
+    {
+        return $this->single_transaction_limit * 100;
+    }
 }

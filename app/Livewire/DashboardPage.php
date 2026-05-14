@@ -84,11 +84,11 @@ class DashboardPage extends Component
 
             // Income and Expenses
             $this->monthlyIncome = (float) $monthlyTransactions
-                ->where('transaction_type', 'in')
+                ->where('type', 'credit')
                 ->sum('amount');
 
             $this->monthlyExpenses = (float) $monthlyTransactions
-                ->where('transaction_type', 'out')
+                ->where('type', 'debit')
                 ->sum('amount');
 
             // Transaction count
@@ -103,7 +103,7 @@ class DashboardPage extends Component
             // Calculate percentage changes
             if ($this->monthlyIncome > 0) {
                 $previousMonthIncome = (float) Transaction::where('user_id', $userId)
-                    ->where('transaction_type', 'in')
+                    ->where('type', 'credit')
                     ->whereBetween('created_at', [
                         now()->subMonth()->startOfMonth(),
                         now()->subMonth()->endOfMonth()
@@ -119,7 +119,7 @@ class DashboardPage extends Component
 
             if ($this->monthlyExpenses > 0) {
                 $previousMonthExpenses = (float) Transaction::where('user_id', $userId)
-                    ->where('transaction_type', 'out')
+                    ->where('type', 'debit')
                     ->whereBetween('created_at', [
                         now()->subMonth()->startOfMonth(),
                         now()->subMonth()->endOfMonth()

@@ -5,7 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Services\TransferService;
+use App\Services\WalletService;
 
 /**
  * SendMoney Livewire Component
@@ -24,6 +24,7 @@ class SendMoney extends Component
     // Amount Step
     public $amount = '';
     public $note = '';
+    public $walletBalance = 0;
     
     // Method Step
     public $method = 'wallet'; // wallet | bank | card
@@ -56,10 +57,14 @@ public function pinVerified($action, $payload)
     $this->processTransfer($payload);
 }
     /**
-     * Initialize component - load recent contacts
+     * Initialize component - load recent contacts and wallet balance
      */
     public function mount()
     {
+        $user = Auth::user();
+        if ($user && $user->wallet) {
+            $this->walletBalance = $user->wallet->balance / 100;
+        }
         $this->loadRecentContacts();
     }
 
@@ -207,24 +212,19 @@ public function pinVerified($action, $payload)
                 throw new \Exception('Insufficient balance for this transfer.');
             }
 
-            // Process the transfer through the service
-            $transferService = new TransferService();
+            // Process the transfer through WalletService with locking and limits
+            $walletService = new WalletService();
             
-            $result = $transferService->transfer(
-                user: $user,
+            $result = $walletService->transfer(
+                senderId: $user->id,
                 recipientId: $this->selectedRecipient['id'] ?? null,
-                amount: (float) $this->amount,
-                method: $this->method,
-                description: $this->note,
+                amountInKobo: (int) round(floatval($this->amount) * 100),
+                description: $this->note ?: 'Transfer to ' . $this->selectedRecipient['name']
             );
 
-            if ($result['success']) {
-                $this->successMessage = 'Transfer completed successfully!';
-                $this->currentStep = 'success';
-                $this->dispatch('moneyTransferred');
-            } else {
-                throw new \Exception($result['message'] ?? 'Transfer failed.');
-            }
+            $this->successMessage = 'Transfer completed successfully!';
+            $this->currentStep = 'success';
+            $this->dispatch('moneyTransferred');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->errorMessage = 'Validation error: ' . collect($e->errors())->flatten()->first();
