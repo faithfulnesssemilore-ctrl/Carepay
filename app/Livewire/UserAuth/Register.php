@@ -72,7 +72,7 @@ public bool $otpVerified = false;
 
                 if ($this->currentStep === 3) {
             $this->validate([
-                'idDocument' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'idDocument' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
                 'idType' => 'required|in:passport,drivers_license,national_id',
                 'idNumber' => 'required|string|max:255',
             ]);
@@ -213,7 +213,7 @@ $this->lastOtpSentAt = now();
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
-            'idDocument' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'idDocument' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'idType' => 'required|in:passport,drivers_license,national_id',
             'idNumber' => 'required|string|max:255',
             'termsAccepted' => 'accepted',
@@ -266,7 +266,7 @@ $this->lastOtpSentAt = now();
         'pin_confirmation' => 'PIN confirmation does not match.',
         'password.required' => 'Password is required.',
         'password.confirmed' => 'Password confirmation does not match.',
-        'idDocument.required' => 'ID document is required.',
+        'idDocument.required' => 'Please upload a valid ID document.',
         'idDocument.mimes' => 'ID document must be a JPG, JPEG, PNG, or PDF file.',
         'idDocument.max' => 'ID document must be less than 2MB.',
         'idType.required' => 'ID type is required.',
