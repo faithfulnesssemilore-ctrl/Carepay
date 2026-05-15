@@ -63,7 +63,7 @@ class Wallet extends Component
             }
 
             $this->walletId = $wallet->id;
-            $this->balance = (float) $wallet->balance;
+            $this->balance = round((float) $wallet->balance / 100, 2);
             $this->currency = $wallet->currency;
             $this->walletStatus = $wallet->status;
 
@@ -74,13 +74,13 @@ class Wallet extends Component
             $this->loadBalanceData();
 
             // Load recent transactions
-            $this->transactions = Transaction::where('wallet_id', $wallet->id)
+            $this->transactions = Transaction::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get();
 
             // Load scheduled payments
-            $this->scheduledPayments = ScheduledPayment::where('wallet_id', $wallet->id)
+            $this->scheduledPayments = ScheduledPayment::where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->orderBy('scheduled_date', 'asc')
                 ->limit(5)
@@ -97,12 +97,12 @@ class Wallet extends Component
     private function calculateBalances($wallet)
     {
         // Pending = transactions in pending status
-        $this->pendingBalance = Transaction::where('wallet_id', $wallet->id)
+        $this->pendingBalance = Transaction::where('user_id', $user->id)
             ->where('status', 'pending')
             ->sum('amount');
 
         // Reserved = scheduled payments
-        $this->reservedBalance = ScheduledPayment::where('wallet_id', $wallet->id)
+        $this->reservedBalance = ScheduledPayment::where('user_id', $user->id)
             ->where('status', 'pending')
             ->sum('amount');
     }
