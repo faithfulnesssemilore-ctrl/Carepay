@@ -5,380 +5,444 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Transaction;
+use App\Models\UserLimit;
 use App\Services\WalletService;
 use App\Services\BankService;
+use App\Services\PaymentService;
 
-/**
- * SendMoney Livewire Component
- * Multi-step transfer: account number, bank, amount, confirm, success
- */
 class SendMoney extends Component
 {
-    // ==================== Multi-Step Form State ====================
-    public $currentStep = 'recipient'; // recipient | amount | confirm | success
-    
-    // Recipient Step (Account Number & Bank Selection)
-    public $accountNumber = '';
-    public $selectedBankCode = '';
-    public $banks = [];
-    public $resolvedAccountName = '';
-    public $accountResolutionError = '';
-    
-    // Amount Step
-    public $amount = '';
-    public $note = '';
-    public $walletBalance = 0;
-    public $dailyLimit = 0;
-    public $dailyUsed = 0;
-    public $singleLimit = 0;
-    
-    // PIN Modal
-    public $showPinModal = false;
-    public $pinInput = '';
-    
-    // Status
-    public $successMessage = '';
-    public $errorMessage = '';
-    public $isProcessing = false;
+    // step flow: recipient -> amount -> confirm -> success
+    public string $currentStep = 'recipient';
 
-    // ==================== Validation Rules ====================
+    // recipient step
+    public string $accountNumber    = '';
+    public string $selectedBankCode = '';
+    public string $selectedBankName = '';
+    public array  $banks            = [];
+    public string $resolvedAccountName   = '';
+    public string $accountResolutionError = '';
+    public bool   $isResolvingAccount    = false;
+
+    // recent contacts from past transfers
+    public array $recentContacts = [];
+
+    // amount step
+    public string $amount        = '';
+    public string $note          = '';
+    public float  $walletBalance = 0;
+    public float  $dailyLimit    = 500000;
+    public float  $dailyUsed     = 0;
+    public float  $singleLimit   = 100000;
+
+    // pin modal
+    public bool   $showPinModal = false;
+    public string $pinInput     = '';
+
+    // transfer result
+    public string $successMessage   = '';
+    public string $errorMessage     = '';
+    public string $transferReference = '';
+    public bool   $isProcessing     = false;
+
     protected $rules = [
-        'accountNumber' => 'required|string|digits:10',
+        'accountNumber'    => 'required|string|digits:10',
         'selectedBankCode' => 'required|string',
-        'amount' => 'required|numeric|min:0.01',
-        'note' => 'nullable|string|max:500',
-        'pinInput' => 'required|numeric|digits:4'
+        'amount'           => 'required|numeric|min:1',
+        'note'             => 'nullable|string|max:500',
+        'pinInput'         => 'required|digits:4',
     ];
 
     protected $messages = [
-        'accountNumber.required' => 'Account number is required.',
-        'accountNumber.digits' => 'Account number must be exactly 10 digits.',
+        'accountNumber.required'    => 'Account number is required.',
+        'accountNumber.digits'      => 'Account number must be exactly 10 digits.',
         'selectedBankCode.required' => 'Please select a bank.',
-        'amount.required' => 'Please enter an amount.',
-        'amount.min' => 'Amount must be greater than 0.',
-        'pinInput.required' => 'PIN is required.',
-        'pinInput.digits' => 'PIN must be exactly 4 digits.',
+        'amount.required'           => 'Please enter an amount.',
+        'amount.min'                => 'Minimum transfer is ₦1.',
+        'pinInput.required'         => 'PIN is required.',
+        'pinInput.digits'           => 'PIN must be exactly 4 digits.',
     ];
 
-    protected $listeners = ['pinVerified'];
-    
-    /**
-     * Initialize component - load banks and wallet limits
-     */
-    public function mount()
+    public function mount(): void
     {
-        $bankService = new BankService();
-        $this->banks = $bankService->getAllBanks();
-        
         $user = Auth::user();
-        if ($user && $user->wallet) {
-            $this->walletBalance = $user->wallet->balance / 100;
+
+        // load banks from Paystack via BankService
+        try {
+            $bankService  = new BankService();
+            $this->banks  = $bankService->getAllBanks();
+        } catch (\Exception $e) {
+            $this->banks = [];
         }
-        
-        // Load limits from user_limits table
-        if ($user && $user->limits) {
-            $this->dailyLimit = $user->limits->daily_transfer_limit;
-            $this->singleLimit = $user->limits->single_transaction_limit;
-            $this->dailyUsed = $user->limits->daily_transfer_used;
+
+        // load wallet balance in naira
+        $this->walletBalance = $user->wallet
+            ? round($user->wallet->balance / 100, 2)
+            : 0;
+
+        // load limits
+        $limits = $user->limits;
+        if ($limits) {
+            $this->dailyLimit  = (float) $limits->daily_transfer_limit;
+            $this->singleLimit = (float) $limits->single_transaction_limit;
         }
+
+        // how much has been sent today in naira
+        $this->dailyUsed = round(
+            Transaction::where('user_id', $user->id)
+                ->where('type', 'debit')
+                ->whereDate('created_at', today())
+                ->sum('amount') / 100,
+            2
+        );
+
+        $this->loadRecentContacts();
     }
-    
-    /**
-     * Resolve account name when bank is selected
-     */
-    public function updatedSelectedBankCode($value)
+
+    public function loadRecentContacts(): void
     {
-        $this->resolvedAccountName = '';
+        // get last 6 unique recipients from transaction history
+        $this->recentContacts = Transaction::where('user_id', Auth::id())
+            ->where('type', 'debit')
+            ->whereNotNull('metadata')
+            ->latest()
+            ->take(20)
+            ->get()
+            ->filter(function ($tx) {
+                $meta = is_array($tx->metadata) ? $tx->metadata : json_decode($tx->metadata, true);
+                return !empty($meta['account_number']);
+            })
+            ->unique(function ($tx) {
+                $meta = is_array($tx->metadata) ? $tx->metadata : json_decode($tx->metadata, true);
+                return $meta['account_number'] ?? '';
+            })
+            ->take(6)
+            ->map(function ($tx) {
+                $meta = is_array($tx->metadata) ? $tx->metadata : json_decode($tx->metadata, true);
+                return [
+                    'account_number' => $meta['account_number'] ?? '',
+                    'bank_code'      => $meta['bank_code']      ?? '',
+                    'bank_name'      => $meta['bank_name']      ?? '',
+                    'account_name'   => $meta['account_name']   ?? 'Unknown',
+                    'initials'       => strtoupper(substr($meta['account_name'] ?? 'U', 0, 1)),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    // auto-resolve account name when bank is selected
+    public function updatedSelectedBankCode(string $value): void
+    {
+        $this->resolvedAccountName    = '';
         $this->accountResolutionError = '';
-        
-        if (empty($this->accountNumber) || strlen($this->accountNumber) !== 10) {
-            return;
+
+        // find bank name from the banks list
+        foreach ($this->banks as $bank) {
+            if (($bank['code'] ?? '') === $value) {
+                $this->selectedBankName = $bank['name'] ?? '';
+                break;
+            }
         }
-        
-        if (empty($value)) {
-            return;
+
+        if (strlen($this->accountNumber) === 10 && !empty($value)) {
+            $this->resolveAccountName();
         }
-        
-        $this->resolveAccountName();
     }
-    
-    /**
-     * Resolve account name when account number is entered
-     */
-    public function updatedAccountNumber($value)
+
+    // auto-resolve when account number is complete
+    public function updatedAccountNumber(string $value): void
     {
-        $this->resolvedAccountName = '';
+        $this->resolvedAccountName    = '';
         $this->accountResolutionError = '';
-        
-        if (strlen($value) !== 10 || empty($this->selectedBankCode)) {
-            return;
+
+        if (strlen($value) === 10 && !empty($this->selectedBankCode)) {
+            $this->resolveAccountName();
         }
-        
-        $this->resolveAccountName();
     }
-    
-    /**
-     * Call BankService to resolve account name via Paystack API
-     */
-    private function resolveAccountName()
+
+    private function resolveAccountName(): void
     {
-        if (strlen($this->accountNumber) !== 10 || empty($this->selectedBankCode)) {
-            return;
-        }
-        
+        $this->isResolvingAccount = true;
+
         try {
             $bankService = new BankService();
-            $accountName = $bankService->resolveAccountName($this->accountNumber, $this->selectedBankCode);
-            
-            if ($accountName) {
-                $this->resolvedAccountName = $accountName;
+            $name        = $bankService->resolveAccountName(
+                $this->accountNumber,
+                $this->selectedBankCode
+            );
+
+            if ($name) {
+                $this->resolvedAccountName = $name;
             } else {
-                $this->accountResolutionError = 'Unable to resolve account name. Check account number and bank.';
+                $this->accountResolutionError = 'Could not find account. Check the number and bank.';
             }
         } catch (\Exception $e) {
-            $this->accountResolutionError = 'Error resolving account: ' . $e->getMessage();
+            $this->accountResolutionError = 'Error: ' . $e->getMessage();
+        } finally {
+            $this->isResolvingAccount = false;
         }
     }
 
+    // select a recent contact to prefill the form
+    public function selectRecentContact(array $contact): void
+    {
+        $this->accountNumber    = $contact['account_number'];
+        $this->selectedBankCode = $contact['bank_code'];
+        $this->selectedBankName = $contact['bank_name'];
+        $this->resolvedAccountName = $contact['account_name'];
+        $this->accountResolutionError = '';
+    }
 
-    /**
-     * Proceed to amount step after account and bank validation
-     */
-    public function proceedToAmount()
+    // move from recipient step to amount step
+    public function proceedToAmount(): void
     {
         $this->errorMessage = '';
-        
-        // Validate account number format
+
         if (strlen($this->accountNumber) !== 10) {
             $this->errorMessage = 'Account number must be exactly 10 digits.';
             return;
         }
-        
+
         if (empty($this->selectedBankCode)) {
             $this->errorMessage = 'Please select a bank.';
             return;
         }
-        
+
         if (empty($this->resolvedAccountName)) {
-            $this->errorMessage = 'Unable to resolve account. Please check the account number and bank.';
+            $this->errorMessage = 'Account not verified. Check the account number and bank.';
             return;
         }
-        
+
         $this->setStep('amount');
     }
 
-    /**
-     * Set the current step in the workflow
-     */
-    public function setStep($step)
+    public function setStep(string $step): void
     {
-        $validSteps = ['recipient', 'amount', 'confirm', 'success'];
-        
-        if (in_array($step, $validSteps)) {
-            $this->currentStep = $step;
+        $valid = ['recipient', 'amount', 'confirm', 'success'];
+        if (in_array($step, $valid)) {
+            $this->currentStep  = $step;
             $this->errorMessage = '';
         }
     }
 
-    /**
-     * Validate amount and move to confirmation step
-     */
-    public function handleAmountSubmit()
+    // validate amount and move to confirm
+    public function handleAmountSubmit(): void
     {
         $this->errorMessage = '';
-        
-        // Validate amount
-        if (empty($this->amount) || floatval($this->amount) <= 0) {
-            $this->errorMessage = 'Please enter a valid amount greater than 0.';
+
+        $amount = floatval($this->amount);
+
+        if ($amount <= 0) {
+            $this->errorMessage = 'Please enter a valid amount.';
             return;
         }
 
-        // Check user balance (in naira, not kobo)
-        $user = Auth::user();
-        $wallet = $user->wallet;
+        // check balance
+        if ($amount > $this->walletBalance) {
+            $this->errorMessage = 'Insufficient balance. Your balance is ₦' . number_format($this->walletBalance, 2);
+            return;
+        }
 
-        if (!$wallet || $wallet->balance < floatval($this->amount) * 100) {
-            $this->errorMessage = 'Insufficient balance for this transfer.';
+        // check single transaction limit
+        if ($amount > $this->singleLimit) {
+            $this->errorMessage = 'Amount exceeds your single transaction limit of ₦' . number_format($this->singleLimit, 2);
             return;
         }
-        
-        // Check single transaction limit
-        if (floatval($this->amount) > $this->singleLimit) {
-            $remaining = $this->singleLimit - floatval($this->amount);
-            $this->errorMessage = "Amount exceeds single transaction limit of ₦{$this->singleLimit}. Remaining: ₦{$remaining}";
-            return;
-        }
-        
-        // Check daily limit
-        $dailyRemaining = $this->dailyLimit - $this->dailyUsed;
-        if (floatval($this->amount) > $dailyRemaining) {
-            $this->errorMessage = "Daily limit exceeded. Used: ₦{$this->dailyUsed}, Remaining: ₦{$dailyRemaining}";
+
+        // check daily limit
+        $remaining = $this->dailyLimit - $this->dailyUsed;
+        if ($amount > $remaining) {
+            $this->errorMessage = 'This would exceed your daily limit. You can send ₦' . number_format($remaining, 2) . ' more today.';
             return;
         }
 
         $this->setStep('confirm');
     }
 
-    /**
-     * Show PIN verification modal before confirming transfer
-     */
-    public function showPinVerification()
+    // open PIN modal from confirm step
+    public function showPinVerification(): void
     {
         $this->showPinModal = true;
-        $this->pinInput = '';
-    }
-    
-    /**
-     * Verify PIN and process transfer
-     */
-    public function verifyPinAndTransfer()
-    {
-        $this->errorMessage = '';
-        
-        if (empty($this->pinInput)) {
-            $this->errorMessage = 'PIN is required.';
-            return;
-        }
-        
-        if (strlen($this->pinInput) !== 4) {
-            $this->errorMessage = 'PIN must be exactly 4 digits.';
-            return;
-        }
-        
-        $user = Auth::user();
-        
-        // Verify PIN against hashed PIN in database
-        if (!Hash::check($this->pinInput, $user->pin)) {
-            $this->errorMessage = 'Incorrect PIN. Please try again.';
-            return;
-        }
-        
-        // PIN is correct, process transfer
-        $this->processTransfer();
-    }
-    
-    /**
-     * Close PIN modal without processing
-     */
-    public function closePinModal()
-    {
-        $this->showPinModal = false;
-        $this->pinInput = '';
+        $this->pinInput     = '';
         $this->errorMessage = '';
     }
 
-    /**
-     * Process the actual transfer through external bank (Paystack or similar)
-     */
-    public function processTransfer()
+    public function closePinModal(): void
+    {
+        $this->showPinModal = false;
+        $this->pinInput     = '';
+        $this->errorMessage = '';
+    }
+
+    // check PIN then process transfer
+    public function verifyPinAndTransfer(): void
+    {
+        $this->errorMessage = '';
+
+        $user = Auth::user();
+
+        if (!$user->pin) {
+            $this->errorMessage = 'You have not set a transaction PIN. Go to Settings to create one.';
+            return;
+        }
+
+        if (!Hash::check($this->pinInput, $user->pin)) {
+            $this->errorMessage = 'Wrong PIN. Try again.';
+            return;
+        }
+
+        $this->processTransfer();
+    }
+
+    public function processTransfer(): void
     {
         $this->isProcessing = true;
         $this->errorMessage = '';
-        $this->successMessage = '';
 
         try {
-            $user = Auth::user();
-            $wallet = $user->wallet;
+            $user      = Auth::user();
+            $wallet    = $user->wallet;
+            $amountNaira = floatval($this->amount);
+            $amountKobo  = (int) round($amountNaira * 100);
 
-            // Validate wallet exists
             if (!$wallet) {
-                throw new \Exception('Wallet not found. Please contact support.');
+                throw new \Exception('Wallet not found. Contact support.');
             }
 
-            // Validate sufficient balance (in kobo)
-            if ($wallet->balance < floatval($this->amount) * 100) {
-                throw new \Exception('Insufficient balance for this transfer.');
+            if ($wallet->balance < $amountKobo) {
+                throw new \Exception('Insufficient balance.');
             }
 
-            // Create a transaction record for external bank transfer
-            // This records the transfer but actual settlement happens with the bank
-            $bankService = new BankService();
-            $bank = $bankService->getBankByCode($this->selectedBankCode);
-            
-            $reference = 'TRN_' . strtoupper(uniqid());
-            
-            $transaction = Transaction::create([
-                'user_id' => $user->id,
-                'type' => 'debit',
-                'amount' => (int) round(floatval($this->amount) * 100),
-                'reference' => $reference,
-                'status' => 'pending',
-                'description' => 'Transfer to ' . ($bank['name'] ?? 'External Bank'),
-                'metadata' => json_encode([
+            // generate unique reference for this transfer
+            $reference = 'TRF_' . strtoupper(Str::random(16));
+
+            // try to use Paystack transfer API to send to real bank account
+            // if PaymentService or Paystack transfer fails, we record it as pending
+            try {
+                $paymentService = new PaymentService();
+
+                // first create a transfer recipient on Paystack
+                $recipient = $paymentService->createTransferRecipient(
+                    name:        $this->resolvedAccountName,
+                    accountNumber: $this->accountNumber,
+                    bankCode:    $this->selectedBankCode
+                );
+
+                $recipientCode = $recipient['recipient_code'] ?? null;
+
+                if ($recipientCode) {
+                    // initiate the actual Paystack transfer
+                    $transfer = $paymentService->initiateTransfer(
+                        amount:        $amountKobo,
+                        recipient:     $recipientCode,
+                        reference:     $reference,
+                        reason:        $this->note ?: 'Transfer from CarePay'
+                    );
+
+                    $status = $transfer['status'] ?? 'pending';
+                } else {
+                    $status = 'pending';
+                }
+            } catch (\Exception $paystackError) {
+                // Paystack failed - still record the transaction but mark as pending
+                // admin can manually process it
+                $status = 'pending';
+            }
+
+            // deduct from wallet regardless - funds are now reserved
+            $wallet->decrement('balance', $amountKobo);
+
+            // record the transaction
+            Transaction::create([
+                'user_id'     => $user->id,
+                'type'        => 'debit',
+                'amount'      => $amountKobo,
+                'reference'   => $reference,
+                'status'      => $status,
+                'description' => 'Transfer to ' . $this->resolvedAccountName,
+                'metadata'    => json_encode([
                     'account_number' => $this->accountNumber,
-                    'bank_code' => $this->selectedBankCode,
-                    'bank_name' => $bank['name'] ?? '',
-                    'account_name' => $this->resolvedAccountName,
-                ])
+                    'bank_code'      => $this->selectedBankCode,
+                    'bank_name'      => $this->selectedBankName,
+                    'account_name'   => $this->resolvedAccountName,
+                    'note'           => $this->note,
+                ]),
             ]);
 
-            // Deduct from wallet immediately (funds on hold)
-            $wallet->decrement('balance', (int) round(floatval($this->amount) * 100));
+            $this->transferReference = $reference;
+            $this->showPinModal      = false;
+            $this->successMessage    = 'Transfer of ₦' . number_format($amountNaira, 2) . ' to ' . $this->resolvedAccountName . ' is being processed.';
 
-            $this->successMessage = 'Transfer initiated successfully! Your funds are on hold and will be delivered within 1-2 hours.';
-            $this->showPinModal = false;
-            $this->currentStep = 'success';
-            $this->dispatch('moneyTransferred');
+            // update daily used amount
+            $this->dailyUsed += $amountNaira;
+
+            // update wallet balance display
+            $this->walletBalance = round(($wallet->balance) / 100, 2);
+
+            $this->setStep('success');
+            $this->dispatch('toast', type: 'success', message: 'Transfer successful!');
 
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
+            $this->dispatch('toast', type: 'error', message: $e->getMessage());
         } finally {
             $this->isProcessing = false;
         }
     }
 
-    /**
-     * Complete the transaction and redirect
-     */
-    public function handleComplete()
+    public function handleComplete(): void
     {
         $this->resetForm();
-        $this->redirect('/app/transactions', navigate: true);
+        $this->redirect(route('transactions'), navigate: true);
     }
 
-    /**
-     * Reset the entire form to initial state
-     */
-    public function resetForm()
+    public function resetForm(): void
     {
-        $this->currentStep = 'recipient';
-        $this->accountNumber = '';
-        $this->selectedBankCode = '';
-        $this->resolvedAccountName = '';
+        $this->currentStep           = 'recipient';
+        $this->accountNumber         = '';
+        $this->selectedBankCode      = '';
+        $this->selectedBankName      = '';
+        $this->resolvedAccountName   = '';
         $this->accountResolutionError = '';
-        $this->amount = '';
-        $this->note = '';
-        $this->successMessage = '';
-        $this->errorMessage = '';
-        $this->isProcessing = false;
-        $this->showPinModal = false;
-        $this->pinInput = '';
+        $this->amount                = '';
+        $this->note                  = '';
+        $this->successMessage        = '';
+        $this->errorMessage          = '';
+        $this->transferReference     = '';
+        $this->isProcessing          = false;
+        $this->showPinModal          = false;
+        $this->pinInput              = '';
     }
 
-    /**
-     * Get the index of a step in the workflow
-     * Used for progress indicator styling
-     */
-    public function getStepIndex($step)
+    public function getStepIndex(string $step): int
     {
         $steps = ['recipient', 'amount', 'confirm', 'success'];
         $index = array_search($step, $steps);
-        return $index !== false ? $index : 0;
+        return $index !== false ? (int) $index : 0;
     }
 
     public function render()
     {
         return view('livewire.send-money', [
-            'currentStep' => $this->currentStep,
-            'banks' => $this->banks,
-            'accountNumber' => $this->accountNumber,
-            'selectedBankCode' => $this->selectedBankCode,
-            'resolvedAccountName' => $this->resolvedAccountName,
+            'currentStep'          => $this->currentStep,
+            'banks'                => $this->banks,
+            'recentContacts'       => $this->recentContacts,
+            'walletBalance'        => $this->walletBalance,
+            'dailyLimit'           => $this->dailyLimit,
+            'dailyUsed'            => $this->dailyUsed,
+            'singleLimit'          => $this->singleLimit,
+            'resolvedAccountName'  => $this->resolvedAccountName,
+            'accountResolutionError' => $this->accountResolutionError,
+            'isResolvingAccount'   => $this->isResolvingAccount,
+            'successMessage'       => $this->successMessage,
+            'errorMessage'         => $this->errorMessage,
+            'transferReference'    => $this->transferReference,
+            'showPinModal'         => $this->showPinModal,
+            'searchResults'        => [], // kept for blade compatibility
         ]);
-
     }
 }
-
-
