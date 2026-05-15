@@ -113,7 +113,7 @@ class SendMoney extends Component
     }
     
     /**
-     * Search for recipient by username or email
+     * Search for recipient by email or name
      */
     public function searchRecipient()
     {
@@ -126,20 +126,20 @@ class SendMoney extends Component
         
         $user = Auth::user();
         
-        // Search by username (case-insensitive) or email
+        // Search by email or name (case-insensitive)
         $this->searchResults = User::where('id', '!=', $user->id)
             ->where(function ($query) {
-                $query->where('username', 'like', '%' . $this->searchQuery . '%')
-                    ->orWhere('email', 'like', '%' . $this->searchQuery . '%');
+                $query->where('email', 'like', '%' . $this->searchQuery . '%')
+                    ->orWhere('first_name', 'like', '%' . $this->searchQuery . '%')
+                    ->orWhere('last_name', 'like', '%' . $this->searchQuery . '%');
             })
-            ->select('id', 'first_name', 'last_name', 'email', 'username')
+            ->select('id', 'first_name', 'last_name', 'email')
             ->limit(5)
             ->get()
             ->map(fn($u) => [
                 'id' => $u->id,
                 'name' => trim($u->first_name . ' ' . $u->last_name),
                 'email' => $u->email,
-                'username' => $u->username,
             ])
             ->toArray();
     }
@@ -375,7 +375,6 @@ class SendMoney extends Component
             'selectedRecipient' => $this->selectedRecipient,
             'amount' => $this->amount,
             'note' => $this->note,
-            'method' => $this->method,
             'recentContacts' => $this->recentContacts,
             'searchQuery' => $this->searchQuery,
         ]);

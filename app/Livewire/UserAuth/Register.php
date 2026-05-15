@@ -3,7 +3,6 @@
 namespace App\Livewire\UserAuth;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
-use App\Services\VirtualAccountService;
 use Ichtrojan\Otp\Otp;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
@@ -244,14 +243,8 @@ $this->lastOtpSentAt = now();
             $user->update(['id_document' => $path]);
         }
 
-        // 3. Create wallet
-        $user->wallet()->create([
-            'balance' => 0,
-            'currency' => 'NGN'
-        ]);
-
-        
-            app(VirtualAccountService::class)->create($user);// This will create a virtual account for the user after registration
+        // 3. Wallet, Virtual Account, and Limits auto-created by User model boot method
+        // No need to create them here - they're already created automatically
 
     // 4. Login
         Auth::login($user);

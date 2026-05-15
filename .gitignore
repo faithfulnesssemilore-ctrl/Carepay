@@ -17,3 +17,5 @@
 !storage/certs/aiven-ca.pem
 !public/build/
 !public/build/**
+!public/build/
+!public/build/**

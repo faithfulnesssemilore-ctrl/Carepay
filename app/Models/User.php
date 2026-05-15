@@ -117,6 +117,7 @@ class User extends Authenticatable implements MustVerifyEmail
             // create wallet with zero balance (stored in kobo internally)
             $user->wallet()->create([
                 'balance' => 0,
+                'currency' => 'NGN',
             ]);
             
             // create default limits for new users

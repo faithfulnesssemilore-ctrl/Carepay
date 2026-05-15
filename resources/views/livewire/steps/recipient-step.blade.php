@@ -20,7 +20,7 @@
             placeholder="Search by username or email..."
             class="bg-secondary-custom border-0 rounded-xl"
             style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
-            wire:model.live="searchQuery"
+            wire:model.debounce-300="searchQuery"
             wire:change="searchRecipient"
         />
     </div>
