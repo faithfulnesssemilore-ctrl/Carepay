@@ -1,120 +1,99 @@
 {{--
-    Recipient Selection Step
-    Search by username or email, show search results and recent contacts
+    Recipient Selection Step - Updated to use Account Number + Bank Selection
+    Instead of searching for recipients, users enter account number and select bank
+    Account name is resolved via Paystack API
 --}}
 
 <div class="d-flex flex-column gap-4">
     <div>
-        <h2 class="h3 fw-bold mb-2">Select Recipient</h2>
-        <p class="text-muted-custom">Search by username or email</p>
+        <h2 class="h3 fw-bold mb-2">Send to Account</h2>
+        <p class="text-muted-custom">Enter account number and select bank</p>
     </div>
 
-    {{-- Search Input --}}
-    <div class="input-group">
-        <span class="input-group-text bg-secondary-custom border-0">
-            <i class="fas fa-search text-muted-custom"></i>
-        </span>
+    {{-- Account Number Input --}}
+    <div class="mb-3">
+        <label class="form-label fw-medium">Account Number</label>
         <x-ui.input 
             type="text"
-            name="searchQuery"
-            placeholder="Search by username or email..."
+            name="accountNumber"
+            placeholder="Enter 10-digit account number"
             class="bg-secondary-custom border-0 rounded-xl"
-            style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
-            wire:model.debounce-300="searchQuery"
-            wire:change="searchRecipient"
+            wire:model.live="accountNumber"
+            maxlength="10"
+            pattern="[0-9]*"
+            inputmode="numeric"
         />
+        <div class="small text-muted-custom mt-1">Your account must be 10 digits (like OpAy)</div>
     </div>
-    
-    {{-- Search Results (if searching) --}}
-    @if(!empty($searchResults))
-        <div>
-            <h3 class="small fw-medium mb-3">Search Results</h3>
-            <div class="row g-3">
-                @forelse($searchResults as $result)
-                    <div class="col-sm-6">
-                        <x-ui.card 
-                            variant="default" 
-                            hover="lift"
-                            class="bg-secondary-custom border"
-                            wire:click="selectRecipient({{ $result['id'] }})"
-                            style="
-                                cursor: pointer; 
-                                border-color: #2a2a3a;
-                                border-radius: 12px; 
-                                transition: all 0.3s ease;
-                            "
-                        >
-                            <div class="card-body d-flex align-items-center gap-3">
-                                <div 
-                                    class="rounded-circle d-flex align-items-center justify-content-center text-white fw-semibold gradient-bg-primary"
-                                    style="width: 48px; height: 48px; flex-shrink: 0;"
-                                >
-                                    {{ substr($result['name'], 0, 1) }}{{ strpos($result['name'], ' ') ? substr($result['name'], strpos($result['name'], ' ') + 1, 1) : '' }}
-                                </div>
-                                <div class="flex-fill" style="min-width: 0;">
-                                    <div class="fw-medium">{{ $result['name'] }}</div>
-                                    <div class="small text-muted-custom text-truncate">@{{ $result['username'] ?? $result['email'] }}</div>
-                                </div>
-                                <i class="fas fa-arrow-right text-muted-custom" style="flex-shrink: 0;"></i>
-                            </div>
-                        </x-ui.card>
-                    </div>
-                @empty
-                    <div class="col-12">
-                        <div class="alert alert-info text-center">
-                            <i class="fas fa-info-circle me-2"></i>
-                            No users found matching your search.
-                        </div>
-                    </div>
-                @endforelse
+
+    {{-- Bank Selection Dropdown --}}
+    <div class="mb-3">
+        <label class="form-label fw-medium">Bank</label>
+        <select 
+            class="form-control bg-secondary-custom border-0 rounded-xl text-white"
+            wire:model.live="selectedBankCode"
+            style="color: #999 !important;"
+        >
+            <option value="">-- Select a bank --</option>
+            @foreach($banks as $bank)
+                <option value="{{ $bank['code'] }}">{{ $bank['name'] }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- Account Resolution Status --}}
+    @if($accountResolutionError)
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <x-lucide-alert-triangle class="me-2" style="width: 18px; height: 18px; display: inline;" />
+            {{ $accountResolutionError }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($resolvedAccountName)
+        <div class="card-luxury p-4 border border-success">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center gradient-bg-primary text-white" style="width: 48px; height: 48px; flex-shrink: 0;">
+                    <x-lucide-check style="width: 24px; height: 24px;" />
+                </div>
+                <div class="flex-fill">
+                    <div class="small text-muted-custom">Account Name</div>
+                    <div class="fw-bold">{{ $resolvedAccountName }}</div>
+                </div>
             </div>
         </div>
     @endif
 
-    {{-- Recent Contacts (show only when not searching) --}}
-    @if(empty($searchResults) && !empty($recentContacts))
-        <div>
-            <h3 class="small fw-medium mb-3">Recent Contacts</h3>
-            <div class="row g-3">
-                @forelse($recentContacts as $contact)
-                    <div class="col-sm-6">
-                        <x-ui.card 
-                            variant="default" 
-                            hover="lift"
-                            class="bg-secondary-custom border"
-                            wire:click="selectRecipient({{ $contact['id'] }})"
-                            style="
-                                cursor: pointer; 
-                                border-color: #2a2a3a;
-                                border-radius: 12px; 
-                                transition: all 0.3s ease;
-                            "
-                        >
-                            <div class="card-body d-flex align-items-center gap-3">
-                                <div 
-                                    class="rounded-circle d-flex align-items-center justify-content-center text-white fw-semibold gradient-bg-primary"
-                                    style="width: 48px; height: 48px; flex-shrink: 0;"
-                                >
-                                    {{ substr($contact['name'], 0, 1) }}{{ strpos($contact['name'], ' ') ? substr($contact['name'], strpos($contact['name'], ' ') + 1, 1) : '' }}
-                                </div>
-                                <div class="flex-fill" style="min-width: 0;">
-                                    <div class="fw-medium">{{ $contact['name'] }}</div>
-                                    <div class="small text-muted-custom text-truncate">{{ $contact['email'] }}</div>
-                                </div>
-                                <i class="fas fa-arrow-right text-muted-custom" style="flex-shrink: 0;"></i>
-                            </div>
-                        </x-ui.card>
-                    </div>
-                @empty
-                @endforelse
-            </div>
+    {{-- Error Message --}}
+    @if($errorMessage)
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <x-lucide-alert-circle class="me-2" style="width: 18px; height: 18px; display: inline;" />
+            {{ $errorMessage }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    
-    @if(empty($searchResults) && empty($recentContacts))
-        <div class="alert alert-info text-center">
-            <i class="fas fa-info-circle me-2"></i>
-            No recent contacts. Start typing to search for recipients.
-        </div>
-    @endif
+
+    {{-- Action Buttons --}}
+    <div class="d-flex gap-3">
+        <button 
+            type="button"
+            class="btn btn-outline-secondary flex-fill rounded-xl"
+            wire:click="resetForm"
+        >
+            Cancel
+        </button>
+        <button 
+            type="button"
+            class="btn btn-gradient flex-fill rounded-xl fw-semibold"
+            wire:click="proceedToAmount"
+            :disabled="!$resolvedAccountName"
+            :disabled="isProcessing"
+        >
+            <span wire:loading.remove>Continue</span>
+            <span wire:loading>
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Loading...
+            </span>
+        </button>
+    </div>
 </div>

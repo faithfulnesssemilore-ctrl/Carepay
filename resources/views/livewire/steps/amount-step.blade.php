@@ -41,18 +41,18 @@
         </div>
         
         {{-- Balance & Limits Info --}}
-        <div class=\"mt-3 small text-muted-custom\">
-            <div class=\"d-flex justify-content-between mb-2\">
+        <div class="mt-3 small text-muted-custom">
+            <div class="d-flex justify-content-between mb-2">
                 <span>Available balance:</span>
-                <span class=\"text-primary-custom fw-semibold\">₦{{ number_format($walletBalance, 2) }}</span>
+                <span class="text-primary-custom fw-semibold">₦{{ number_format($walletBalance, 2) }}</span>
             </div>
-            <div class=\"d-flex justify-content-between mb-2\">
+            <div class="d-flex justify-content-between mb-2">
                 <span>Single transfer limit:</span>
-                <span class=\"fw-semibold\">₦{{ number_format($singleLimit, 2) }}</span>
+                <span class="fw-semibold">₦{{ number_format($singleLimit, 2) }}</span>
             </div>
-            <div class=\"d-flex justify-content-between\">
+            <div class="d-flex justify-content-between">
                 <span>Daily limit remaining:</span>
-                <span class=\"fw-semibold\">₦{{ number_format($dailyLimit - $dailyUsed, 2) }} / ₦{{ number_format($dailyLimit, 2) }}</span>
+                <span class="fw-semibold">₦{{ number_format($dailyLimit - $dailyUsed, 2) }} / ₦{{ number_format($dailyLimit, 2) }}</span>
             </div>
         </div>
     </div>
@@ -97,7 +97,7 @@
                 style="border-color: #2a2a3a;"
                 wire:click="setStep('recipient')"
             >
-                <i class="fas fa-arrow-left me-2"></i>
+                <x-lucide-arrow-left style="width: 18px; height: 18px; display: inline; margin-right: 8px;" />
                 Back
             </button>
         </div>
@@ -108,7 +108,7 @@
                 wire:click="handleAmountSubmit"
             >
                 Continue
-                <i class="fas fa-arrow-right"></i>
+                <x-lucide-arrow-right style="width: 18px; height: 18px;" />
             </button>
         </div>
     </div>

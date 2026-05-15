@@ -3,11 +3,13 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Jobs\CreateVirtualAccountJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Ichtrojan\Otp\Otp;
 use Illuminate\Support\Facades\Mail;
+
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
@@ -43,6 +45,9 @@ class CreateNewUser implements CreatesNewUsers
         Mail::raw("Your verification code is: {$otp->token}", function ($message) use ($user) {
             $message->to($user->email)->subject('Verify Your Email');
         });
+
+        // Create virtual account asynchronously
+        CreateVirtualAccountJob::dispatch($user);
 
         return $user;
     }

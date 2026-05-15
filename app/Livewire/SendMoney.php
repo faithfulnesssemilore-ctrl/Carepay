@@ -8,21 +8,23 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Transaction;
 use App\Services\WalletService;
+use App\Services\BankService;
 
 /**
  * SendMoney Livewire Component
- * Multi-step wallet-to-wallet transfer: recipient -> amount -> confirm -> success
+ * Multi-step transfer: account number, bank, amount, confirm, success
  */
 class SendMoney extends Component
 {
     // ==================== Multi-Step Form State ====================
     public $currentStep = 'recipient'; // recipient | amount | confirm | success
     
-    // Recipient Step
-    public $searchQuery = '';
-    public $searchResults = [];
-    public $selectedRecipient = null;
-    public $recentContacts = [];
+    // Recipient Step (Account Number & Bank Selection)
+    public $accountNumber = '';
+    public $selectedBankCode = '';
+    public $banks = [];
+    public $resolvedAccountName = '';
+    public $accountResolutionError = '';
     
     // Amount Step
     public $amount = '';
@@ -43,14 +45,17 @@ class SendMoney extends Component
 
     // ==================== Validation Rules ====================
     protected $rules = [
-        'selectedRecipient' => 'required|array',
+        'accountNumber' => 'required|string|digits:10',
+        'selectedBankCode' => 'required|string',
         'amount' => 'required|numeric|min:0.01',
         'note' => 'nullable|string|max:500',
         'pinInput' => 'required|numeric|digits:4'
     ];
 
     protected $messages = [
-        'selectedRecipient.required' => 'Please select a recipient.',
+        'accountNumber.required' => 'Account number is required.',
+        'accountNumber.digits' => 'Account number must be exactly 10 digits.',
+        'selectedBankCode.required' => 'Please select a bank.',
         'amount.required' => 'Please enter an amount.',
         'amount.min' => 'Amount must be greater than 0.',
         'pinInput.required' => 'PIN is required.',
@@ -58,11 +63,15 @@ class SendMoney extends Component
     ];
 
     protected $listeners = ['pinVerified'];
+    
     /**
-     * Initialize component - load recent contacts and wallet limits
+     * Initialize component - load banks and wallet limits
      */
     public function mount()
     {
+        $bankService = new BankService();
+        $this->banks = $bankService->getAllBanks();
+        
         $user = Auth::user();
         if ($user && $user->wallet) {
             $this->walletBalance = $user->wallet->balance / 100;
@@ -74,74 +83,90 @@ class SendMoney extends Component
             $this->singleLimit = $user->limits->single_transaction_limit;
             $this->dailyUsed = $user->limits->daily_transfer_used;
         }
-        
-        $this->loadRecentContacts();
-    }
-
-    /**
-     * Load real recent contacts from transaction history
-     */
-    public function loadRecentContacts()
-    {
-        $user = Auth::user();
-        
-        // Get unique recipients from recent transactions (last 30 days)
-        $recentTransactions = Transaction::where('user_id', $user->id)
-            ->where('type', 'debit')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->with('recipient:id,first_name,last_name,email')
-            ->latest()
-            ->get();
-        
-        // Map to unique recipients with initials
-        $seenIds = [];
-        $this->recentContacts = [];
-        
-        foreach ($recentTransactions as $transaction) {
-            if ($transaction->recipient && !in_array($transaction->recipient->id, $seenIds)) {
-                $seenIds[] = $transaction->recipient->id;
-                $name = $transaction->recipient->first_name . ' ' . $transaction->recipient->last_name;
-                $this->recentContacts[] = [
-                    'id' => $transaction->recipient->id,
-                    'name' => trim($name),
-                    'email' => $transaction->recipient->email,
-                ];
-                
-                if (count($this->recentContacts) >= 4) break;
-            }
-        }
     }
     
     /**
-     * Search for recipient by email or name
+     * Resolve account name when bank is selected
      */
-    public function searchRecipient()
+    public function updatedSelectedBankCode($value)
     {
-        $this->errorMessage = '';
+        $this->resolvedAccountName = '';
+        $this->accountResolutionError = '';
         
-        if (empty($this->searchQuery)) {
-            $this->searchResults = [];
+        if (empty($this->accountNumber) || strlen($this->accountNumber) !== 10) {
             return;
         }
         
-        $user = Auth::user();
+        if (empty($value)) {
+            return;
+        }
         
-        // Search by email or name (case-insensitive)
-        $this->searchResults = User::where('id', '!=', $user->id)
-            ->where(function ($query) {
-                $query->where('email', 'like', '%' . $this->searchQuery . '%')
-                    ->orWhere('first_name', 'like', '%' . $this->searchQuery . '%')
-                    ->orWhere('last_name', 'like', '%' . $this->searchQuery . '%');
-            })
-            ->select('id', 'first_name', 'last_name', 'email')
-            ->limit(5)
-            ->get()
-            ->map(fn($u) => [
-                'id' => $u->id,
-                'name' => trim($u->first_name . ' ' . $u->last_name),
-                'email' => $u->email,
-            ])
-            ->toArray();
+        $this->resolveAccountName();
+    }
+    
+    /**
+     * Resolve account name when account number is entered
+     */
+    public function updatedAccountNumber($value)
+    {
+        $this->resolvedAccountName = '';
+        $this->accountResolutionError = '';
+        
+        if (strlen($value) !== 10 || empty($this->selectedBankCode)) {
+            return;
+        }
+        
+        $this->resolveAccountName();
+    }
+    
+    /**
+     * Call BankService to resolve account name via Paystack API
+     */
+    private function resolveAccountName()
+    {
+        if (strlen($this->accountNumber) !== 10 || empty($this->selectedBankCode)) {
+            return;
+        }
+        
+        try {
+            $bankService = new BankService();
+            $accountName = $bankService->resolveAccountName($this->accountNumber, $this->selectedBankCode);
+            
+            if ($accountName) {
+                $this->resolvedAccountName = $accountName;
+            } else {
+                $this->accountResolutionError = 'Unable to resolve account name. Check account number and bank.';
+            }
+        } catch (\Exception $e) {
+            $this->accountResolutionError = 'Error resolving account: ' . $e->getMessage();
+        }
+    }
+
+
+    /**
+     * Proceed to amount step after account and bank validation
+     */
+    public function proceedToAmount()
+    {
+        $this->errorMessage = '';
+        
+        // Validate account number format
+        if (strlen($this->accountNumber) !== 10) {
+            $this->errorMessage = 'Account number must be exactly 10 digits.';
+            return;
+        }
+        
+        if (empty($this->selectedBankCode)) {
+            $this->errorMessage = 'Please select a bank.';
+            return;
+        }
+        
+        if (empty($this->resolvedAccountName)) {
+            $this->errorMessage = 'Unable to resolve account. Please check the account number and bank.';
+            return;
+        }
+        
+        $this->setStep('amount');
     }
 
     /**
@@ -149,43 +174,12 @@ class SendMoney extends Component
      */
     public function setStep($step)
     {
-        $validSteps = ['recipient', 'amount', 'method', 'confirm', 'success'];
+        $validSteps = ['recipient', 'amount', 'confirm', 'success'];
         
         if (in_array($step, $validSteps)) {
             $this->currentStep = $step;
             $this->errorMessage = '';
         }
-    }
-
-    /**
-     * Select a recipient and move to amount step
-     */
-    public function selectRecipient($contactId)
-    {
-        // Try recent contacts first
-        $contact = collect($this->recentContacts)->firstWhere('id', $contactId);
-        
-        // If not found, try search results
-        if (!$contact) {
-            $contact = collect($this->searchResults)->firstWhere('id', $contactId);
-        }
-        
-        if ($contact) {
-            $this->selectedRecipient = $contact;
-            $this->searchQuery = '';
-            $this->searchResults = [];
-            $this->setStep('amount');
-        } else {
-            $this->errorMessage = 'Invalid recipient selected.';
-        }
-    }
-    
-    /**
-     * Confirm recipient selection
-     */
-    public function confirmRecipient($contactId)
-    {
-        $this->selectRecipient($contactId);
     }
 
     /**
@@ -276,7 +270,7 @@ class SendMoney extends Component
     }
 
     /**
-     * Process the actual transfer through WalletService
+     * Process the actual transfer through external bank (Paystack or similar)
      */
     public function processTransfer()
     {
@@ -285,9 +279,6 @@ class SendMoney extends Component
         $this->successMessage = '';
 
         try {
-            // Final validation
-            $this->validate();
-
             $user = Auth::user();
             $wallet = $user->wallet;
 
@@ -301,23 +292,36 @@ class SendMoney extends Component
                 throw new \Exception('Insufficient balance for this transfer.');
             }
 
-            // Process the transfer through WalletService with locking and limits
-            $walletService = new WalletService();
+            // Create a transaction record for external bank transfer
+            // This records the transfer but actual settlement happens with the bank
+            $bankService = new BankService();
+            $bank = $bankService->getBankByCode($this->selectedBankCode);
             
-            $result = $walletService->transfer(
-                senderId: $user->id,
-                recipientId: $this->selectedRecipient['id'] ?? null,
-                amountInKobo: (int) round(floatval($this->amount) * 100),
-                description: $this->note ?: 'Transfer to ' . $this->selectedRecipient['name']
-            );
+            $reference = 'TRN_' . strtoupper(uniqid());
+            
+            $transaction = Transaction::create([
+                'user_id' => $user->id,
+                'type' => 'debit',
+                'amount' => (int) round(floatval($this->amount) * 100),
+                'reference' => $reference,
+                'status' => 'pending',
+                'description' => 'Transfer to ' . ($bank['name'] ?? 'External Bank'),
+                'metadata' => json_encode([
+                    'account_number' => $this->accountNumber,
+                    'bank_code' => $this->selectedBankCode,
+                    'bank_name' => $bank['name'] ?? '',
+                    'account_name' => $this->resolvedAccountName,
+                ])
+            ]);
 
-            $this->successMessage = 'Transfer completed successfully!';
+            // Deduct from wallet immediately (funds on hold)
+            $wallet->decrement('balance', (int) round(floatval($this->amount) * 100));
+
+            $this->successMessage = 'Transfer initiated successfully! Your funds are on hold and will be delivered within 1-2 hours.';
             $this->showPinModal = false;
             $this->currentStep = 'success';
             $this->dispatch('moneyTransferred');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->errorMessage = 'Validation error: ' . collect($e->errors())->flatten()->first();
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
         } finally {
@@ -330,7 +334,6 @@ class SendMoney extends Component
      */
     public function handleComplete()
     {
-        // Reset form and return to initial step
         $this->resetForm();
         $this->redirect('/app/transactions', navigate: true);
     }
@@ -341,9 +344,10 @@ class SendMoney extends Component
     public function resetForm()
     {
         $this->currentStep = 'recipient';
-        $this->searchQuery = '';
-        $this->searchResults = [];
-        $this->selectedRecipient = null;
+        $this->accountNumber = '';
+        $this->selectedBankCode = '';
+        $this->resolvedAccountName = '';
+        $this->accountResolutionError = '';
         $this->amount = '';
         $this->note = '';
         $this->successMessage = '';
@@ -351,15 +355,11 @@ class SendMoney extends Component
         $this->isProcessing = false;
         $this->showPinModal = false;
         $this->pinInput = '';
-        $this->loadRecentContacts();
     }
 
     /**
      * Get the index of a step in the workflow
      * Used for progress indicator styling
-     * 
-     * @param string $step Step identifier
-     * @return int Step index (0-3)
      */
     public function getStepIndex($step)
     {
@@ -372,12 +372,12 @@ class SendMoney extends Component
     {
         return view('livewire.send-money', [
             'currentStep' => $this->currentStep,
-            'selectedRecipient' => $this->selectedRecipient,
-            'amount' => $this->amount,
-            'note' => $this->note,
-            'recentContacts' => $this->recentContacts,
-            'searchQuery' => $this->searchQuery,
+            'banks' => $this->banks,
+            'accountNumber' => $this->accountNumber,
+            'selectedBankCode' => $this->selectedBankCode,
+            'resolvedAccountName' => $this->resolvedAccountName,
         ]);
+
     }
 }
 

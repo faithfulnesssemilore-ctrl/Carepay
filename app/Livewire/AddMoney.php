@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Services\BankService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,12 +24,21 @@ class AddMoney extends Component
     public $step = 'select'; // select | details | success
     public $selectedMethod = null; // bank-transfer | cash | card | ussd
     
+    // Virtual Account Details
+    public $accountNumber = '';
+    public $accountName = '';
+    public $bankName = '';
+    public $hasVirtualAccount = false;
+    
     // Card Payment
     public $cardAmount = '';
     public $selectedCard = '';
     
     // USSD Payment
     public $selectedBank = '';
+    public $ussdAmount = '';
+    public $ussdCode = '';
+    public $banks = [];
     
     // UI State
     public $copiedField = null; // Tracks which field was copied
@@ -46,7 +56,28 @@ class AddMoney extends Component
     public function mount()
     {
         $this->loadBalance();
-        $this->virtualAccount = VirtualAccount::where('user_id', Auth::id())->first();
+        $this->loadVirtualAccount();
+        $bankService = new BankService();
+        $this->banks = $bankService->getAllBanks();
+    }
+
+    /**
+     * Load virtual account details
+     */
+    public function loadVirtualAccount()
+    {
+        try {
+            $va = Auth::user()->virtualAccount;
+            if ($va) {
+                $this->accountNumber = $va->account_number;
+                $this->accountName = $va->account_name;
+                $this->bankName = $va->bank_name;
+                $this->hasVirtualAccount = true;
+                $this->virtualAccount = $va;
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'Unable to load virtual account details';
+        }
     }
 
     /**
@@ -93,6 +124,57 @@ class AddMoney extends Component
             $this->errorMessage = '';
         } else {
             $this->errorMessage = 'Invalid deposit method selected.';
+        }
+    }
+
+    /**
+     * Update USSD code when bank is selected
+     */
+    public function updatedSelectedBank($value)
+    {
+        $this->ussdCode = '';
+        if (empty($value) || empty($this->ussdAmount)) {
+            return;
+        }
+        $this->generateUssdCode();
+    }
+
+    /**
+     * Update USSD code when amount is entered
+     */
+    public function updatedUssdAmount($value)
+    {
+        $this->ussdCode = '';
+        if (empty($value) || empty($this->selectedBank)) {
+            return;
+        }
+        $this->generateUssdCode();
+    }
+
+    /**
+     * Generate USSD code for the selected bank and amount
+     */
+    private function generateUssdCode()
+    {
+        if (empty($this->selectedBank) || empty($this->ussdAmount)) {
+            return;
+        }
+
+        try {
+            $bankService = new BankService();
+            $ussdCode = $bankService->getUssdCode(
+                $this->selectedBank,
+                (int) $this->ussdAmount,
+                $this->accountNumber
+            );
+
+            if ($ussdCode) {
+                $this->ussdCode = $ussdCode;
+            } else {
+                $this->errorMessage = 'USSD code not available for this bank.';
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'Error generating USSD code: ' . $e->getMessage();
         }
     }
 
@@ -216,6 +298,13 @@ class AddMoney extends Component
             'selectedCard' => $this->selectedCard,
             'selectedBank' => $this->selectedBank,
             'copiedField' => $this->copiedField,
+            'accountNumber' => $this->accountNumber,
+            'accountName' => $this->accountName,
+            'bankName' => $this->bankName,
+            'hasVirtualAccount' => $this->hasVirtualAccount,
+            'banks' => $this->banks,
+            'ussdAmount' => $this->ussdAmount,
+            'ussdCode' => $this->ussdCode,
         ]);
     }
 }

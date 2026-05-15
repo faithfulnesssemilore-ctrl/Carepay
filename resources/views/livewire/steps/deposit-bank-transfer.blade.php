@@ -16,7 +16,7 @@
                     background: rgba(168, 85, 247, 0.1);
                 "
             >
-                <i class="fas fa-building text-primary-custom" style="font-size: 24px;"></i>
+                <x-lucide-building-2 class="text-primary-custom" style="width: 24px; height: 24px;" />
             </div>
             <div>
                 <h2 class="h3 fw-bold mb-1">Bank Transfer</h2>
@@ -24,100 +24,110 @@
             </div>
         </div>
 
-        {{-- Account Details --}}
-        <div class="d-flex flex-column gap-3">
-            {{-- Bank Name --}}
-            <div class="p-4 bg-secondary-custom rounded-xl">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="small text-muted-custom mb-1">Bank Name</div>
-                        <div class="fw-medium">CarePay Virtual Bank</div>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn btn-link p-2 text-primary-custom copy-btn"
-                        data-copy-text="CarePay Virtual Bank"
-                        data-copy-field="bank"
-                        style="text-decoration: none; border: none; background: none;"
-                    >
-                        <i class="fas fa-copy" style="font-size: 20px;"></i>
-                    </button>
-                </div>
+        @if (!$hasVirtualAccount)
+            {{-- Loading State --}}
+            <div class="card-luxury text-center p-4">
+                <x-lucide-clock class="text-primary-custom mb-3" style="width:40px;height:40px;" />
+                <h6 class="fw-bold">Setting up your account</h6>
+                <p class="text-muted-custom small">Your bank account is being created. Usually takes under a minute.</p>
+                <button wire:click="$refresh" class="btn btn-gradient mt-2">Refresh</button>
             </div>
-
-            {{-- Account Number --}}
-            <div class="p-4 bg-secondary-custom rounded-xl">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="small text-muted-custom mb-1">Account Number</div>
-                        <div class="h4 fw-bold mb-0 font-monospace">7845621039</div>
+        @else
+            {{-- Account Details --}}
+            <div class="d-flex flex-column gap-3">
+                {{-- Bank Name --}}
+                <div class="p-4 bg-secondary-custom rounded-xl">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small text-muted-custom mb-1">Bank Name</div>
+                            <div class="fw-medium">{{ $bankName }}</div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-link p-2 text-primary-custom copy-btn"
+                            data-copy-text="{{ $bankName }}"
+                            data-copy-field="bank"
+                            style="text-decoration: none; border: none; background: none;"
+                        >
+                            <x-lucide-copy style="width: 20px; height: 20px;" />
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        class="btn btn-link p-2 text-primary-custom copy-btn"
-                        data-copy-text="7845621039"
-                        data-copy-field="account"
-                        style="text-decoration: none; border: none; background: none;"
-                    >
-                        <i class="fas fa-copy" style="font-size: 20px;"></i>
-                    </button>
                 </div>
-            </div>
 
-            {{-- Account Name --}}
-            <div class="p-4 bg-secondary-custom rounded-xl">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="small text-muted-custom mb-1">Account Name</div>
-                        <div class="fw-medium">John Doe - CarePay</div>
+                {{-- Account Number --}}
+                <div class="p-4 bg-secondary-custom rounded-xl">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small text-muted-custom mb-1">Account Number</div>
+                            <div class="h4 fw-bold mb-0 font-monospace">{{ $accountNumber }}</div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-link p-2 text-primary-custom copy-btn"
+                            data-copy-text="{{ $accountNumber }}"
+                            data-copy-field="account"
+                            style="text-decoration: none; border: none; background: none;"
+                        >
+                            <x-lucide-copy style="width: 20px; height: 20px;" />
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        class="btn btn-link p-2 text-primary-custom copy-btn"
-                        data-copy-text="John Doe - CarePay"
-                        data-copy-field="name"
-                        style="text-decoration: none; border: none; background: none;"
-                    >
-                        <i class="fas fa-copy" style="font-size: 20px;"></i>
-                    </button>
                 </div>
-            </div>
-        </div>
 
-        {{-- Instructions Card --}}
-        <x-ui.card 
-            variant="default"
-            class="mt-4 border-0"
-            style="
-                background: rgba(168, 85, 247, 0.05);
-                border: 1px solid rgba(168, 85, 247, 0.2) !important;
-            "
-        >
-            <div class="card-body">
-                <div class="d-flex gap-3">
-                    <i class="fas fa-info-circle text-primary-custom flex-shrink-0 mt-1" style="font-size: 20px;"></i>
-                    <div class="small">
-                        <p class="fw-semibold mb-2">Instructions:</p>
-                        <ol class="ps-3 mb-0">
-                            <li>Copy the account number above</li>
-                            <li>Go to your bank's app or website</li>
-                            <li>Initiate a transfer to the account number</li>
-                            <li>Return here and click "I have sent the money"</li>
-                            <li>Your wallet will be credited within 5-10 minutes</li>
-                        </ol>
+                {{-- Account Name --}}
+                <div class="p-4 bg-secondary-custom rounded-xl">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small text-muted-custom mb-1">Account Name</div>
+                            <div class="fw-medium">{{ $accountName }} - CarePay</div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-link p-2 text-primary-custom copy-btn"
+                            data-copy-text="{{ $accountName }} - CarePay"
+                            data-copy-field="name"
+                            style="text-decoration: none; border: none; background: none;"
+                        >
+                            <x-lucide-copy style="width: 20px; height: 20px;" />
+                        </button>
                     </div>
                 </div>
             </div>
-        </x-ui.card>
 
-        {{-- Action Button --}}
-        <button
-            type="button"
-            class="btn btn-gradient w-100 py-3 mt-4"
-            wire:click="handleConfirmTransfer"
-        >
-            I have sent the money
-        </button>
+            {{-- Instructions Card --}}
+            <x-ui.card 
+                variant="default"
+                class="mt-4 border-0"
+                style="
+                    background: rgba(168, 85, 247, 0.05);
+                    border: 1px solid rgba(168, 85, 247, 0.2) !important;
+                "
+            >
+                <div class="card-body">
+                    <div class="d-flex gap-3">
+                        <x-lucide-info class="text-primary-custom flex-shrink-0 mt-1" style="width: 20px; height: 20px;" />
+                        <div class="small">
+                            <p class="fw-semibold mb-2">Instructions:</p>
+                            <ol class="ps-3 mb-0">
+                                <li>Copy the account number above</li>
+                                <li>Go to your bank's app or website</li>
+                                <li>Initiate a transfer to the account number</li>
+                                <li>Return here and click "I have sent the money"</li>
+                                <li>Your wallet will be credited within 5-10 minutes</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </x-ui.card>
+
+            {{-- Action Button --}}
+            <button
+                type="button"
+                class="btn btn-gradient w-100 py-3 mt-4"
+                wire:click="handleConfirmTransfer"
+            >
+                I have sent the money
+            </button>
+        @endif
     </div>
 </x-ui.card>
 
@@ -136,14 +146,16 @@
                 
                 navigator.clipboard.writeText(text).then(() => {
                     // Update button to show success
-                    const icon = this.querySelector('i');
-                    const originalClass = icon.className;
-                    icon.className = 'fas fa-check';
-                    icon.style.color = '#a855f7';
+                    const icon = this.querySelector('svg');
+                    const originalHtml = this.innerHTML;
+                    
+                    this.innerHTML = '<x-lucide-check style="width: 20px; height: 20px;" />';
+                    this.style.color = '#22c55e';
                     
                     // Revert after 2 seconds
                     setTimeout(() => {
-                        icon.className = originalClass;
+                        this.innerHTML = originalHtml;
+                        this.style.color = '';
                     }, 2000);
                 }).catch(err => {
                     console.error('Failed to copy:', err);
