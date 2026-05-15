@@ -133,13 +133,13 @@
                 </div>
 
                 <div class="d-flex flex-column gap-2">
-                    @forelse($transactions->take(5) as $tx)
+                   @forelse(collect($transactions)->take(5) as $tx)
                     <div class="p-2 p-md-3 rounded" style="background: rgba(255, 255, 255, 0.03);">
                         <div class="d-flex justify-content-between align-items-center gap-2">
                             <div class="d-flex align-items-center gap-2 flex-fill">
                                 <div class="icon-container icon-container-sm" 
-                                     style="background: {{ $tx->type === 'deposit' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(168, 85, 247, 0.2)' }};">
-                                    @if($tx->type === 'deposit')
+                                     style="background: {{ $tx->type === 'credit' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(168, 85, 247, 0.2)' }};">
+                                    @if($tx->type === 'credit')
                                         <x-lucide-arrow-down-left class="w-4 h-4 text-success" />
                                     @else
                                         <x-lucide-arrow-up-right class="w-4 h-4 text-primary-custom" />
@@ -151,8 +151,8 @@
                                 </div>
                             </div>
                             <div class="fw-semibold text-nowrap" 
-                                 style="color: {{ $tx->type === 'deposit' ? '#10b981' : '#a855f7' }}">
-                                {{ $tx->type === 'deposit' ? '+' : '-' }}₦{{ number_format(abs($tx->amount), 0) }}
+                                 style="color: {{ $tx->type === 'credit' ? '#10b981' : '#a855f7' }}">
+                                {{ $tx->type === 'credit' ? '+' : '-' }}₦{{ number_format(abs($tx->amount), 0) }}
                             </div>
                         </div>
                     </div>
