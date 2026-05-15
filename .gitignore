@@ -19,3 +19,4 @@
 !public/build/**
 !public/build/
 !public/build/**
+# keep build folder tracked but ignore old hashed files
