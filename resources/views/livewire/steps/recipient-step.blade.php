@@ -23,7 +23,7 @@
             pattern="[0-9]*"
             inputmode="numeric"
         />
-        <div class="small text-muted-custom mt-1">Your account must be 10 digits (like OpAy)</div>
+        <div class="small text-muted-custom mt-1">Your account number must be 10 digits </div>
     </div>
 
     {{-- Bank Selection Dropdown --}}

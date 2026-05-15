@@ -26,6 +26,16 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
             'pin' => bcrypt('1234'), // test PIN: 1234
         ]);
+              // create test  user
+        User::factory()->create([
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'testuser@test.com',
+            'phone' => encrypt('09000000000'),
+            'role' => 0, // 0 = user
+            'email_verified_at' => now(),
+            'pin' => bcrypt('1234'), // test PIN: 1234
+        ]);
 
         // create 5 regular test users
         User::factory()
