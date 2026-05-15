@@ -3,16 +3,17 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class BankService
 {
-    // hardcoded USSD codes per bank code
     private array $ussdCodes = [
         '057' => '*745*{amount}*{account}#',
         '011' => '*901*{amount}*{account}#',
         '058' => '*737*50*{amount}*{account}#',
         '033' => '*770*{amount}*{account}#',
-        '044' => '*919*{amount}*{account}#',
+        '044' => '*901*{amount}*{account}#',
         '050' => '*326*{amount}*{account}#',
         '070' => '*919*{amount}*{account}#',
         '035' => '*945*{amount}*{account}#',
@@ -28,22 +29,27 @@ class BankService
     // get all banks - tries Paystack first, falls back to hardcoded list
     public function getAllBanks(): array
     {
-        // cache for 24 hours so we dont hit Paystack on every page load
         return Cache::remember('paystack_banks', 86400, function () {
             try {
-                $paymentService = new PaymentService();
-                $banks = $paymentService->getBanks();
-                if (!empty($banks)) {
+                $secret = config('services.paystack.secret');
+                $response = Http::withToken($secret)
+                    ->get('https://api.paystack.co/bank', [
+                        'country'    => 'nigeria',
+                        'use_cursor' => false,
+                        'perPage'    => 100,
+                    ]);
+
+                if ($response->successful() && !empty($response->json('data'))) {
                     return array_map(fn($b) => [
                         'code' => $b['code'],
                         'name' => $b['name'],
-                    ], $banks);
+                    ], $response->json('data'));
                 }
             } catch (\Exception $e) {
-                \Log::warning('Could not fetch banks from Paystack: ' . $e->getMessage());
+                Log::warning('Could not fetch banks from Paystack: ' . $e->getMessage());
             }
 
-            // fallback list if Paystack is down
+            // fallback if Paystack is down or key not set
             return [
                 ['code' => '057', 'name' => 'Zenith Bank'],
                 ['code' => '011', 'name' => 'First Bank'],
@@ -57,7 +63,7 @@ class BankService
                 ['code' => '076', 'name' => 'Polaris Bank'],
                 ['code' => '023', 'name' => 'Keystone Bank'],
                 ['code' => '039', 'name' => 'Stanbic IBTC'],
-                ['code' => '009', 'name' => 'First City Monument Bank'],
+                ['code' => '009', 'name' => 'FCMB'],
                 ['code' => '007', 'name' => 'Sterling Bank'],
                 ['code' => '055', 'name' => 'Opay'],
                 ['code' => '090175', 'name' => 'Kuda Bank'],
@@ -70,8 +76,7 @@ class BankService
     // get a single bank by its code
     public function getBankByCode(string $code): ?array
     {
-        $banks = $this->getAllBanks();
-        foreach ($banks as $bank) {
+        foreach ($this->getAllBanks() as $bank) {
             if ($bank['code'] === $code) {
                 return $bank;
             }
@@ -79,19 +84,34 @@ class BankService
         return null;
     }
 
-    // resolve the real account name from Paystack
+    // resolve the real account name using Paystack API directly
     public function resolveAccountName(string $accountNumber, string $bankCode): ?string
     {
         try {
-            $paymentService = new PaymentService();
-            return $paymentService->resolveAccountNumber($accountNumber, $bankCode);
+            $secret   = config('services.paystack.secret');
+            $response = Http::withToken($secret)
+                ->get('https://api.paystack.co/bank/resolve', [
+                    'account_number' => $accountNumber,
+                    'bank_code'      => $bankCode,
+                ]);
+
+            if ($response->successful()) {
+                return $response->json('data.account_name');
+            }
+
+            Log::warning('Account resolution failed', [
+                'account_number' => $accountNumber,
+                'bank_code'      => $bankCode,
+                'response'       => $response->body(),
+            ]);
         } catch (\Exception $e) {
-            \Log::error('Account resolution failed: ' . $e->getMessage());
-            return null;
+            Log::error('Account resolution error: ' . $e->getMessage());
         }
+
+        return null;
     }
 
-    // generate USSD code for a bank transfer
+    // generate USSD dial code for bank transfer
     public function getUssdCode(string $bankCode, $amount, string $accountNumber): ?string
     {
         $template = $this->ussdCodes[$bankCode] ?? null;
