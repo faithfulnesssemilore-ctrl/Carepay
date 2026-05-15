@@ -20,7 +20,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm ci && npm run build
 RUN php artisan livewire:publish --assets || true
-RUN php artisan storage:link || true
+RUN php artisan storage:link || true && mkdir -p storage/app/livewire-tmp && chmod -R 775 storage/app/livewire-tmp
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
