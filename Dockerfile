@@ -19,6 +19,8 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm ci && npm run build
+RUN php artisan livewire:publish --assets || true
+RUN php artisan storage:link || true
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
@@ -27,8 +29,6 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-RUN php artisan storage:link || true
-
 EXPOSE 8080
 
-CMD ["/bin/sh", "-c", "php artisan config:clear && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache || true && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/bin/sh", "-c", "php artisan config:clear && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:clear && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
