@@ -1,0 +1,35 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-DBkz-poX.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/bootstrap.css": {
+    "file": "assets/bootstrap-DPRSLbOf.css",
+    "src": "resources/css/bootstrap.css",
+    "isEntry": true,
+    "name": "bootstrap",
+    "names": [
+      "bootstrap.css"
+    ]
+  },
+  "resources/css/custom.css": {
+    "file": "assets/custom-BS8Hfcpk.css",
+    "src": "resources/css/custom.css",
+    "isEntry": true,
+    "name": "custom",
+    "names": [
+      "custom.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BhkAUlfa.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
