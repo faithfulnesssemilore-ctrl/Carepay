@@ -10,54 +10,60 @@ use App\Models\ScheduledPayment;
 
 class DashboardPage extends Component
 {
-    public $balance = 0;
+    public float  $balance           = 0;
+    public bool   $balanceVisible    = true;
+    public int    $notificationCount = 0;
+
+    // stat cards
+    public float $monthlyIncome     = 0;
+    public float $monthlyExpenses   = 0;
+    public int   $transactionCount  = 0;
+    public float $billsPaid         = 0;
+    public float $incomePercentage  = 0;
+    public float $expensePercentage = 0;
+
+    // daily limit progress
+    public float $dailyLimitUsedPercent = 0;
+    public float $dailyLimitTotal       = 0;
+    public float $dailyLimitUsed        = 0;
+
+    // chart data json for Chart.js
+    public string $chartData = '{}';
+
+    // collections
     public $recentTransactions;
     public $upcomingPayments;
-    public $notificationCount = 0;
-    public $balanceVisible = true;
-    
-    // Stats
-    public $monthlyIncome = 0;
-    public $monthlyExpenses = 0;
-    public $transactionCount = 0;
-    public $billsPaid = 0;
-    public $incomePercentage = 0;
-    public $expensePercentage = 0;
 
-    public function mount()
+    public function mount(): void
     {
+        $this->recentTransactions = collect();
+        $this->upcomingPayments   = collect();
         $this->loadData();
     }
 
-    /**
-     * Load user data including wallet balance, transactions, and payments
-     */
-    public function loadData()
+    public function loadData(): void
     {
         try {
-            $user = Auth::user();
+            $user   = Auth::user();
             $userId = $user->id;
 
-            // Get or create wallet (with fallback balance)
+            // get or create wallet
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $userId],
-                [
-                    'balance' => 0,
-                    'currency' => 'NGN',
-                    'status' => 'active'
-                ]
+                ['balance' => 0, 'currency' => 'NGN', 'status' => 'active']
             );
 
-            $this->balance = (float) $wallet->balance;
+            // balance stored in kobo — divide by 100 for naira display
+            $this->balance = round($wallet->balance / 100, 2);
 
-            // Get recent transactions (optimized query)
+            // recent transactions
             $this->recentTransactions = Transaction::where('user_id', $userId)
-                ->select('id', 'user_id', 'amount', 'transaction_type', 'status', 'created_at', 'description')
+                ->select('id', 'user_id', 'amount', 'type', 'status', 'created_at', 'description')
                 ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get();
 
-            // Get upcoming payments (optimized query)
+            // upcoming scheduled payments
             $this->upcomingPayments = ScheduledPayment::where('user_id', $userId)
                 ->where('status', 'pending')
                 ->where('scheduled_date', '>=', now()->startOfDay())
@@ -66,117 +72,148 @@ class DashboardPage extends Component
                 ->take(3)
                 ->get();
 
-            // Calculate notification count (combined with 24-hour recent transactions)
-            $recentTransactionCount = $this->recentTransactions
+            // notification count
+            $recentCount = $this->recentTransactions
                 ->where('created_at', '>=', now()->subHours(24))
                 ->count();
+            $this->notificationCount = $this->upcomingPayments->count() + $recentCount;
 
-            $this->notificationCount = $this->upcomingPayments->count() + $recentTransactionCount;
-
-            // Calculate stats for this month
+            // this month stats
             $monthStart = now()->startOfMonth();
-            $monthEnd = now()->endOfMonth();
+            $monthEnd   = now()->endOfMonth();
 
-            // Monthly transactions
-            $monthlyTransactions = Transaction::where('user_id', $userId)
+            $monthlyTx = Transaction::where('user_id', $userId)
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->get();
 
-            // Income and Expenses
-            $this->monthlyIncome = (float) $monthlyTransactions
+            // amounts are stored in kobo — divide by 100
+            $this->monthlyIncome   = round($monthlyTx->where('type', 'credit')->sum('amount') / 100, 2);
+            $this->monthlyExpenses = round($monthlyTx->where('type', 'debit')->sum('amount') / 100, 2);
+            $this->transactionCount = $monthlyTx->count();
+
+            $this->billsPaid = round(
+                ScheduledPayment::where('user_id', $userId)
+                    ->where('status', 'completed')
+                    ->whereBetween('scheduled_date', [$monthStart, $monthEnd])
+                    ->sum('amount') / 100,
+                2
+            );
+
+            // percentage change vs last month
+            $prevStart = now()->subMonth()->startOfMonth();
+            $prevEnd   = now()->subMonth()->endOfMonth();
+
+            $prevIncome = Transaction::where('user_id', $userId)
                 ->where('type', 'credit')
-                ->sum('amount');
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->sum('amount') / 100;
 
-            $this->monthlyExpenses = (float) $monthlyTransactions
+            $prevExpenses = Transaction::where('user_id', $userId)
                 ->where('type', 'debit')
-                ->sum('amount');
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->sum('amount') / 100;
 
-            // Transaction count
-            $this->transactionCount = $monthlyTransactions->count();
+            $this->incomePercentage  = $prevIncome > 0
+                ? round((($this->monthlyIncome - $prevIncome) / $prevIncome) * 100, 1)
+                : ($this->monthlyIncome > 0 ? 100 : 0);
 
-            // Bills paid (scheduled payments completed this month)
-            $this->billsPaid = (float) ScheduledPayment::where('user_id', $userId)
-                ->where('status', 'completed')
-                ->whereBetween('scheduled_date', [$monthStart, $monthEnd])
-                ->sum('amount');
+            $this->expensePercentage = $prevExpenses > 0
+                ? round((($this->monthlyExpenses - $prevExpenses) / $prevExpenses) * 100, 1)
+                : ($this->monthlyExpenses > 0 ? 100 : 0);
 
-            // Calculate percentage changes
-            if ($this->monthlyIncome > 0) {
-                $previousMonthIncome = (float) Transaction::where('user_id', $userId)
-                    ->where('type', 'credit')
-                    ->whereBetween('created_at', [
-                        now()->subMonth()->startOfMonth(),
-                        now()->subMonth()->endOfMonth()
-                    ])
-                    ->sum('amount');
-
-                if ($previousMonthIncome > 0) {
-                    $this->incomePercentage = (($this->monthlyIncome - $previousMonthIncome) / $previousMonthIncome) * 100;
-                } else {
-                    $this->incomePercentage = 100; // 100% increase if prev was 0
-                }
-            }
-
-            if ($this->monthlyExpenses > 0) {
-                $previousMonthExpenses = (float) Transaction::where('user_id', $userId)
+            // daily limit progress
+            $limits = $user->limits;
+            if ($limits) {
+                $dailyLimitKobo  = $limits->daily_transfer_limit * 100;
+                $todaySpentKobo  = Transaction::where('user_id', $userId)
                     ->where('type', 'debit')
-                    ->whereBetween('created_at', [
-                        now()->subMonth()->startOfMonth(),
-                        now()->subMonth()->endOfMonth()
-                    ])
+                    ->whereDate('created_at', today())
                     ->sum('amount');
 
-                if ($previousMonthExpenses > 0) {
-                    $this->expensePercentage = (($this->monthlyExpenses - $previousMonthExpenses) / $previousMonthExpenses) * 100;
-                } else {
-                    $this->expensePercentage = 100;
-                }
+                $this->dailyLimitTotal       = round($dailyLimitKobo / 100, 2);
+                $this->dailyLimitUsed        = round($todaySpentKobo / 100, 2);
+                $this->dailyLimitUsedPercent = $dailyLimitKobo > 0
+                    ? min(100, round(($todaySpentKobo / $dailyLimitKobo) * 100))
+                    : 0;
             }
+
+            // chart data for last 6 months
+            $chartMonths  = [];
+            $chartIncome  = [];
+            $chartExpense = [];
+
+            for ($i = 5; $i >= 0; $i--) {
+                $m = now()->subMonths($i);
+                $chartMonths[] = $m->format('M');
+
+                $chartIncome[] = round(
+                    Transaction::where('user_id', $userId)
+                        ->where('type', 'credit')
+                        ->whereYear('created_at', $m->year)
+                        ->whereMonth('created_at', $m->month)
+                        ->sum('amount') / 100,
+                    2
+                );
+
+                $chartExpense[] = round(
+                    Transaction::where('user_id', $userId)
+                        ->where('type', 'debit')
+                        ->whereYear('created_at', $m->year)
+                        ->whereMonth('created_at', $m->month)
+                        ->sum('amount') / 100,
+                    2
+                );
+            }
+
+            $this->chartData = json_encode([
+                'labels'   => $chartMonths,
+                'income'   => $chartIncome,
+                'expenses' => $chartExpense,
+            ]);
 
         } catch (\Exception $e) {
-            // Graceful fallback
-            $this->balance = 0;
+            // graceful fallback so page never crashes
+            $this->balance            = 0;
             $this->recentTransactions = collect();
-            $this->upcomingPayments = collect();
-            $this->notificationCount = 0;
-            $this->monthlyIncome = 0;
-            $this->monthlyExpenses = 0;
-            $this->transactionCount = 0;
-            $this->billsPaid = 0;
+            $this->upcomingPayments   = collect();
+            $this->notificationCount  = 0;
+            $this->monthlyIncome      = 0;
+            $this->monthlyExpenses    = 0;
+            $this->transactionCount   = 0;
+            $this->billsPaid          = 0;
+            $this->chartData          = '{"labels":[],"income":[],"expenses":[]}';
         }
     }
 
-    /**
-     * Toggle balance visibility
-     */
-    public function toggleBalance()
+    public function toggleBalance(): void
     {
         $this->balanceVisible = !$this->balanceVisible;
     }
 
-    /**
-     * Refresh dashboard data (for real-time updates)
-     */
-    public function refresh()
+    public function refresh(): void
     {
         $this->loadData();
+        $this->dispatch('toast', type: 'info', message: 'Dashboard refreshed');
     }
 
     public function render()
     {
         return view('livewire.dashboard-page', [
-            'balance' => $this->balance,
-            'balanceVisible' => $this->balanceVisible,
-            'monthlyIncome' => $this->monthlyIncome,
-            'monthlyExpenses' => $this->monthlyExpenses,
-            'transactionCount' => $this->transactionCount,
-            'billsPaid' => $this->billsPaid,
-            'incomePercentage' => $this->incomePercentage,
-            'expensePercentage' => $this->expensePercentage,
-            'recentTransactions' => $this->recentTransactions,
-            'upcomingPayments' => $this->upcomingPayments,
-            'notificationCount' => $this->notificationCount,
+            'balance'                => $this->balance,
+            'balanceVisible'         => $this->balanceVisible,
+            'monthlyIncome'          => $this->monthlyIncome,
+            'monthlyExpenses'        => $this->monthlyExpenses,
+            'transactionCount'       => $this->transactionCount,
+            'billsPaid'              => $this->billsPaid,
+            'incomePercentage'       => $this->incomePercentage,
+            'expensePercentage'      => $this->expensePercentage,
+            'recentTransactions'     => $this->recentTransactions,
+            'upcomingPayments'       => $this->upcomingPayments,
+            'notificationCount'      => $this->notificationCount,
+            'chartData'              => json_decode($this->chartData, true),
+            'dailyLimitUsedPercent'  => $this->dailyLimitUsedPercent,
+            'dailyLimitTotal'        => $this->dailyLimitTotal,
+            'dailyLimitUsed'         => $this->dailyLimitUsed,
         ]);
     }
 }
-
