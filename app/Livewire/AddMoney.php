@@ -213,6 +213,10 @@ class AddMoney extends Component
                 $this->errorMessage = 'Please enter a valid amount.';
                 return;
             }
+            if (floatval($this->cardAmount) < 100) {
+                $this->errorMessage = 'Minimum deposit is ₦100.';
+                return;
+            }
             if (empty($this->selectedCard)) {
                 $this->errorMessage = 'Please select a card.';
                 return;
@@ -225,7 +229,7 @@ class AddMoney extends Component
         }
 
         // Process the deposit
-        $this->processDeposit();
+        return $this->processDeposit();
     }
 
     /**
@@ -238,9 +242,15 @@ class AddMoney extends Component
 
         try {
             $user = Auth::user();
-            $amount = $this->selectedMethod === 'card' ? (float) $this->cardAmount : 0;
 
-            // Log the deposit request
+            if ($this->selectedMethod === 'card') {
+                // Handle card payment with Paystack
+                return $this->processCardPayment();
+            }
+
+            $amount = (float) $this->cardAmount;
+
+            // Log the deposit request for non-card methods
             DB::table('deposits')->insert([
                 'user_id' => $user->id,
                 'amount' => $amount,
@@ -261,6 +271,65 @@ class AddMoney extends Component
             $this->errorMessage = $e->getMessage();
         } finally {
             $this->isProcessing = false;
+        }
+    }
+
+    /**
+     * Process card payment with Paystack
+     */
+    private function processCardPayment()
+    {
+        $user = Auth::user();
+        $amountInKobo = (int)($this->cardAmount * 100);
+
+        // Minimum ₦100
+        if ($amountInKobo < 10000) {
+            throw new \Exception('Minimum deposit amount is ₦100.');
+        }
+
+        // Generate reference
+        $reference = 'DEP_' . strtoupper(Str::random(16));
+
+        // Store pending deposit in database
+        DB::table('deposits')->insert([
+            'user_id' => $user->id,
+            'amount' => $this->cardAmount,
+            'method' => 'card',
+            'status' => 'pending',
+            'reference_id' => $reference,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        try {
+            $paymentService = new \App\Services\PaymentService();
+            $response = $paymentService->initialize(
+                email: $user->email,
+                amount: $amountInKobo,
+                reference: $reference,
+                callbackUrl: route('payment.callback')
+            );
+
+            if (empty($response['authorization_url'])) {
+                throw new \Exception('Failed to initialize payment.');
+            }
+
+            $this->dispatch('paystack:init', [
+                'publicKey' => config('services.paystack.public'),
+                'email' => $user->email,
+                'amount' => $amountInKobo,
+                'reference' => $reference,
+                'callbackUrl' => route('payment.callback'),
+            ]);
+
+            return;
+
+        } catch (\Exception $e) {
+            DB::table('deposits')
+                ->where('reference_id', $reference)
+                ->delete();
+
+            throw $e;
         }
     }
 

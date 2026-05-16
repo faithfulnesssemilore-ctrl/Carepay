@@ -169,30 +169,69 @@
         {{-- MAIN CONTENT ROW --}}
         <div class="row g-4 mb-4 mb-md-5">
             {{-- Spending Overview Chart --}}
-            <div class="col-lg-8">
-                <div class="card card-luxury border">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div>
-                                <h3 class="h5 fw-semibold mb-1">Spending Overview</h3>
-                                <p class="small text-muted-custom mb-0">Last 6 months</p>
-                            </div>
-                            <select class="form-select bg-secondary-custom border-0 w-auto rounded-xl" style="max-width: 150px;">
-                                <option>6 months</option>
-                                <option>3 months</option>
-                                <option>1 month</option>
-                            </select>
-                        </div>
+            <div style="position:relative;height:220px;">
+    <canvas id="spendingChart"></canvas>
+</div>
 
-                        <div style="height: 250px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
-                            <div style="text-align: center;">
-                                <x-lucide-bar-chart-3 class="w-12 h-12 text-muted-custom mx-auto mb-3" style="opacity: 0.5;" />
-                                <p class="text-muted-custom small">Spending analytics chart area</p>
-                           </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('spendingChart');
+    if (!el) return;
+    if (el._chart) el._chart.destroy();
+
+    const data = @json($chartData);
+
+    el._chart = new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.labels || [],
+            datasets: [
+                {
+                    label: 'Income',
+                    data: data.income || [],
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168,85,247,0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#a855f7',
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Expenses',
+                    data: data.expenses || [],
+                    borderColor: '#c084fc',
+                    backgroundColor: 'rgba(192,132,252,0.05)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#c084fc',
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#888', font: { size: 11 } } }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888' } },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: {
+                        color: '#888',
+                        callback: function(v) { return '₦' + v.toLocaleString(); }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
 
             {{-- Quick Actions Sidebar --}}
             <div class="col-lg-4">
