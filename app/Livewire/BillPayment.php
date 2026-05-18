@@ -69,7 +69,7 @@ class BillPayment extends Component
     public string $token            = ''; // for electricity
     public bool   $isProcessing     = false;
     public float  $currentBalance   = 0;
-
+     public $billCategories = [];
     // recent bills from transaction history
     public $recentBills;
 
