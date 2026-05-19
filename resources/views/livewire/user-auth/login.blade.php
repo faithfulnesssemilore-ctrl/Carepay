@@ -24,7 +24,7 @@
             <div class="card-body p-4">
 
                 <form wire:submit.prevent="login">
-@csrf
+                    @csrf
                     <div class="mb-3">
                         <label class="form-label">
                             Email Address
@@ -100,9 +100,13 @@
             </div>
         </x-ui.card>
 
-        <div class="text-center mt-4 small">
-            <i class="fas fa-shield-alt text-success"></i>
-            Secured by bank-level encryption
+        <div class="row gx-2 mt-4">
+            <div class="col-6">
+                <a href="/forgot-password" class="text-primary-custom text-decoration-none small">Forgot password?</a>
+            </div>
+            <div class="col-6 text-end">
+                    <span class="text-muted-custom small text-muted-custom">Secured by bank-level encryption</span>
+            </div>
         </div>
 
     </div>

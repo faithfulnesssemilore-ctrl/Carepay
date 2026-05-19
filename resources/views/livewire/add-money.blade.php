@@ -22,7 +22,7 @@
                     wire:click="handleBack"
                     style="text-decoration: none;"
                 >
-                    <i class="fas fa-arrow-left" style="font-size: 24px;"></i>
+                    <x-lucide-arrow-left class="w-6 h-6" />
                 </button>
             @endif
             <div>
@@ -34,7 +34,7 @@
         {{-- Error/Success Messages --}}
         @if ($errorMessage)
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
+                <x-lucide-alert-circle class="w-5 h-5 me-2" />
                 {{ $errorMessage }}
                 <button type="button" class="btn-close" wire:click="$set('errorMessage', '')"></button>
             </div>
@@ -42,7 +42,7 @@
 
         @if ($successMessage)
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
+                <x-lucide-check-circle class="w-5 h-5 me-2" />
                 {{ $successMessage }}
                 <button type="button" class="btn-close" wire:click="resetForm"></button>
             </div>
@@ -75,7 +75,7 @@
                                     background: rgba(168, 85, 247, 0.1);
                                 "
                             >
-                                <i class="fas fa-building text-primary-custom" style="font-size: 32px;"></i>
+                                <x-lucide-building-2 class="text-primary-custom" style="width: 32px; height: 32px;" />
                             </div>
                             {{-- Title --}}
                             <h3 class="h5 fw-semibold mb-2">Bank Transfer</h3>
@@ -111,7 +111,7 @@
                                     background: rgba(192, 132, 252, 0.1);
                                 "
                             >
-                                <i class="fas fa-wallet text-accent-custom" style="font-size: 32px;"></i>
+                                <x-lucide-wallet class="text-accent-custom" style="width: 32px; height: 32px;" />
                             </div>
                             {{-- Title --}}
                             <h3 class="h5 fw-semibold mb-2">Cash Deposit</h3>
@@ -147,7 +147,7 @@
                                     background: rgba(168, 85, 247, 0.1);
                                 "
                             >
-                                <i class="fas fa-credit-card text-primary-custom" style="font-size: 32px;"></i>
+                                <x-lucide-credit-card class="text-primary-custom" style="width: 32px; height: 32px;" />
                             </div>
                             {{-- Title --}}
                             <h3 class="h5 fw-semibold mb-2">Debit Card</h3>
@@ -183,7 +183,7 @@
                                     background: rgba(192, 132, 252, 0.1);
                                 "
                             >
-                                <i class="fas fa-mobile-alt text-accent-custom" style="font-size: 32px;"></i>
+                                <x-lucide-smartphone class="text-accent-custom" style="width: 32px; height: 32px;" />
                             </div>
                             {{-- Title --}}
                             <h3 class="h5 fw-semibold mb-2">USSD Code</h3>
@@ -245,7 +245,7 @@
             const btn = document.querySelector(`[data-copy-field="${fieldId}"]`);
             if (btn) {
                 const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.innerHTML = 'Copied';
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
                 }, 2000);
@@ -254,4 +254,33 @@
             console.error('Failed to copy:', err);
         });
     }
+</script>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    Livewire.on('paystack:init', (payload) => {
+        if (!window.PaystackPop) {
+            console.error('Paystack JS not loaded');
+            return;
+        }
+
+        const handler = PaystackPop.setup({
+            key: payload.publicKey,
+            email: payload.email,
+            amount: payload.amount,
+            ref: payload.reference,
+            callback: function(response) {
+                if (response.status === 'success') {
+                    window.location.href = payload.callbackUrl + '?reference=' + response.reference;
+                } else {
+                    console.error('Paystack payment not successful', response);
+                }
+            },
+            onClose: function() {
+                console.log('Paystack payment window closed.');
+            }
+        });
+
+        handler.openIframe();
+    });
 </script>

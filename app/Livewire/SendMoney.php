@@ -12,6 +12,7 @@ use App\Models\UserLimit;
 use App\Services\WalletService;
 use App\Services\BankService;
 use App\Services\PaymentService;
+use Illuminate\Support\Collection;
 
 class SendMoney extends Component
 {
@@ -77,6 +78,14 @@ class SendMoney extends Component
         } catch (\Exception $e) {
             $this->banks = [];
         }
+
+        // Always include an internal test bank option for development/demo transfers.
+        $this->banks = collect($this->banks)
+            ->push(['code' => 'CAREPAY', 'name' => 'CarePay'])
+            ->push(['code' => 'OPAY', 'name' => 'Opay'])
+            ->unique('code')
+            ->values()
+            ->toArray();
 
         // load wallet balance in naira
         $this->walletBalance = $user->wallet
@@ -169,6 +178,17 @@ class SendMoney extends Component
         $this->isResolvingAccount = true;
 
         try {
+            // Internal test accounts bypass external resolution.
+            if ($this->selectedBankCode === 'CAREPAY' && $this->accountNumber === '9026446100') {
+                $this->resolvedAccountName = 'CarePay Test Account';
+                return;
+            }
+
+            if ($this->selectedBankCode === 'OPAY' && $this->accountNumber === '9026446100') {
+                $this->resolvedAccountName = 'Opay Test Account';
+                return;
+            }
+
             $bankService = new BankService();
             $name        = $bankService->resolveAccountName(
                 $this->accountNumber,

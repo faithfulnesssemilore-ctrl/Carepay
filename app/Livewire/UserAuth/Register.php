@@ -275,7 +275,7 @@ $this->lastOtpSentAt = now();
         'termsAccepted.accepted' => 'You must accept the terms and conditions.',
     ];
 
-    #[Layout('components.layouts.app')]
+    #[Layout('components.layouts.guest')]
     public function render()
     {
         return view('livewire.user-auth.register');

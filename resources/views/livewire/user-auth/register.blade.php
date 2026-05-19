@@ -194,7 +194,12 @@
                                     <label class="form-label">4-Digit PIN</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-lock" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="password" wire:model="pin" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('pin') is-invalid @enderror" placeholder="please input ur 4 digit stuff" maxlength="4" required>
+                                        <div class="input-group">
+                                            <input type="password" id="pinInput" wire:model="pin" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('pin') is-invalid @enderror" placeholder="please input ur 4 digit stuff" maxlength="4" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('pinInput','pinToggle')">
+                                                <i class="fas fa-eye" id="pinToggle"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     @error('pin') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
@@ -203,7 +208,12 @@
                                     <label class="form-label">Confirm PIN</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-lock" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="password" wire:model="pin_confirmation" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('pin_confirmation') is-invalid @enderror" placeholder="confirm" maxlength="4" required>
+                                        <div class="input-group">
+                                            <input type="password" id="pinConfirmationInput" wire:model="pin_confirmation" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('pin_confirmation') is-invalid @enderror" placeholder="confirm" maxlength="4" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('pinConfirmationInput','pinConfirmationToggle')">
+                                                <i class="fas fa-eye" id="pinConfirmationToggle"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     @error('pin_confirmation') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
@@ -221,7 +231,12 @@
                                     <label class="form-label">Password</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-lock" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="password" wire:model="password" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('password') is-invalid @enderror" placeholder="••••••••" required>
+                                        <div class="input-group">
+                                            <input type="password" id="passwordInputRegister" wire:model="password" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('password') is-invalid @enderror" placeholder="••••••••" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('passwordInputRegister','passwordToggleRegister')">
+                                                <i class="fas fa-eye" id="passwordToggleRegister"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     @error('password') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                     <small class="text-muted-custom">Must contain uppercase, lowercase, numbers, and symbols</small>
@@ -231,7 +246,12 @@
                                     <label class="form-label">Confirm Password</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-lock" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="password" wire:model="password_confirmation" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('password_confirmation') is-invalid @enderror" placeholder="••••••••" required>
+                                        <div class="input-group">
+                                            <input type="password" id="passwordConfirmationInputRegister" wire:model="password_confirmation" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('password_confirmation') is-invalid @enderror" placeholder="••••••••" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('passwordConfirmationInputRegister','passwordConfirmationToggleRegister')">
+                                                <i class="fas fa-eye" id="passwordConfirmationToggleRegister"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     @error('password_confirmation') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
@@ -323,6 +343,18 @@
     </div>
 
     <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
     document.addEventListener('livewire:loaded', () => {
         Livewire.on('enable-resend', () => {
             // This will be triggered after 60 seconds to re-enable the resend button

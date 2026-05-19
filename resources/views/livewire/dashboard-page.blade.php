@@ -169,9 +169,66 @@
         {{-- MAIN CONTENT ROW --}}
         <div class="row g-4 mb-4 mb-md-5">
             {{-- Spending Overview Chart --}}
-            <div style="position:relative;height:220px;">
-    <canvas id="spendingChart"></canvas>
-</div>
+            <div class="col-12 col-xl-8">
+                <div class="card card-luxury border h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <div>
+                                <h3 class="h5 fw-semibold mb-1">Spending Overview</h3>
+                                <p class="small text-muted-custom mb-0">Track income versus expenses over time</p>
+                            </div>
+                            <div class="small text-muted-custom">Updated {{ now()->format('M d, Y') }}</div>
+                        </div>
+                        <div class="position-relative" style="min-height: 320px;">
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Quick Actions Sidebar --}}
+            <div class="col-12 col-xl-4">
+                <div class="card card-luxury border h-100">
+                    <div class="card-body">
+                        <h3 class="h5 fw-semibold mb-4">Quick Actions</h3>
+                        <div class="d-flex flex-column gap-3">
+                            {{-- Send Money --}}
+                            <a href="{{ route('send-money') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2);">
+                                <div class="icon-container icon-container-sm gradient-bg-primary flex-shrink-0">
+                                    <x-lucide-send class="w-5 h-5 text-white" />
+                                </div>
+                                <div class="flex-fill">
+                                    <div class="fw-medium text-white">Send Money</div>
+                                    <div class="small text-muted-custom">Transfer to anyone</div>
+                                </div>
+                            </a>
+
+                            {{-- Pay Bills --}}
+                            <a href="{{ route('bill-payment') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift" style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2);">
+                                <div class="icon-container icon-container-sm flex-shrink-0" style="background: #c084fc;">
+                                    <x-lucide-receipt class="w-5 h-5 text-white" />
+                                </div>
+                                <div class="flex-fill">
+                                    <div class="fw-medium text-white">Pay Bills</div>
+                                    <div class="small text-muted-custom">Pay your bills</div>
+                                </div>
+                            </a>
+
+                            {{-- Wallet --}}
+                            <a href="{{ route('wallet') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift bg-secondary-custom" style="border: 1px solid #2a2a3a;">
+                                <div class="icon-container icon-container-sm gradient-bg-primary flex-shrink-0">
+                                    <x-lucide-wallet class="w-5 h-5 text-white" />
+                                </div>
+                                <div class="flex-fill">
+                                    <div class="fw-medium text-white">Wallet</div>
+                                    <div class="small text-muted-custom">Manage funds</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 @push('scripts')
 <script>
@@ -232,50 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-
-            {{-- Quick Actions Sidebar --}}
-            <div class="col-lg-4">
-                <div class="card card-luxury border">
-                    <div class="card-body">
-                        <h3 class="h5 fw-semibold mb-4">Quick Actions</h3>
-                        <div class="d-flex flex-column gap-3">
-                            {{-- Send Money --}}
-                            <a href="{{ route('send-money') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2);">
-                                <div class="icon-container icon-container-sm gradient-bg-primary flex-shrink-0">
-                                    <x-lucide-send class="w-5 h-5 text-white" />
-                                </div>
-                                <div class="flex-fill">
-                                    <div class="fw-medium text-white">Send Money</div>
-                                    <div class="small text-muted-custom">Transfer to anyone</div>
-                                </div>
-                            </a>
-
-                            {{-- Pay Bills --}}
-                            <a href="{{ route('bill-payment') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift" style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2);">
-                                <div class="icon-container icon-container-sm flex-shrink-0" style="background: #c084fc;">
-                                    <x-lucide-receipt class="w-5 h-5 text-white" />
-                                </div>
-                                <div class="flex-fill">
-                                    <div class="fw-medium text-white">Pay Bills</div>
-                                    <div class="small text-muted-custom">Pay your bills</div>
-                                </div>
-                            </a>
-
-                            {{-- Wallet --}}
-                            <a href="{{ route('wallet') }}" class="d-flex align-items-center gap-3 p-3 rounded-xl text-decoration-none hover-lift bg-secondary-custom" style="border: 1px solid #2a2a3a;">
-                                <div class="icon-container icon-container-sm gradient-bg-primary flex-shrink-0">
-                                    <x-lucide-wallet class="w-5 h-5 text-white" />
-                                </div>
-                                <div class="flex-fill">
-                                    <div class="fw-medium text-white">Wallet</div>
-                                    <div class="small text-muted-custom">Manage funds</div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         {{-- UPCOMING PAYMENTS & RECENT TRANSACTIONS --}}
         @if($upcomingPayments->count() > 0 || $recentTransactions->count() > 0)

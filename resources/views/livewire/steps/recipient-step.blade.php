@@ -175,6 +175,7 @@
         <x-lucide-info style="width:14px;height:14px;color:#a855f7;flex-shrink:0;" />
         <span class="text-muted-custom" style="font-size:12px;line-height:1.5;">
             Enter any 10-digit Nigerian bank account number. We verify it with Paystack before you proceed.
+            For a demo transfer, use account <strong>9026446100</strong> with bank <strong>CarePay</strong> or <strong>Opay</strong>.
         </span>
     </div>
 

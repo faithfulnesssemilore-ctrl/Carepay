@@ -42,6 +42,9 @@ class Login extends Component
     public function render()
     {
         return view('livewire.user-auth.login')
-            ->layout('components.layouts.app');
+            ->layout('components.layouts.guest', [
+                'title' => 'CarePay Login',
+                'subtitle' => 'Welcome back, sign in to continue',
+            ]);
     }
 }

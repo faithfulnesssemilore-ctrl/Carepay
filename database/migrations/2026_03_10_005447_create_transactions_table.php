@@ -19,7 +19,7 @@ public function up(): void
         // FIX: Change this to foreignUuid to match the wallet table
         $table->foreignUuid('wallet_id')->constrained('wallet')->onDelete('cascade');
 
-        $table->enum('type', ['deposit', 'withdrawal', 'transfer'])->index();
+        $table->enum('type', ['credit', 'debit'])->index();
         $table->bigInteger('amount');
         $table->string('currency')->default('NGN');
         $table->enum('status', ['pending', 'completed', 'failed'])->default('pending')->index();

@@ -15,7 +15,7 @@
                     background: rgba(168, 85, 247, 0.1);
                 "
             >
-                <i class="fas fa-credit-card text-primary-custom" style="font-size: 24px;"></i>
+                <x-lucide-credit-card class="text-primary-custom" style="width: 24px; height: 24px;" />
             </div>
             <div>
                 <h2 class="h3 fw-bold mb-1">Debit Card Top-up</h2>
