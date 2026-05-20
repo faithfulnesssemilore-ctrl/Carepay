@@ -1,16 +1,6 @@
 <div class="d-flex align-items-center justify-content-center min-vh-100 p-4">
     <div class="mx-auto" style="max-width: 450px; width: 100%;">
 
-        <div class="text-center mb-5">
-            <div class="mb-3">
-                <div class="icon-container p-3 rounded shadow-primary mx-auto" style="width: fit-content;">
-                    <i class="fas fa-wallet text-white" style="font-size: 28px;"></i>
-                </div>
-            </div>
-            <h1 class="display-6 fw-bold mb-2 gradient-text">CarePay</h1>
-            <p class="text-muted-custom fs-6">Welcome back, sign in to continue</p>
-        </div>
-
         @if ($errorMessage)
             <x-ui.alert variant="danger" dismissible class="mb-4">
                 <div class="d-flex align-items-center gap-2">

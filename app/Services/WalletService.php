@@ -82,7 +82,7 @@ class WalletService
             ]);
 
             // Record in ledger for accounting
-            LedgerEntry::create([
+            try { LedgerEntry::create([
                 'wallet_id'      => $wallet->id,
                 'transaction_id' => $transaction->id,
                 'entry_type'     => 'credit',
@@ -138,7 +138,7 @@ class WalletService
             ]);
 
             // Record in ledger
-            LedgerEntry::create([
+            try { LedgerEntry::create([
                 'wallet_id'      => $wallet->id,
                 'transaction_id' => $transaction->id,
                 'entry_type'     => 'debit',
@@ -184,7 +184,7 @@ class WalletService
         // Check daily transfer limit
         $todaySpent = Transaction::where('user_id', $senderId)
             ->where('type', 'debit')
-            ->whereDate('created_at', now()->toDateDate())
+            ->whereDate('created_at', now()->toDateString())
             ->sum('amount');
 
         $dailyLimitKobo = $limits->dailyLimitInKobo();
@@ -239,7 +239,7 @@ class WalletService
                 'recipient_id' => $recipientId,
             ]);
 
-            LedgerEntry::create([
+            try { LedgerEntry::create([
                 'wallet_id'      => $senderWallet->id,
                 'transaction_id' => $debitTx->id,
                 'entry_type'     => 'debit',
@@ -261,7 +261,7 @@ class WalletService
                 'recipient_id' => $senderId,
             ]);
 
-            LedgerEntry::create([
+            try { LedgerEntry::create([
                 'wallet_id'      => $recipientWallet->id,
                 'transaction_id' => $creditTx->id,
                 'entry_type'     => 'credit',

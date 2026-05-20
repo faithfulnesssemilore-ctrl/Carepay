@@ -5,12 +5,7 @@
 
             {{-- Header with logo --}}
             <div class="text-center mb-4">
-                <a href="/" class="d-inline-flex align-items-center gap-2 text-decoration-none mb-4">
-                    <div class="icon-container gradient-bg-primary p-2 rounded shadow">
-                        <x-icon name="lucide-wallet" class="text-white" style="width:28px; height:28px;" />
-                    </div>
-                    <span class="gradient-text fs-3 fw-bold">CarePay</span>
-                </a>
+               
                 <h1 class="display-6 fw-bold mb-2">Create Your Account</h1>
                 <p class="text-muted-custom">Complete the steps to get started</p>
             </div>

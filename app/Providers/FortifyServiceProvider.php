@@ -32,6 +32,8 @@ class FortifyServiceProvider extends ServiceProvider
 
         // Use Livewire login page
         Fortify::loginView(fn () => app(Login::class));
+        Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
+        Fortify::resetPasswordView(fn () => view('auth.reset-password'));
 
         // Rate limiter for login
         RateLimiter::for('login', function (Request $request) {

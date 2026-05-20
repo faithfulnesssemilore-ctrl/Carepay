@@ -16,6 +16,7 @@ class Transaction extends Model
         'currency',
         'type',
         'status',
+        'reference',
         'description',
         'recipient_id',
         'idempotency_key'
