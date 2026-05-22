@@ -9,6 +9,7 @@
         "php": "^8.2",
         "blade-ui-kit/blade-icons": "^1.9",
         "dedoc/scramble": "^0.13.22",
+        "filament/filament": "^3.2",
         "ichtrojan/laravel-otp": "^2.0",
         "laravel/fortify": "^1.35",
         "laravel/framework": "^12.0",

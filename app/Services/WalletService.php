@@ -82,7 +82,7 @@ class WalletService
             ]);
 
             // Record in ledger for accounting
-            try { LedgerEntry::create([
+            try { try { LedgerEntry::create([
                 'wallet_id'      => $wallet->id,
                 'transaction_id' => $transaction->id,
                 'entry_type'     => 'credit',
@@ -138,7 +138,7 @@ class WalletService
             ]);
 
             // Record in ledger
-            try { LedgerEntry::create([
+            try { try { LedgerEntry::create([
                 'wallet_id'      => $wallet->id,
                 'transaction_id' => $transaction->id,
                 'entry_type'     => 'debit',
@@ -239,7 +239,7 @@ class WalletService
                 'recipient_id' => $recipientId,
             ]);
 
-            try { LedgerEntry::create([
+            try { try { LedgerEntry::create([
                 'wallet_id'      => $senderWallet->id,
                 'transaction_id' => $debitTx->id,
                 'entry_type'     => 'debit',
@@ -261,7 +261,7 @@ class WalletService
                 'recipient_id' => $senderId,
             ]);
 
-            try { LedgerEntry::create([
+            try { try { LedgerEntry::create([
                 'wallet_id'      => $recipientWallet->id,
                 'transaction_id' => $creditTx->id,
                 'entry_type'     => 'credit',
