@@ -2,7 +2,7 @@ FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     nginx supervisor curl git unzip nodejs npm \
-    oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev
+    oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev icu-dev libzip-dev
 
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath opcache intl zip
 
