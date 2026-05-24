@@ -168,11 +168,11 @@
     </div>
 
     {{-- Scheduled Payments Section --}}
-    @if($scheduledPayments->count() > 0)
+    @if(count($scheduledPayments) > 0)
     <div class="card card-luxury p-3 p-md-4 border">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-bold mb-0">Scheduled Payments</h5>
-            <span class="badge bg-warning text-dark">{{ $scheduledPayments->count() }}</span>
+            <span class="badge bg-warning text-dark">{{ count($scheduledPayments) }}</span>
         </div>
 
         <div class="row g-2">

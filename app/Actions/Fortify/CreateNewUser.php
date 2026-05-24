@@ -42,10 +42,17 @@ class CreateNewUser implements CreatesNewUsers
         // Generate and Send OTP immediately after registration
         $otp = (new Otp)->generate($user->email, 'numeric', 6, 300);
         
-        Mail::raw("Your verification code is: {$otp->token}", function ($message) use ($user) {
-            $message->to($user->email)->subject('Verify Your Email');
-        });
-
+      Mail::send(
+    'emails.verification',
+    [
+        'token' => $otp->token,
+        'user' => $user
+    ],
+    function ($message) use ($user) {
+        $message->to($user->email)
+                ->subject('Verify your email address');
+    }
+);  
         // Create virtual account asynchronously
         CreateVirtualAccountJob::dispatch($user);
 

@@ -132,10 +132,23 @@ public bool $otpVerified = false;
 
                 $otp = (new Otp)->generate($this->email, 'numeric', 6, 300);         // 5 minutes = 300 seconds
 
+        $user = (object) [
+            'name' => trim($this->firstName . ' ' . $this->lastName) ?: $this->email,
+            'email' => $this->email,
+        ];
+
         // Send email
-        Mail::raw("Your verification code is: {$otp->token}", function ($message) {
-            $message->to($this->email)->subject('Email Verification Code');
-        });
+        Mail::send(
+            'Notification.Emailotp',
+            [
+                'token' => $otp->token,
+                'user' => $user,
+            ],
+            function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Verify your email');
+            }
+        );
 
         $this->verificationSent = true;
         $this->lastOtpSentAt = now();

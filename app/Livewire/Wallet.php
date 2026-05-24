@@ -96,13 +96,15 @@ class Wallet extends Component
      */
     private function calculateBalances($wallet)
     {
+        $userId = $wallet->user_id;
+
         // Pending = transactions in pending status
-        $this->pendingBalance = Transaction::where('user_id', $user->id)
+        $this->pendingBalance = Transaction::where('user_id', $userId)
             ->where('status', 'pending')
             ->sum('amount');
 
         // Reserved = scheduled payments
-        $this->reservedBalance = ScheduledPayment::where('user_id', $user->id)
+        $this->reservedBalance = ScheduledPayment::where('user_id', $userId)
             ->where('status', 'pending')
             ->sum('amount');
     }
