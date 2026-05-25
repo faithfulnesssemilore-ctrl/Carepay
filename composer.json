@@ -20,7 +20,8 @@
         "livewire/volt": "^1.7.0",
         "mallardduck/blade-lucide-icons": "^1.26",
         "predis/predis": "^3.4",
-        "symfony/brevo-mailer": "^8.0"
+        "symfony/brevo-mailer": "^8.0",
+        "yieldstudio/laravel-brevo-notifier": "^1.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "*",

@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,7 +19,15 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
-
+  Mail::extend('brevo', function (array $config) {
+        return (new BrevoTransportFactory)->create(
+            new Dsn(
+                'brevo+api',
+                'default',
+                config('services.brevo.key')
+            )
+        );
+    });
         Gate::define('admin', function ($user) {
             return $user->role >= 1;
         });
@@ -27,5 +35,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('super-admin', function ($user) {
             return $user->role >= 2;
         });
+
+            Gate::define('can-send-money', function ($user) {
+                return $user->role >= 0; // all users can send money
+            });
     }
 }
