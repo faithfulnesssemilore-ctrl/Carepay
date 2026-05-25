@@ -89,7 +89,7 @@
                     {{-- Amount Row --}}
                     <div class="d-flex justify-content-between align-items-center small mb-2">
                         <span class="text-muted-custom">Amount</span>
-                        <span class="fw-semibold">₦{{ number_format((float)($cardAmount ?? 0), 2) }}</span>
+                        <span class="fw-semibold">₦{{ number_format($cardAmount ?? 0, 2) }}</span>
                     </div>
                     
                     <hr style="border-color: rgba(168, 85, 247, 0.2); margin: 0.75rem 0" />
@@ -97,7 +97,7 @@
                     {{-- Fee Row --}}
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted-custom">Fee (2.5%)</span>
-                        <span class="fw-semibold text-primary-custom">₦{{ number_format((float)($cardAmount ?? 0) * 0.025, 2) }}</span>
+                        <span class="fw-semibold text-primary-custom">₦{{ number_format(($cardAmount ?? 0) * 0.025, 2) }}</span>
                     </div>
                     
                     <hr style="border-color: rgba(168, 85, 247, 0.2); margin: 0.75rem 0" />
@@ -105,7 +105,7 @@
                     {{-- Total Row --}}
                     <div class="d-flex justify-content-between align-items-center fw-bold">
                         <span>Total</span>
-                        <span class="text-primary-custom">₦{{ number_format((float)($cardAmount ?? 0) * 1.025, 2) }}</span>
+                        <span class="text-primary-custom">₦{{ number_format(($cardAmount ?? 0) * 1.025, 2) }}</span>
                     </div>
                 </div>
             </x-ui.card>
@@ -115,8 +115,6 @@
                 type="button"
                 class="btn btn-gradient w-100 py-3"
                 wire:click="handleConfirmTransfer"
-                wire:loading.attr="disabled"
-                wire:target="handleConfirmTransfer"
                 @if (empty($cardAmount) || floatval($cardAmount) <= 0 || empty($selectedCard))
                     disabled
                 @endif

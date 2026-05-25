@@ -8,15 +8,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     @livewireStyles
 </head>
-<body style="background:#0a0a0f;color:white;min-height:100vh;">
+<body style="background:#0a0a0f;color:white;min-height:100vh;overflow-x:hidden;">
 
-{{-- desktop sidebar --}}
-<div class="d-none d-lg-flex" style="min-height:100vh;">
+{{-- desktop and tablet sidebar --}}
+<div class="d-none d-md-flex app-desktop-shell" style="min-height:100vh;">
 
     {{-- sidebar --}}
-    <div class="d-flex flex-column"
-         style="width:240px;background:#0f0f1a;border-right:1px solid rgba(168,85,247,0.12);
-                position:fixed;top:0;left:0;height:100vh;z-index:100;padding:24px 16px;">
+    <div class="d-flex flex-column app-sidebar"
+         style="background:#0f0f1a;border-right:1px solid rgba(168,85,247,0.12);
+                position:fixed;top:0;left:0;height:100vh;z-index:100;padding:24px 16px;overflow-y:auto;">
 
         {{-- logo --}}
         <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none mb-5">
@@ -108,12 +108,11 @@
     </div>
 
     {{-- main content area --}}
-    <div style="margin-left:240px;flex:1;min-height:100vh;">
+    <div class="app-main-content">
 
         {{-- top bar --}}
-        <div style="background:rgba(10,10,15,0.8);backdrop-filter:blur(10px);
-                    border-bottom:1px solid rgba(168,85,247,0.1);
-                    padding:16px 32px;position:sticky;top:0;z-index:50;">
+        <div class="app-topbar" style="background:rgba(10,10,15,0.8);backdrop-filter:blur(10px);
+                    border-bottom:1px solid rgba(168,85,247,0.1);position:sticky;top:0;z-index:50;">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <div style="font-size:18px;font-weight:700;color:white;">
@@ -135,14 +134,14 @@
         </div>
 
         {{-- page content --}}
-        <div style="padding:32px;">
+        <div class="app-main-content-inner" style="padding:32px;">
             {{ $slot }}
         </div>
     </div>
 </div>
 
 {{-- mobile layout --}}
-<div class="d-lg-none">
+<div class="d-md-none app-mobile-shell">
 
     {{-- mobile top header --}}
     <div style="background:rgba(10,10,15,0.95);backdrop-filter:blur(10px);
@@ -170,7 +169,7 @@
     </div>
 
     {{-- mobile page content --}}
-    <div style="padding:16px;padding-bottom:80px;">
+    <div style="padding:16px;padding-bottom:calc(72px + env(safe-area-inset-bottom));">
         {{ $slot }}
     </div>
 
@@ -178,7 +177,8 @@
     <nav style="position:fixed;bottom:0;left:0;right:0;z-index:200;
                 background:rgba(10,10,15,0.97);backdrop-filter:blur(20px);
                 border-top:1px solid rgba(168,85,247,0.15);
-                display:flex;height:60px;">
+                display:flex;height:calc(64px + env(safe-area-inset-bottom));
+                padding-bottom:env(safe-area-inset-bottom);">
         @foreach([
             ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Home'],
             ['route' => 'send-money',  'icon' => 'send',             'label' => 'Send'],

@@ -398,9 +398,137 @@
 /* Optimize flex layouts for mobile */
 @media (max-width: 576px) {
   .d-flex { flex-wrap: wrap; }
-  
-  .justify-content-between { 
-    justify-content: space-between !important;
+}
+
+/* Global responsiveness defaults */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+canvas,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+@media (max-width: 767.98px) {
+  .container,
+  .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  body {
+    font-size: 0.97rem;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .container,
+  .container-fluid {
+    padding-left: 1.1rem !important;
+    padding-right: 1.1rem !important;
+  }
+
+  .card-body {
+    padding: 1.15rem !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .container,
+  .container-fluid {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+}
+
+.app-desktop-shell {
+  width: 100%;
+}
+
+.app-sidebar {
+  width: 240px;
+}
+
+.app-main-content {
+  margin-left: 240px;
+  flex: 1;
+  min-height: 100vh;
+  width: calc(100% - 240px);
+}
+
+.app-topbar {
+  padding: 16px 32px;
+}
+
+.app-main-content-inner {
+  padding: 32px;
+}
+
+@media (max-width: 991.98px) {
+  .app-sidebar {
+    width: 220px;
+  }
+
+  .app-main-content {
+    margin-left: 220px;
+    width: calc(100% - 220px);
+  }
+
+  .app-topbar {
+    padding: 14px 20px;
+  }
+
+  .app-main-content-inner {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .app-mobile-shell {
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .btn,
+  .form-control,
+  .form-select {
+    font-size: 0.95rem;
+  }
+
+  .display-3 {
+    font-size: clamp(1.7rem, 6.5vw, 2.3rem) !important;
   }
 }
 
@@ -411,6 +539,10 @@
   .display-4 { font-size: 1.9rem !important; }
   .display-5 { font-size: 1.5rem !important; }
 }
+
+.transaction-item {
+  background: #141420;
+  border: 1px solid #2a2a3a;
   border-radius: 0.75rem;
   padding: 1rem;
   transition: all 0.3s ease;

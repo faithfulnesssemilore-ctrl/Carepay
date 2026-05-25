@@ -226,18 +226,16 @@
 
 {{-- JavaScript for Copy Functionality --}}
 <script>
-    document.addEventListener('livewire:load', () => {
-        // Listen for copy-to-clipboard event from Livewire
-        Livewire.on('copy-to-clipboard', (event) => {
-            const text = event.text || event[0]?.text;
-            if (text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    // Feedback shown in Blade via copiedField property
-                }).catch(() => {
-                    console.error('Failed to copy to clipboard');
-                });
-            }
-        });
+    // Listen for copy-to-clipboard event from Livewire
+    Livewire.on('copy-to-clipboard', (event) => {
+        const text = event.text || event[0]?.text;
+        if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Feedback shown in Blade via copiedField property
+            }).catch(() => {
+                console.error('Failed to copy to clipboard');
+            });
+        }
     });
 
     // Alternative: Direct copy function for copy buttons
@@ -260,31 +258,29 @@
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-    document.addEventListener('livewire:load', () => {
-        Livewire.on('paystack:init', (payload) => {
-            if (!window.PaystackPop) {
-                console.error('Paystack JS not loaded');
-                return;
-            }
+    Livewire.on('paystack:init', (payload) => {
+        if (!window.PaystackPop) {
+            console.error('Paystack JS not loaded');
+            return;
+        }
 
-            const handler = PaystackPop.setup({
-                key: payload.publicKey,
-                email: payload.email,
-                amount: payload.amount,
-                ref: payload.reference,
-                callback: function(response) {
-                    if (response.status === 'success') {
-                        window.location.href = payload.callbackUrl + '?reference=' + response.reference;
-                    } else {
-                        console.error('Paystack payment not successful', response);
-                    }
-                },
-                onClose: function() {
-                    console.log('Paystack payment window closed.');
+        const handler = PaystackPop.setup({
+            key: payload.publicKey,
+            email: payload.email,
+            amount: payload.amount,
+            ref: payload.reference,
+            callback: function(response) {
+                if (response.status === 'success') {
+                    window.location.href = payload.callbackUrl + '?reference=' + response.reference;
+                } else {
+                    console.error('Paystack payment not successful', response);
                 }
-            });
-
-            handler.openIframe();
+            },
+            onClose: function() {
+                console.log('Paystack payment window closed.');
+            }
         });
+
+        handler.openIframe();
     });
 </script>
