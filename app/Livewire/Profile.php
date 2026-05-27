@@ -2,22 +2,29 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Profile extends Component
 {
     // User properties
     public $firstName = '';
+
     public $lastName = '';
+
     public $email = '';
+
     public $phone = '';
+
     public $profilePicture = '';
 
     // UI properties
     public $successMessage = '';
+
     public $errorMessage = '';
+
     public $isProcessing = false;
+
     public $isEditing = false;
 
     public function mount()
@@ -47,7 +54,7 @@ class Profile extends Component
      */
     public function toggleEdit()
     {
-        $this->isEditing = !$this->isEditing;
+        $this->isEditing = ! $this->isEditing;
     }
 
     /**
@@ -59,7 +66,7 @@ class Profile extends Component
         $this->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20'
+            'phone' => 'nullable|string|max:20',
         ]);
 
         $this->isProcessing = true;
@@ -79,7 +86,7 @@ class Profile extends Component
             $this->isEditing = false;
 
         } catch (\Exception $e) {
-            $this->errorMessage = 'Failed to update profile: ' . $e->getMessage();
+            $this->errorMessage = 'Failed to update profile: '.$e->getMessage();
         }
 
         $this->isProcessing = false;
@@ -90,4 +97,3 @@ class Profile extends Component
         return view('livewire.profile');
     }
 }
-

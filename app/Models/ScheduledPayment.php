@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class ScheduledPayment extends Model
 {
@@ -18,14 +18,14 @@ class ScheduledPayment extends Model
         'scheduled_date',
         'status',
         'description',
-        'recipient_id'
+        'recipient_id',
     ];
 
     protected $casts = [
         'amount' => 'integer',  // stored in kobo
         'scheduled_date' => 'datetime',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
     ];
 
     /**

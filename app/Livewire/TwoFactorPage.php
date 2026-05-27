@@ -3,16 +3,21 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
 
 class TwoFactorPage extends Component
 {
     public $code = '';
+
     public $step = 'verify'; // verify, backup, success
+
     public $errorMessage = '';
+
     public $successMessage = '';
+
     public $isProcessing = false;
+
     public $showBackupCodes = false;
+
     public $backupCodes = [];
 
     public function mount()
@@ -46,7 +51,7 @@ class TwoFactorPage extends Component
                 $this->errorMessage = 'Invalid verification code. Please try again.';
             }
         } catch (\Exception $e) {
-            $this->errorMessage = 'Verification failed: ' . $e->getMessage();
+            $this->errorMessage = 'Verification failed: '.$e->getMessage();
         }
 
         $this->isProcessing = false;

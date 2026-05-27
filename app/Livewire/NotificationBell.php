@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class NotificationBell extends Component
 {
@@ -30,12 +30,12 @@ class NotificationBell extends Component
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn($n) => [
-                'id'      => $n->id,
+            ->map(fn ($n) => [
+                'id' => $n->id,
                 'message' => $n->data['message'] ?? 'Notification',
-                'type'    => $n->data['type'] ?? 'general',
-                'read'    => !is_null($n->read_at),
-                'time'    => $n->created_at->diffForHumans(),
+                'type' => $n->data['type'] ?? 'general',
+                'read' => ! is_null($n->read_at),
+                'time' => $n->created_at->diffForHumans(),
             ])
             ->toArray();
 
@@ -46,7 +46,7 @@ class NotificationBell extends Component
     // Mark all as read when user opens the dropdown
     public function toggleDropdown(): void
     {
-        $this->open = !$this->open;
+        $this->open = ! $this->open;
 
         if ($this->open) {
             // Mark all as read

@@ -11,40 +11,40 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('users', function (Blueprint $table) {
-    $table->id();
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
 
-    $table->string('first_name');
-    $table->string('last_name');
-    $table->string('email')->unique();
-    $table->string('phone')->nullable();
-    $table->string('password');  
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('email')->unique();
+            $table->string('phone')->nullable();
+            $table->string('password');
 
-    // KYC
-    $table->string('id_document')->nullable();
-    $table->string('id_type')->nullable();
-    $table->string('id_number')->nullable();
-    $table->boolean('kyc_verified')->default(false);
+            // KYC
+            $table->string('id_document')->nullable();
+            $table->string('id_type')->nullable();
+            $table->string('id_number')->nullable();
+            $table->boolean('kyc_verified')->default(false);
 
-    // Security
-    $table->string('pin')->nullable();
+            // Security
+            $table->string('pin')->nullable();
 
-    // Registration
-    $table->boolean('registration_complete')->default(false);
-    $table->boolean('terms_accepted')->default(false);
+            // Registration
+            $table->boolean('registration_complete')->default(false);
+            $table->boolean('terms_accepted')->default(false);
 
-    // Verification
-    $table->timestamp('email_verified_at')->nullable();
-    $table->string('verification_code')->nullable();
+            // Verification
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('verification_code')->nullable();
 
-    // Profile
-    $table->string('profile_picture')->nullable();
+            // Profile
+            $table->string('profile_picture')->nullable();
 
-    // Roles
-    $table->string('role')->default('user'); // FIXED
+            // Roles
+            $table->string('role')->default('user'); // FIXED
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**

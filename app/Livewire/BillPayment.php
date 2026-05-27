@@ -2,19 +2,20 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Services\VtpassService;
 use App\Services\WalletService;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class BillPayment extends Component
 {
     // step flow: category -> provider -> details -> confirm -> success
-    public string $currentStep    = 'category';
+    public string $currentStep = 'category';
+
     public string $selectedCategory = '';
+
     public string $selectedProvider = '';
 
     // Nigerian network providers
@@ -29,7 +30,7 @@ class BillPayment extends Component
         ['id' => 'mtn-data',      'name' => 'MTN Data',    'color' => '#ffcc00'],
         ['id' => 'airtel-data',   'name' => 'Airtel Data', 'color' => '#ef4444'],
         ['id' => 'glo-data',      'name' => 'Glo Data',    'color' => '#22c55e'],
-        ['id' => 'etisalat-data', 'name' => '9mobile Data','color' => '#22c55e'],
+        ['id' => 'etisalat-data', 'name' => '9mobile Data', 'color' => '#22c55e'],
     ];
 
     public array $electricityProviders = [
@@ -41,7 +42,7 @@ class BillPayment extends Component
         ['id' => 'ibedc',          'name' => 'Ibadan Electric (IBEDC)'],
         ['id' => 'aedc',           'name' => 'Abuja Electric (AEDC)'],
         ['id' => 'jos-electric',   'name' => 'Jos Electric (JED)'],
-        ['id' => 'kaduna-electric','name' => 'Kaduna Electric'],
+        ['id' => 'kaduna-electric', 'name' => 'Kaduna Electric'],
         ['id' => 'benin-electric', 'name' => 'Benin Electric (BEDC)'],
     ];
 
@@ -52,24 +53,36 @@ class BillPayment extends Component
     ];
 
     // form fields
-    public string $phone       = '';
+    public string $phone = '';
+
     public string $meterNumber = '';
-    public string $meterType   = 'prepaid'; // prepaid or postpaid
-    public string $smartcard   = '';
-    public string $amount      = '';
-    public string $dataPlan    = '';
+
+    public string $meterType = 'prepaid'; // prepaid or postpaid
+
+    public string $smartcard = '';
+
+    public string $amount = '';
+
+    public string $dataPlan = '';
 
     // available data plans (loaded when provider selected)
     public array $dataPlans = [];
 
     // result
-    public string $successMessage   = '';
-    public string $errorMessage     = '';
-    public string $referenceNumber  = '';
-    public string $token            = ''; // for electricity
-    public bool   $isProcessing     = false;
-    public float  $currentBalance   = 0;
-     public $billCategories = [];
+    public string $successMessage = '';
+
+    public string $errorMessage = '';
+
+    public string $referenceNumber = '';
+
+    public string $token = ''; // for electricity
+
+    public bool $isProcessing = false;
+
+    public float $currentBalance = 0;
+
+    public $billCategories = [];
+
     // recent bills from transaction history
     public $recentBills;
 
@@ -106,7 +119,9 @@ class BillPayment extends Component
     public function selectCategory(string $category): void
     {
         $valid = ['airtime', 'data', 'electricity', 'cable'];
-        if (!in_array($category, $valid)) return;
+        if (! in_array($category, $valid)) {
+            return;
+        }
 
         $this->selectedCategory = $category;
         $this->selectedProvider = '';
@@ -118,7 +133,7 @@ class BillPayment extends Component
     public function selectProvider(string $provider): void
     {
         $this->selectedProvider = $provider;
-        $this->errorMessage     = '';
+        $this->errorMessage = '';
 
         // load data plans if data category
         if ($this->selectedCategory === 'data') {
@@ -138,7 +153,7 @@ class BillPayment extends Component
                 ['code' => 'mtn-1gb-1000', 'name' => '1GB - ₦1,000 (30 days)'],
                 ['code' => 'mtn-2gb-1200', 'name' => '2GB - ₦1,200 (30 days)'],
                 ['code' => 'mtn-5gb-2500', 'name' => '5GB - ₦2,500 (30 days)'],
-                ['code' => 'mtn-10gb-5000','name' => '10GB - ₦5,000 (30 days)'],
+                ['code' => 'mtn-10gb-5000', 'name' => '10GB - ₦5,000 (30 days)'],
             ],
             'airtel-data' => [
                 ['code' => 'airtel-100mb-200', 'name' => '100MB - ₦200 (3 days)'],
@@ -169,23 +184,27 @@ class BillPayment extends Component
 
         // validate based on category
         if ($this->selectedCategory === 'airtime') {
-            if (strlen($this->phone) !== 11 || !str_starts_with($this->phone, '0')) {
+            if (strlen($this->phone) !== 11 || ! str_starts_with($this->phone, '0')) {
                 $this->errorMessage = 'Enter a valid 11-digit Nigerian phone number starting with 0.';
+
                 return;
             }
             if (floatval($this->amount) < 50) {
                 $this->errorMessage = 'Minimum airtime is ₦50.';
+
                 return;
             }
         }
 
         if ($this->selectedCategory === 'data') {
-            if (strlen($this->phone) !== 11 || !str_starts_with($this->phone, '0')) {
+            if (strlen($this->phone) !== 11 || ! str_starts_with($this->phone, '0')) {
                 $this->errorMessage = 'Enter a valid 11-digit Nigerian phone number.';
+
                 return;
             }
             if (empty($this->dataPlan)) {
                 $this->errorMessage = 'Please select a data plan.';
+
                 return;
             }
         }
@@ -193,10 +212,12 @@ class BillPayment extends Component
         if ($this->selectedCategory === 'electricity') {
             if (strlen($this->meterNumber) < 11 || strlen($this->meterNumber) > 13) {
                 $this->errorMessage = 'Enter a valid meter number (11-13 digits).';
+
                 return;
             }
             if (floatval($this->amount) < 500) {
                 $this->errorMessage = 'Minimum electricity payment is ₦500.';
+
                 return;
             }
         }
@@ -204,6 +225,7 @@ class BillPayment extends Component
         if ($this->selectedCategory === 'cable') {
             if (empty($this->smartcard)) {
                 $this->errorMessage = 'Enter your smartcard number.';
+
                 return;
             }
         }
@@ -211,7 +233,8 @@ class BillPayment extends Component
         // check balance
         $amountNaira = floatval($this->amount);
         if ($amountNaira > $this->currentBalance) {
-            $this->errorMessage = 'Insufficient balance. Your balance is ₦' . number_format($this->currentBalance, 2);
+            $this->errorMessage = 'Insufficient balance. Your balance is ₦'.number_format($this->currentBalance, 2);
+
             return;
         }
 
@@ -225,16 +248,16 @@ class BillPayment extends Component
         $this->errorMessage = '';
 
         try {
-            $user         = Auth::user();
-            $amountNaira  = floatval($this->amount);
-            $amountKobo   = (int) round($amountNaira * 100);
-            $walletService = new WalletService();
-            $vtpass        = new VtpassService();
-            $requestId     = $vtpass->generateRequestId();
+            $user = Auth::user();
+            $amountNaira = floatval($this->amount);
+            $amountKobo = (int) round($amountNaira * 100);
+            $walletService = new WalletService;
+            $vtpass = new VtpassService;
+            $requestId = $vtpass->generateRequestId();
 
             // check balance one more time before deducting
             $wallet = $user->wallet;
-            if (!$wallet || $wallet->balance < $amountKobo) {
+            if (! $wallet || $wallet->balance < $amountKobo) {
                 throw new \Exception('Insufficient balance.');
             }
 
@@ -242,21 +265,21 @@ class BillPayment extends Component
             $payload = $this->buildVtpassPayload($requestId, $amountNaira);
 
             // debit wallet BEFORE calling VTPass
-            $reference   = 'BILL_' . strtoupper(\Illuminate\Support\Str::random(12));
+            $reference = 'BILL_'.strtoupper(\Illuminate\Support\Str::random(12));
             $description = $this->buildDescription();
 
             $walletService->debit(
-                userId:      $user->id,
-                amountKobo:  $amountKobo,
-                reference:   $reference,
+                userId: $user->id,
+                amountKobo: $amountKobo,
+                reference: $reference,
                 description: $description
             );
 
             // call VTPass
             $result = $vtpass->processPayment(
-                serviceId:      $this->selectedProvider,
-                amount:         $amountNaira,
-                phone:          $this->phone ?: $user->phone,
+                serviceId: $this->selectedProvider,
+                amount: $amountNaira,
+                phone: $this->phone ?: $user->phone,
                 additionalData: $payload
             );
 
@@ -265,12 +288,12 @@ class BillPayment extends Component
             // VTPass success codes: 000 = success
             if ($vtpassCode !== '000') {
                 // VTPass failed - refund the wallet
-                $refundRef = 'REFUND_' . $reference;
+                $refundRef = 'REFUND_'.$reference;
                 $walletService->credit(
-                    userId:      $user->id,
-                    amountKobo:  $amountKobo,
-                    reference:   $refundRef,
-                    description: 'Refund: ' . $description
+                    userId: $user->id,
+                    amountKobo: $amountKobo,
+                    reference: $refundRef,
+                    description: 'Refund: '.$description
                 );
 
                 $errorMsg = $result['response_description'] ?? $result['message'] ?? 'Payment failed. Please try again.';
@@ -287,9 +310,9 @@ class BillPayment extends Component
                 $result['content']['transactions']['token'] ?? '';
 
             $this->referenceNumber = $requestId;
-            $this->currentBalance  = round(($wallet->balance - $amountKobo) / 100, 2);
-            $this->currentStep     = 'success';
-            $this->successMessage  = 'Payment successful!';
+            $this->currentBalance = round(($wallet->balance - $amountKobo) / 100, 2);
+            $this->currentStep = 'success';
+            $this->successMessage = 'Payment successful!';
 
             $this->dispatch('toast', type: 'success', message: 'Bill payment successful!');
 
@@ -310,17 +333,17 @@ class BillPayment extends Component
                 'billersCode' => $this->meterNumber,
                 'variation_code' => $this->meterType, // prepaid or postpaid
                 'amount' => $amount,
-                'phone'  => $this->phone ?: Auth::user()->phone ?? '',
+                'phone' => $this->phone ?: Auth::user()->phone ?? '',
             ]),
             'cable' => array_merge($base, [
-                'billersCode'    => $this->smartcard,
+                'billersCode' => $this->smartcard,
                 'variation_code' => $this->dataPlan,
-                'phone'          => Auth::user()->phone ?? '',
+                'phone' => Auth::user()->phone ?? '',
             ]),
             'data' => array_merge($base, [
-                'billersCode'    => $this->phone,
+                'billersCode' => $this->phone,
                 'variation_code' => $this->dataPlan,
-                'phone'          => $this->phone,
+                'phone' => $this->phone,
             ]),
             default => $base, // airtime just needs phone and amount
         };
@@ -329,11 +352,11 @@ class BillPayment extends Component
     private function buildDescription(): string
     {
         return match ($this->selectedCategory) {
-            'airtime'     => 'Airtime - ' . $this->selectedProvider . ' - ' . $this->phone,
-            'data'        => 'Data - ' . $this->selectedProvider . ' - ' . $this->phone,
-            'electricity' => 'Electricity - ' . $this->selectedProvider . ' - ' . $this->meterNumber,
-            'cable'       => 'Cable TV - ' . $this->selectedProvider . ' - ' . $this->smartcard,
-            default       => 'Bill payment - ' . $this->selectedProvider,
+            'airtime' => 'Airtime - '.$this->selectedProvider.' - '.$this->phone,
+            'data' => 'Data - '.$this->selectedProvider.' - '.$this->phone,
+            'electricity' => 'Electricity - '.$this->selectedProvider.' - '.$this->meterNumber,
+            'cable' => 'Cable TV - '.$this->selectedProvider.' - '.$this->smartcard,
+            default => 'Bill payment - '.$this->selectedProvider,
         };
     }
 
@@ -343,54 +366,54 @@ class BillPayment extends Component
 
         $this->currentStep = match ($this->currentStep) {
             'provider' => 'category',
-            'details'  => 'provider',
-            'confirm'  => 'details',
-            default    => 'category',
+            'details' => 'provider',
+            'confirm' => 'details',
+            default => 'category',
         };
     }
 
     public function resetForm(): void
     {
-        $this->currentStep      = 'category';
+        $this->currentStep = 'category';
         $this->selectedCategory = '';
         $this->selectedProvider = '';
         $this->resetFormFields();
-        $this->successMessage   = '';
-        $this->errorMessage     = '';
-        $this->referenceNumber  = '';
-        $this->token            = '';
+        $this->successMessage = '';
+        $this->errorMessage = '';
+        $this->referenceNumber = '';
+        $this->token = '';
         $this->loadBalance();
     }
 
     private function resetFormFields(): void
     {
-        $this->phone       = '';
+        $this->phone = '';
         $this->meterNumber = '';
-        $this->meterType   = 'prepaid';
-        $this->smartcard   = '';
-        $this->amount      = '';
-        $this->dataPlan    = '';
-        $this->dataPlans   = [];
+        $this->meterType = 'prepaid';
+        $this->smartcard = '';
+        $this->amount = '';
+        $this->dataPlan = '';
+        $this->dataPlans = [];
     }
 
     public function render()
     {
         return view('livewire.bill-payment', [
-            'currentStep'          => $this->currentStep,
-            'selectedCategory'     => $this->selectedCategory,
-            'selectedProvider'     => $this->selectedProvider,
-            'currentBalance'       => $this->currentBalance,
-            'airtimeProviders'     => $this->airtimeProviders,
-            'dataProviders'        => $this->dataProviders,
+            'currentStep' => $this->currentStep,
+            'selectedCategory' => $this->selectedCategory,
+            'selectedProvider' => $this->selectedProvider,
+            'currentBalance' => $this->currentBalance,
+            'airtimeProviders' => $this->airtimeProviders,
+            'dataProviders' => $this->dataProviders,
             'electricityProviders' => $this->electricityProviders,
-            'cableProviders'       => $this->cableProviders,
-            'dataPlans'            => $this->dataPlans,
-            'recentBills'          => $this->recentBills,
-            'referenceNumber'      => $this->referenceNumber,
-            'token'                => $this->token,
-            'successMessage'       => $this->successMessage,
-            'errorMessage'         => $this->errorMessage,
-            'isProcessing'         => $this->isProcessing,
+            'cableProviders' => $this->cableProviders,
+            'dataPlans' => $this->dataPlans,
+            'recentBills' => $this->recentBills,
+            'referenceNumber' => $this->referenceNumber,
+            'token' => $this->token,
+            'successMessage' => $this->successMessage,
+            'errorMessage' => $this->errorMessage,
+            'isProcessing' => $this->isProcessing,
         ]);
     }
 }

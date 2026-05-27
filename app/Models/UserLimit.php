@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 // user limits model - enforces transaction limits per user
 // prevents over-spending and fraud
@@ -63,6 +62,7 @@ class UserLimit extends Model
     public function getRemainingDailyTransfer()
     {
         $this->resetDailyLimitIfNeeded();
+
         return $this->daily_transfer_limit - $this->daily_transfer_used;
     }
 
@@ -77,6 +77,7 @@ class UserLimit extends Model
     public function getHoursUntilReset()
     {
         $nextReset = $this->limit_reset_date->copy()->addDay()->startOfDay();
+
         return $nextReset->diffInHours(now());
     }
 

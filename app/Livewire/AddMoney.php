@@ -2,16 +2,12 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use App\Models\VirtualAccount;
 use App\Models\Wallet;
-use App\Models\Transaction;
 use App\Services\BankService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Livewire\Component;
 
 /**
  * AddMoney Livewire Component
@@ -20,81 +16,80 @@ use Illuminate\Support\Facades\DB;
  */
 class AddMoney extends Component
 {
-    // ==================== Multi-Step Form State ====================
-    public $step = 'select'; // select | details | success
-    public $selectedMethod = null; // bank-transfer | cash | card | ussd
-    
-    // Virtual Account Details
+    public $step = 'select';
+
+    public $selectedMethod = null;
+
     public $accountNumber = '';
+
     public $accountName = '';
+
     public $bankName = '';
+
     public $hasVirtualAccount = false;
-    
-    // Card Payment
+
     public $cardAmount = '';
+
     public $selectedCard = '';
-    
-    // USSD Payment
+
     public $selectedBank = '';
+
     public $ussdAmount = '';
+
     public $ussdCode = '';
+
     public $banks = [];
-    
-    // UI State
-    public $copiedField = null; // Tracks which field was copied
-    
-    // Status
+
+    public $copiedField = null;
+
     public $successMessage = '';
+
     public $errorMessage = '';
+
     public $isProcessing = false;
+
     public $currentBalance = 0;
+
     public $virtualAccount;
 
-    /**
-     * Initialize component - load balance and virtual account
-     */
     public function mount()
     {
         $this->loadBalance();
         $this->loadVirtualAccount();
-        $bankService = new BankService();
-        $this->banks = $bankService->getAllBanks();
+
+        $this->banks = (new BankService)->getAllBanks();
     }
 
-    /**
-     * Load virtual account details
-     */
     public function loadVirtualAccount()
     {
-        try {
-            $va = Auth::user()->virtualAccount;
-            if ($va) {
-                $this->accountNumber = $va->account_number;
-                $this->accountName = $va->account_name;
-                $this->bankName = $va->bank_name;
-                $this->hasVirtualAccount = true;
-                $this->virtualAccount = $va;
-            }
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Unable to load virtual account details';
+        $user = Auth::user();
+
+        if (! $user) {
+            return;
         }
+
+        $va = $user->virtualAccount;
+
+        if (! $va) {
+            return;
+        }
+
+        $this->accountNumber = $va->account_number;
+        $this->accountName = $va->account_name;
+        $this->bankName = $va->bank_name;
+        $this->hasVirtualAccount = true;
+        $this->virtualAccount = $va;
     }
 
-    /**
-     * Load current wallet balance
-     */
     public function loadBalance()
     {
-        try {
-            $user = Auth::user();
-            $wallet = $user->wallet;
+        $user = Auth::user();
 
-            if ($wallet) {
-                $this->currentBalance = $wallet->balance;
-            }
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Unable to load balance';
+        if (! $user || ! $user->wallet) {
+            return;
         }
+
+        $this->currentBalance = $user->wallet->balance;
     }
 
     /**
@@ -117,7 +112,7 @@ class AddMoney extends Component
     public function handleMethodSelect($method)
     {
         $validMethods = ['bank-transfer', 'cash', 'card', 'ussd'];
-        
+
         if (in_array($method, $validMethods)) {
             $this->selectedMethod = $method;
             $this->step = 'details';
@@ -161,7 +156,7 @@ class AddMoney extends Component
         }
 
         try {
-            $bankService = new BankService();
+            $bankService = new BankService;
             $ussdCode = $bankService->getUssdCode(
                 $this->selectedBank,
                 (int) $this->ussdAmount,
@@ -174,32 +169,14 @@ class AddMoney extends Component
                 $this->errorMessage = 'USSD code not available for this bank.';
             }
         } catch (\Exception $e) {
-            $this->errorMessage = 'Error generating USSD code: ' . $e->getMessage();
+            $this->errorMessage = 'Error generating USSD code: '.$e->getMessage();
         }
     }
 
-    /**
-     * Copy text to clipboard and show feedback
-     */
     public function handleCopy($text, $field)
     {
-        // In Livewire, we set the field and let JavaScript handle copying
         $this->copiedField = $field;
-        
-        // Reset the copied field after 2 seconds
         $this->dispatch('copy-to-clipboard', ['text' => $text]);
-        
-        // Reset visual feedback after 2 seconds
-        $this->scheduleReset();
-    }
-
-    /**
-     * Schedule reset of copied feedback
-     */
-    public function scheduleReset()
-    {
-        sleep(2);
-        $this->copiedField = null;
     }
 
     /**
@@ -211,19 +188,23 @@ class AddMoney extends Component
         if ($this->selectedMethod === 'card') {
             if (empty($this->cardAmount) || floatval($this->cardAmount) <= 0) {
                 $this->errorMessage = 'Please enter a valid amount.';
+
                 return;
             }
             if (floatval($this->cardAmount) < 100) {
                 $this->errorMessage = 'Minimum deposit is ₦100.';
+
                 return;
             }
             if (empty($this->selectedCard)) {
                 $this->errorMessage = 'Please select a card.';
+
                 return;
             }
         } elseif ($this->selectedMethod === 'ussd') {
             if (empty($this->selectedBank)) {
                 $this->errorMessage = 'Please select a bank.';
+
                 return;
             }
         }
@@ -280,7 +261,7 @@ class AddMoney extends Component
     private function processCardPayment()
     {
         $user = Auth::user();
-        $amountInKobo = (int)($this->cardAmount * 100);
+        $amountInKobo = (int) ($this->cardAmount * 100);
 
         // Minimum ₦100
         if ($amountInKobo < 10000) {
@@ -288,7 +269,7 @@ class AddMoney extends Component
         }
 
         // Generate reference
-        $reference = 'DEP_' . strtoupper(Str::random(16));
+        $reference = 'DEP_'.strtoupper(Str::random(16));
 
         // Store pending deposit in database
         DB::table('deposits')->insert([
@@ -302,7 +283,7 @@ class AddMoney extends Component
         ]);
 
         try {
-            $paymentService = new \App\Services\PaymentService();
+            $paymentService = new \App\Services\PaymentService;
             $response = $paymentService->initialize(
                 email: $user->email,
                 amount: $amountInKobo,
@@ -377,5 +358,3 @@ class AddMoney extends Component
         ]);
     }
 }
-
-

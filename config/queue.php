@@ -9,13 +9,13 @@ return [
     |
     | so we use queues to process heavy tasks in the background
     | like sending emails or processing payments
-    | if we use redis and redis breaks, everything breaks 
+    | if we use redis and redis breaks, everything breaks
     | so we use database instead - more reliable
     | database is slower but its not gonna disappear
     | best for production fintech apps
     |
     */
-'default' => env('QUEUE_CONNECTION', 'database'),
+    'default' => env('QUEUE_CONNECTION', 'database'),
 
     /*
     |--------------------------------------------------------------------------

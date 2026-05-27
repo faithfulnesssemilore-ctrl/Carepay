@@ -18,17 +18,17 @@ return new class extends Migration
             $table->string('currency')->default('NGN');
             $table->enum('frequency', ['daily', 'weekly', 'monthly'])->index();
             $table->dateTime('next_payment_date')->index();
-            $table->enum('status', ['active', 'pending','failed','completed'])->default('active')->index();
+            $table->enum('status', ['active', 'pending', 'failed', 'completed'])->default('active')->index();
             $table->string('description')->nullable();
             $table->timestamps();
             // e.g., 'bill_payment', 'subscription', etc.
             $table->string('type')->index();
             $table->json('metadata')->nullable(); // For storing additional info as JSON
 
-            $table->index(['wallet_id','next_payment_date']);
-            $table->index(['wallet_id','status']);
-            $table->index(['wallet_id','frequency']);
-            $table->index(['frequency','status']);
+            $table->index(['wallet_id', 'next_payment_date']);
+            $table->index(['wallet_id', 'status']);
+            $table->index(['wallet_id', 'frequency']);
+            $table->index(['frequency', 'status']);
 
         });
     }

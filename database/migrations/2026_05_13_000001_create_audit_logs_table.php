@@ -14,31 +14,31 @@ return new class extends Migration
     {
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
-            
+
             // who did the action
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            
+
             // what action (transfer_sent, deposit_received, etc)
             $table->string('action');
-            
+
             // what kind of thing was affected (Transaction, Wallet, etc)
             $table->string('entity_type')->nullable();
-            
+
             // the id of that thing
             $table->unsignedBigInteger('entity_id')->nullable();
-            
+
             // what changed (old value and new value)
             $table->json('changes')->nullable();
-            
+
             // where from (ip address)
             $table->string('ip_address')->nullable();
-            
+
             // what device/browser
             $table->text('user_agent')->nullable();
-            
+
             // when it happened
             $table->timestamps();
-            
+
             // indexes for fast lookups
             $table->index(['user_id', 'created_at']);
             $table->index(['action', 'created_at']);

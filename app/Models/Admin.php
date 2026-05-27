@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Container\Attributes\Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
-{     /** @use HasFactory<\Database\Factories\AdminFactory> */
+{
+    /** @use HasFactory<\Database\Factories\AdminFactory> */
     use HasFactory, Notifiable;
-protected $table = 'admin';
-protected $guard = 'admin';
+
+    protected $table = 'admin';
+
+    protected $guard = 'admin';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -35,7 +36,7 @@ protected $guard = 'admin';
         'email_verified',
         'verification_code',
         'profile_picture',
-        'role'
+        'role',
     ];
 
     /**

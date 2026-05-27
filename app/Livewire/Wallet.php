@@ -2,34 +2,44 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Wallet as WalletModel;
-use App\Models\Transaction;
 use App\Models\ScheduledPayment;
+use App\Models\Transaction;
+use App\Models\Wallet as WalletModel;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Wallet extends Component
 {
     // Wallet properties
     public $balance = 0;
+
     public $pendingBalance = 0;
+
     public $reservedBalance = 0;
+
     public $currency = 'NGN';
+
     public $walletStatus = 'active';
+
     public $walletId = null;
 
     // Balance data for cards
     public $balanceData = [];
+
     public $bphp = [];
 
     // Transaction history
     public $transactions = [];
+
     public $scheduledPayments = [];
 
     // UI properties
     public $balanceVisible = true;
+
     public $errorMessage = '';
+
     public $successMessage = '';
+
     public $activeTab = 'overview';
 
     public function mount()
@@ -45,20 +55,21 @@ class Wallet extends Component
         try {
             $user = Auth::user();
 
-            if (!$user) {
+            if (! $user) {
                 redirect()->route('login');
+
                 return;
             }
 
             $wallet = $user->wallet;
 
-            if (!$wallet) {
+            if (! $wallet) {
                 // Create wallet if it doesn't exist
                 $wallet = WalletModel::create([
                     'user_id' => $user->id,
                     'balance' => 0,
                     'currency' => 'NGN',
-                    'status' => 'active'
+                    'status' => 'active',
                 ]);
             }
 
@@ -87,7 +98,7 @@ class Wallet extends Component
                 ->get();
 
         } catch (\Exception $e) {
-            $this->errorMessage = 'Failed to load wallet data: ' . $e->getMessage();
+            $this->errorMessage = 'Failed to load wallet data: '.$e->getMessage();
         }
     }
 
@@ -118,18 +129,18 @@ class Wallet extends Component
             [
                 'name' => 'Available Balance',
                 'value' => $this->balance,
-                'color' => '#a855f7'
+                'color' => '#a855f7',
             ],
             [
                 'name' => 'Pending Balance',
                 'value' => $this->pendingBalance,
-                'color' => '#f59e0b'
+                'color' => '#f59e0b',
             ],
             [
                 'name' => 'Reserved',
                 'value' => $this->reservedBalance,
-                'color' => '#ef4444'
-            ]
+                'color' => '#ef4444',
+            ],
         ];
 
         // For balance distribution pie chart
@@ -141,7 +152,7 @@ class Wallet extends Component
      */
     public function toggleBalance()
     {
-        $this->balanceVisible = !$this->balanceVisible;
+        $this->balanceVisible = ! $this->balanceVisible;
     }
 
     /**
@@ -160,8 +171,9 @@ class Wallet extends Component
     public function getFormattedBalance()
     {
         if ($this->balanceVisible) {
-            return '₦' . number_format($this->balance, 2);
+            return '₦'.number_format($this->balance, 2);
         }
+
         return '••••••••';
     }
 

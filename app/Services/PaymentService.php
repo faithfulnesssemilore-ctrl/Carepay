@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class PaymentService
 {
     protected $secret;
+
     protected $baseUrl = 'https://api.paystack.co';
 
     public function __construct()
@@ -20,15 +21,15 @@ class PaymentService
     {
         $response = Http::withToken($this->secret)
             ->post("{$this->baseUrl}/transaction/initialize", [
-                'email'        => $email,
-                'amount'       => $amount,
-                'reference'    => $reference,
+                'email' => $email,
+                'amount' => $amount,
+                'reference' => $reference,
                 'callback_url' => $callbackUrl,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Paystack init failed', ['response' => $response->body()]);
-            throw new \Exception('Payment initialization failed: ' . $response->json('message', 'Unknown error'));
+            throw new \Exception('Payment initialization failed: '.$response->json('message', 'Unknown error'));
         }
 
         return $response->json('data');
@@ -40,9 +41,9 @@ class PaymentService
         $response = Http::withToken($this->secret)
             ->get("{$this->baseUrl}/transaction/verify/{$reference}");
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Paystack verify failed', ['reference' => $reference, 'response' => $response->body()]);
-            throw new \Exception('Payment verification failed: ' . $response->json('message', 'Unknown error'));
+            throw new \Exception('Payment verification failed: '.$response->json('message', 'Unknown error'));
         }
 
         return $response->json('data');
@@ -53,20 +54,20 @@ class PaymentService
     {
         $response = Http::withToken($this->secret)
             ->post("{$this->baseUrl}/transferrecipient", [
-                'type'           => 'nuban',
-                'name'           => $name,
+                'type' => 'nuban',
+                'name' => $name,
                 'account_number' => $accountNumber,
-                'bank_code'      => $bankCode,
-                'currency'       => 'NGN',
+                'bank_code' => $bankCode,
+                'currency' => 'NGN',
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Paystack create recipient failed', [
                 'account_number' => $accountNumber,
-                'bank_code'      => $bankCode,
-                'response'       => $response->body(),
+                'bank_code' => $bankCode,
+                'response' => $response->body(),
             ]);
-            throw new \Exception('Could not create transfer recipient: ' . $response->json('message', 'Unknown error'));
+            throw new \Exception('Could not create transfer recipient: '.$response->json('message', 'Unknown error'));
         }
 
         return $response->json('data');
@@ -77,21 +78,21 @@ class PaymentService
     {
         $response = Http::withToken($this->secret)
             ->post("{$this->baseUrl}/transfer", [
-                'source'    => 'balance',
-                'amount'    => $amount,
+                'source' => 'balance',
+                'amount' => $amount,
                 'recipient' => $recipient,
                 'reference' => $reference,
-                'reason'    => $reason,
+                'reason' => $reason,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Paystack transfer failed', [
                 'recipient' => $recipient,
-                'amount'    => $amount,
+                'amount' => $amount,
                 'reference' => $reference,
-                'response'  => $response->body(),
+                'response' => $response->body(),
             ]);
-            throw new \Exception('Transfer failed: ' . $response->json('message', 'Unknown error'));
+            throw new \Exception('Transfer failed: '.$response->json('message', 'Unknown error'));
         }
 
         return $response->json('data');
@@ -102,13 +103,14 @@ class PaymentService
     {
         $response = Http::withToken($this->secret)
             ->get("{$this->baseUrl}/bank", [
-                'country'    => 'nigeria',
+                'country' => 'nigeria',
                 'use_cursor' => false,
-                'perPage'    => 100,
+                'perPage' => 100,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Paystack get banks failed', ['response' => $response->body()]);
+
             return [];
         }
 
@@ -121,15 +123,16 @@ class PaymentService
         $response = Http::withToken($this->secret)
             ->get("{$this->baseUrl}/bank/resolve", [
                 'account_number' => $accountNumber,
-                'bank_code'      => $bankCode,
+                'bank_code' => $bankCode,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::warning('Paystack resolve account failed', [
                 'account_number' => $accountNumber,
-                'bank_code'      => $bankCode,
-                'response'       => $response->body(),
+                'bank_code' => $bankCode,
+                'response' => $response->body(),
             ]);
+
             return null;
         }
 
@@ -140,6 +143,7 @@ class PaymentService
     public function verifyWebhook($payload, $signature): bool
     {
         $computed = hash_hmac('sha512', $payload, $this->secret);
+
         return hash_equals($computed, $signature);
     }
 }

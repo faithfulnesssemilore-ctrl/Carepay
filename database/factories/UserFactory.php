@@ -23,17 +23,17 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-    
-    return [
-        // DELETE THE 'name' LINE FROM HERE
-        'first_name' => fake()->firstName(),
-        'last_name' => fake()->lastName(),
-        'email' => fake()->unique()->safeEmail(),
-     
-        'password' => static::$password ??= Hash::make('password'),
-        'remember_token' => Str::random(10),
-        'phone' => fake()->phoneNumber(),
-        'role' => 0,  ];
+
+        return [
+            // DELETE THE 'name' LINE FROM HERE
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
+
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+            'phone' => fake()->phoneNumber(),
+            'role' => 0,  ];
     }
 
     /**

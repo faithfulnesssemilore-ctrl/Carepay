@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Wallet;
 use App\Models\BankAccount;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 
 // database seeder - creates test data for development
@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
             'pin' => bcrypt('1234'), // test PIN: 1234
         ]);
-              // create test  user
+        // create test  user
         User::factory()->create([
             'first_name' => 'Test',
             'last_name' => 'User',

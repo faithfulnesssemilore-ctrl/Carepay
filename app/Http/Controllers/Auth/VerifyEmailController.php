@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class VerifyEmailController extends Controller
 {
@@ -19,7 +18,7 @@ class VerifyEmailController extends Controller
         $user = User::findOrFail($user);
 
         // Verify the hash matches
-        if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
             return redirect()->route('login')
                 ->with('error', 'Invalid verification link');
         }

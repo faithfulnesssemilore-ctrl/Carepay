@@ -1,27 +1,24 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Middleware\EnsureAccountIsActive;
-use App\Livewire\Security\VerifyPin;
-use App\Livewire\UserAuth\Register;
-use App\Livewire\UserAuth\Login;
 use App\Http\Controllers\PaystackWebhookController;
-use App\Livewire\DashboardPage;
-use App\Livewire\SendMoney;
 use App\Livewire\AddMoney;
-use App\Livewire\BillPayment;
-use App\Livewire\Profile;
-use App\Livewire\Settings;
-use App\Livewire\Wallet as WalletComponent;
-use App\Livewire\Transactions;
-
 use App\Livewire\Admin\Admin;
 use App\Livewire\Admin\AdminKYC;
 use App\Livewire\Admin\AdminTransactions;
 use App\Livewire\Admin\AdminUsers;
-
+use App\Livewire\BillPayment;
+use App\Livewire\DashboardPage;
+use App\Livewire\Profile;
+use App\Livewire\Security\VerifyPin;
+use App\Livewire\SendMoney;
+use App\Livewire\Settings;
+use App\Livewire\Transactions;
+use App\Livewire\UserAuth\Login;
+use App\Livewire\UserAuth\Register;
+use App\Livewire\Wallet as WalletComponent;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +28,6 @@ use App\Models\User;
 Route::get('/', function () {
     return view('home');
 })->name('home');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -43,8 +39,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', Register::class)->name('register');
 });
 
-
-//LOGOUT - Use POST to prevent CSRF attacks
+// LOGOUT - Use POST to prevent CSRF attacks
 Route::middleware('auth')->post('/logout', function () {
     Auth::logout();
     session()->invalidate();
@@ -53,7 +48,7 @@ Route::middleware('auth')->post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-//USER DASHBOARD (Protected)
+// USER DASHBOARD (Protected)
 
 Route::middleware(['auth', 'active'])->group(function () {
 
@@ -77,8 +72,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
 });
 
-
-//Admin ROute 
+// Admin ROute
 Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->name('admin.')
@@ -92,8 +86,7 @@ Route::prefix('admin')
 
         Route::get('/users', AdminUsers::class)->name('users');
 
-});
-
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -109,8 +102,7 @@ Route::prefix('super-admin')
             return view('super_admin.dashboard');
         })->name('dashboard');
 
-});
-
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -139,13 +131,13 @@ Route::get('verify-pin', VerifyPin::class)->name('pin-verify');
 // user clicks verification link in email
 // link looks like: /email/verify/user-id/hash
 Route::get('/email/verify/{user}/{hash}', [
-    \App\Http\Controllers\Auth\VerifyEmailController::class, 
-    'verify'
+    \App\Http\Controllers\Auth\VerifyEmailController::class,
+    'verify',
 ])->name('verification.verify');
 
 // user can request new verification email if they didn't get first one
 Route::post('/email/verification-notification', [
-    \App\Http\Controllers\Auth\VerifyEmailController::class, 
-    'resend'
+    \App\Http\Controllers\Auth\VerifyEmailController::class,
+    'resend',
 ])->middleware('auth')
-  ->name('verification.resend');
+    ->name('verification.resend');

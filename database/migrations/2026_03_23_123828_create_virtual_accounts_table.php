@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-          Schema::create('virtual_accounts', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    $table->string('account_number')->unique();
-    $table->string('account_name');
-    $table->string('bank_name');
-    $table->string('provider')->default('paystack');
-    $table->timestamps();
-});
-        }
-    
+        Schema::create('virtual_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('account_number')->unique();
+            $table->string('account_name');
+            $table->string('bank_name');
+            $table->string('provider')->default('paystack');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

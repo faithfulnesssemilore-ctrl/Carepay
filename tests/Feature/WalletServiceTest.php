@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class WalletServiceTest extends TestCase
 {
@@ -15,16 +15,16 @@ class WalletServiceTest extends TestCase
     private function createUserWithWallet(int $balance = 0): User
     {
         $user = User::factory()->create([
-            'status'       => 'active',
+            'status' => 'active',
             'kyc_verified' => true,
             'email_verified_at' => now(),
         ]);
 
         Wallet::create([
-            'user_id'  => $user->id,
-            'balance'  => $balance,
+            'user_id' => $user->id,
+            'balance' => $balance,
             'currency' => 'NGN',
-            'status'   => 'active',
+            'status' => 'active',
         ]);
 
         return $user;
@@ -34,7 +34,7 @@ class WalletServiceTest extends TestCase
     {
         $user = $this->createUserWithWallet(0);
 
-        (new WalletService())->credit(
+        (new WalletService)->credit(
             $user->id,
             10000,
             'REF-001',
@@ -55,7 +55,7 @@ class WalletServiceTest extends TestCase
         $wallet = Wallet::where('user_id', $user->id)->first();
         $this->assertEquals(20000, $wallet->balance);
 
-        (new WalletService())->debit(
+        (new WalletService)->debit(
             $user->id,
             5000,
             'REF-002',
@@ -75,7 +75,7 @@ class WalletServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Insufficient balance');
 
-        (new WalletService())->debit(
+        (new WalletService)->debit(
             $user->id,
             10000,
             'REF-003',
@@ -87,8 +87,8 @@ class WalletServiceTest extends TestCase
     {
         $user = $this->createUserWithWallet(0);
 
-        (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'First');
-        (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'Second attempt');
+        (new WalletService)->credit($user->id, 10000, 'SAME-REF', 'First');
+        (new WalletService)->credit($user->id, 10000, 'SAME-REF', 'Second attempt');
 
         $this->assertDatabaseHas('wallet', [
             'user_id' => $user->id,
@@ -98,11 +98,11 @@ class WalletServiceTest extends TestCase
 
     public function test_transfer_debits_sender_and_credits_recipient(): void
     {
-        $sender    = $this->createUserWithWallet(100000);
+        $sender = $this->createUserWithWallet(100000);
         $recipient = $this->createUserWithWallet(0);
 
         // use correct parameter name from WalletService::transfer()
-        (new WalletService())->transfer(
+        (new WalletService)->transfer(
             $sender->id,
             $recipient->id,
             50000,

@@ -2,26 +2,18 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\User;
 use App\Jobs\CreateVirtualAccountJob;
+use App\Models\User;
+use Ichtrojan\Otp\Otp;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-use Ichtrojan\Otp\Otp;
-use Illuminate\Support\Facades\Mail;
 
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
 
-    /**
-     * Validate and create a newly registered user.
-     *
-     * @param  array<string, string>  $input
-     *
-     * @throws ValidationException
-     */
-   
     public function create(array $input): User
     {
         Validator::make($input, [
@@ -32,28 +24,20 @@ class CreateNewUser implements CreatesNewUsers
 
         $user = User::create([
             'first_name' => $input['firstName'],
-            'last_name'  => $input['lastName'],
-            'email'      => $input['email'],
-            'phone'      => $input['phone'],
-            'password'   => Hash::make($input['password']),
-            'role'       => 'user',
+            'last_name' => $input['lastName'] ?? null,
+            'email' => $input['email'],
+            'phone' => $input['phone'] ?? null,
+            'password' => Hash::make($input['password']),
+            'role' => 0,
         ]);
 
-        // Generate and Send OTP immediately after registration
         $otp = (new Otp)->generate($user->email, 'numeric', 6, 300);
-        
-      Mail::send(
-    'emails.verification',
-    [
-        'token' => $otp->token,
-        'user' => $user
-    ],
-    function ($message) use ($user) {
-        $message->to($user->email)
+
+        Mail::send('emails.verification', ['token' => $otp->token, 'user' => $user], function ($message) use ($user) {
+            $message->to($user->email)
                 ->subject('Verify your email address');
-    }
-);  
-        // Create virtual account asynchronously
+        });
+
         CreateVirtualAccountJob::dispatch($user);
 
         return $user;

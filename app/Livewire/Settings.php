@@ -2,26 +2,34 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Settings extends Component
 {
     // Security settings
     public $twoFactorEnabled = false;
+
     public $notificationsEnabled = true;
+
     public $emailNotifications = true;
+
     public $transactionAlerts = true;
 
     // Password change
     public $currentPassword = '';
+
     public $newPassword = '';
+
     public $confirmPassword = '';
 
     // UI properties
     public $successMessage = '';
+
     public $errorMessage = '';
+
     public $isProcessing = false;
+
     public $activeTab = 'security';
 
     public function mount()
@@ -65,7 +73,7 @@ class Settings extends Component
         $this->validate([
             'currentPassword' => 'required|current_password',
             'newPassword' => 'required|string|min:8|confirmed',
-            'confirmPassword' => 'required'
+            'confirmPassword' => 'required',
         ]);
 
         $this->isProcessing = true;
@@ -83,7 +91,7 @@ class Settings extends Component
             $this->resetPasswordFields();
 
         } catch (\Exception $e) {
-            $this->errorMessage = 'Failed to change password: ' . $e->getMessage();
+            $this->errorMessage = 'Failed to change password: '.$e->getMessage();
         }
 
         $this->isProcessing = false;
@@ -102,7 +110,7 @@ class Settings extends Component
             // Update settings in database (would require a settings table)
             $this->successMessage = 'Settings updated successfully!';
         } catch (\Exception $e) {
-            $this->errorMessage = 'Failed to update settings: ' . $e->getMessage();
+            $this->errorMessage = 'Failed to update settings: '.$e->getMessage();
         }
 
         $this->isProcessing = false;
@@ -123,4 +131,3 @@ class Settings extends Component
         return view('livewire.settings');
     }
 }
-

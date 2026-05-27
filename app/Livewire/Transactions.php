@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Transaction;
 
 class Transactions extends Component
 {
@@ -14,11 +14,15 @@ class Transactions extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $searchQuery = '';
+
     public $filterStatus = 'all';
+
     public $selectedTransaction = null;
 
     public $totalTransactions = 0;
+
     public $totalIn = 0;
+
     public $totalOut = 0;
 
     public function mount()
@@ -45,11 +49,11 @@ class Transactions extends Component
         $this->totalTransactions = $transactions->count();
 
         $this->totalIn = $transactions
-            ->whereIn('transaction_type', ['deposit','received'])
+            ->whereIn('transaction_type', ['deposit', 'received'])
             ->sum('amount');
 
         $this->totalOut = $transactions
-            ->whereIn('transaction_type', ['withdrawal','sent','transfer'])
+            ->whereIn('transaction_type', ['withdrawal', 'sent', 'transfer'])
             ->sum('amount');
     }
 
@@ -70,7 +74,7 @@ class Transactions extends Component
         if ($this->searchQuery) {
             $query->where(function ($q) {
                 $q->where('description', 'like', "%{$this->searchQuery}%")
-                  ->orWhere('reference', 'like', "%{$this->searchQuery}%");
+                    ->orWhere('reference', 'like', "%{$this->searchQuery}%");
             });
         }
 
@@ -83,7 +87,7 @@ class Transactions extends Component
             ->paginate(10);
 
         return view('livewire.transactions', [
-            'transactions' => $transactions
+            'transactions' => $transactions,
         ]);
     }
 }

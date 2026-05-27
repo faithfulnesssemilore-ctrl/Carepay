@@ -2,21 +2,27 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\Log;
-use App\Models\User;
 use App\Models\Transaction;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Livewire\Component;
 
 class Admin extends Component
 {
     public $totalUsers = 0;
+
     public $totalVolume = 0;
+
     public $totalTransactions = 0;
+
     public $totalRevenue = 0;
-    
+
     public $revenueData = [];
+
     public $transactionData = [];
+
     public $userDistribution = [];
+
     public $recentActivity = [];
 
     public function mount()
@@ -29,15 +35,15 @@ class Admin extends Component
         try {
             // Get total users
             $this->totalUsers = User::where('role', 'user')->count();
-            
+
             // Get transactions and volume
             $transactions = Transaction::all();
             $this->totalTransactions = $transactions->count();
             $this->totalVolume = $transactions->sum('amount');
-            
+
             // Sample revenue data
             $this->totalRevenue = 48200;
-            
+
             // Revenue data for chart
             $this->revenueData = [
                 ['name' => 'Jan', 'value' => 42000],
@@ -47,7 +53,7 @@ class Admin extends Component
                 ['name' => 'May', 'value' => 62000],
                 ['name' => 'Jun', 'value' => 58000],
             ];
-            
+
             // Transaction data by day
             $this->transactionData = [
                 ['name' => 'Mon', 'value' => 245],
@@ -58,14 +64,14 @@ class Admin extends Component
                 ['name' => 'Sat', 'value' => 267],
                 ['name' => 'Sun', 'value' => 198],
             ];
-            
+
             // User distribution
             $this->userDistribution = [
                 ['name' => 'Tier 1', 'value' => 12450, 'color' => '#a855f7'],
                 ['name' => 'Tier 2', 'value' => 3200, 'color' => '#7c3aed'],
                 ['name' => 'Tier 3', 'value' => 850, 'color' => '#6366f1'],
             ];
-            
+
             // Recent activity
             $this->recentActivity = [
                 ['id' => 1, 'user' => 'John Doe', 'action' => 'New registration', 'type' => 'user', 'time' => '2 min ago'],
@@ -75,7 +81,7 @@ class Admin extends Component
                 ['id' => 5, 'user' => 'David Chen', 'action' => 'Failed transaction', 'type' => 'alert', 'time' => '45 min ago'],
             ];
         } catch (\Exception $e) {
-            Log::error('Error loading admin dashboard data: ' . $e->getMessage());
+            Log::error('Error loading admin dashboard data: '.$e->getMessage());
         }
     }
 

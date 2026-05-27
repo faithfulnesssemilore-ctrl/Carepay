@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //to create a table for idempotency keys to prevent duplicate transactions
+        // to create a table for idempotency keys to prevent duplicate transactions
         Schema::create('idempotency_keys', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();

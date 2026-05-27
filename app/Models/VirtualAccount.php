@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class VirtualAccount extends Model
 {
     //
- 
+
     protected $fillable = [
         'user_id',
         'account_number',
@@ -20,5 +20,4 @@ class VirtualAccount extends Model
     {
         return $this->belongsTo(User::class);
     }
-
 }

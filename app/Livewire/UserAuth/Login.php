@@ -2,16 +2,19 @@
 
 namespace App\Livewire\UserAuth;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Login extends Component
 {
     public $email;
+
     public $password;
+
     public $remember = false;
 
     public $isLoading = false;
+
     public $errorMessage = null;
 
     public function login()
@@ -24,13 +27,14 @@ class Login extends Component
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt([
+        if (! Auth::attempt([
             'email' => $this->email,
-            'password' => $this->password
+            'password' => $this->password,
         ], $this->remember)) {
 
             $this->errorMessage = 'Invalid email or password';
             $this->isLoading = false;
+
             return;
         }
 

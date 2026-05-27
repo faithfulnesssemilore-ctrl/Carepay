@@ -2,49 +2,59 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Wallet;
-use App\Models\Transaction;
 use App\Models\ScheduledPayment;
+use App\Models\Transaction;
+use App\Models\Wallet;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class DashboardPage extends Component
 {
-    public float  $balance           = 0;
-    public bool   $balanceVisible    = true;
-    public int    $notificationCount = 0;
+    public float $balance = 0;
+
+    public bool $balanceVisible = true;
+
+    public int $notificationCount = 0;
 
     // stat cards
-    public float $monthlyIncome     = 0;
-    public float $monthlyExpenses   = 0;
-    public int   $transactionCount  = 0;
-    public float $billsPaid         = 0;
-    public float $incomePercentage  = 0;
+    public float $monthlyIncome = 0;
+
+    public float $monthlyExpenses = 0;
+
+    public int $transactionCount = 0;
+
+    public float $billsPaid = 0;
+
+    public float $incomePercentage = 0;
+
     public float $expensePercentage = 0;
 
     // daily limit progress
     public float $dailyLimitUsedPercent = 0;
-    public float $dailyLimitTotal       = 0;
-    public float $dailyLimitUsed        = 0;
+
+    public float $dailyLimitTotal = 0;
+
+    public float $dailyLimitUsed = 0;
 
     // chart data json for Chart.js
     public string $chartData = '{}';
 
     // collections
     public $recentTransactions;
+
     public $upcomingPayments;
 
     public function mount(): void
     {
         $this->recentTransactions = collect();
-        $this->upcomingPayments   = collect();
+        $this->upcomingPayments = collect();
         $this->loadData();
     }
 
     public function loadData(): void
     {
         try {
-            $user   = Auth::user();
+            $user = Auth::user();
             $userId = $user->id;
 
             // get or create wallet
@@ -80,14 +90,14 @@ class DashboardPage extends Component
 
             // this month stats
             $monthStart = now()->startOfMonth();
-            $monthEnd   = now()->endOfMonth();
+            $monthEnd = now()->endOfMonth();
 
             $monthlyTx = Transaction::where('user_id', $userId)
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->get();
 
             // amounts are stored in kobo — divide by 100
-            $this->monthlyIncome   = round($monthlyTx->where('type', 'credit')->sum('amount') / 100, 2);
+            $this->monthlyIncome = round($monthlyTx->where('type', 'credit')->sum('amount') / 100, 2);
             $this->monthlyExpenses = round($monthlyTx->where('type', 'debit')->sum('amount') / 100, 2);
             $this->transactionCount = $monthlyTx->count();
 
@@ -101,7 +111,7 @@ class DashboardPage extends Component
 
             // percentage change vs last month
             $prevStart = now()->subMonth()->startOfMonth();
-            $prevEnd   = now()->subMonth()->endOfMonth();
+            $prevEnd = now()->subMonth()->endOfMonth();
 
             $prevIncome = Transaction::where('user_id', $userId)
                 ->where('type', 'credit')
@@ -113,7 +123,7 @@ class DashboardPage extends Component
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
                 ->sum('amount') / 100;
 
-            $this->incomePercentage  = $prevIncome > 0
+            $this->incomePercentage = $prevIncome > 0
                 ? round((($this->monthlyIncome - $prevIncome) / $prevIncome) * 100, 1)
                 : ($this->monthlyIncome > 0 ? 100 : 0);
 
@@ -124,22 +134,22 @@ class DashboardPage extends Component
             // daily limit progress
             $limits = $user->limits;
             if ($limits) {
-                $dailyLimitKobo  = $limits->daily_transfer_limit * 100;
-                $todaySpentKobo  = Transaction::where('user_id', $userId)
+                $dailyLimitKobo = $limits->daily_transfer_limit * 100;
+                $todaySpentKobo = Transaction::where('user_id', $userId)
                     ->where('type', 'debit')
                     ->whereDate('created_at', today())
                     ->sum('amount');
 
-                $this->dailyLimitTotal       = round($dailyLimitKobo / 100, 2);
-                $this->dailyLimitUsed        = round($todaySpentKobo / 100, 2);
+                $this->dailyLimitTotal = round($dailyLimitKobo / 100, 2);
+                $this->dailyLimitUsed = round($todaySpentKobo / 100, 2);
                 $this->dailyLimitUsedPercent = $dailyLimitKobo > 0
                     ? min(100, round(($todaySpentKobo / $dailyLimitKobo) * 100))
                     : 0;
             }
 
             // chart data for last 6 months
-            $chartMonths  = [];
-            $chartIncome  = [];
+            $chartMonths = [];
+            $chartIncome = [];
             $chartExpense = [];
 
             for ($i = 5; $i >= 0; $i--) {
@@ -166,28 +176,28 @@ class DashboardPage extends Component
             }
 
             $this->chartData = json_encode([
-                'labels'   => $chartMonths,
-                'income'   => $chartIncome,
+                'labels' => $chartMonths,
+                'income' => $chartIncome,
                 'expenses' => $chartExpense,
             ]);
 
         } catch (\Exception $e) {
             // graceful fallback so page never crashes
-            $this->balance            = 0;
+            $this->balance = 0;
             $this->recentTransactions = collect();
-            $this->upcomingPayments   = collect();
-            $this->notificationCount  = 0;
-            $this->monthlyIncome      = 0;
-            $this->monthlyExpenses    = 0;
-            $this->transactionCount   = 0;
-            $this->billsPaid          = 0;
-            $this->chartData          = '{"labels":[],"income":[],"expenses":[]}';
+            $this->upcomingPayments = collect();
+            $this->notificationCount = 0;
+            $this->monthlyIncome = 0;
+            $this->monthlyExpenses = 0;
+            $this->transactionCount = 0;
+            $this->billsPaid = 0;
+            $this->chartData = '{"labels":[],"income":[],"expenses":[]}';
         }
     }
 
     public function toggleBalance(): void
     {
-        $this->balanceVisible = !$this->balanceVisible;
+        $this->balanceVisible = ! $this->balanceVisible;
     }
 
     public function refresh(): void
@@ -199,21 +209,21 @@ class DashboardPage extends Component
     public function render()
     {
         return view('livewire.dashboard-page', [
-            'balance'                => $this->balance,
-            'balanceVisible'         => $this->balanceVisible,
-            'monthlyIncome'          => $this->monthlyIncome,
-            'monthlyExpenses'        => $this->monthlyExpenses,
-            'transactionCount'       => $this->transactionCount,
-            'billsPaid'              => $this->billsPaid,
-            'incomePercentage'       => $this->incomePercentage,
-            'expensePercentage'      => $this->expensePercentage,
-            'recentTransactions'     => $this->recentTransactions,
-            'upcomingPayments'       => $this->upcomingPayments,
-            'notificationCount'      => $this->notificationCount,
-            'chartData'              => json_decode($this->chartData, true),
-            'dailyLimitUsedPercent'  => $this->dailyLimitUsedPercent,
-            'dailyLimitTotal'        => $this->dailyLimitTotal,
-            'dailyLimitUsed'         => $this->dailyLimitUsed,
+            'balance' => $this->balance,
+            'balanceVisible' => $this->balanceVisible,
+            'monthlyIncome' => $this->monthlyIncome,
+            'monthlyExpenses' => $this->monthlyExpenses,
+            'transactionCount' => $this->transactionCount,
+            'billsPaid' => $this->billsPaid,
+            'incomePercentage' => $this->incomePercentage,
+            'expensePercentage' => $this->expensePercentage,
+            'recentTransactions' => $this->recentTransactions,
+            'upcomingPayments' => $this->upcomingPayments,
+            'notificationCount' => $this->notificationCount,
+            'chartData' => json_decode($this->chartData, true),
+            'dailyLimitUsedPercent' => $this->dailyLimitUsedPercent,
+            'dailyLimitTotal' => $this->dailyLimitTotal,
+            'dailyLimitUsed' => $this->dailyLimitUsed,
         ]);
     }
 }

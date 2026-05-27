@@ -3,8 +3,8 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class DepositSuccessful extends Notification
 {
@@ -26,9 +26,9 @@ class DepositSuccessful extends Notification
     {
         return (new MailMessage)
             ->subject('Deposit Successful')
-            ->greeting('Hello ' . $notifiable->first_name)
+            ->greeting('Hello '.$notifiable->first_name)
             ->line('Your wallet has been credited successfully.')
-            ->line('Amount: ₦' . number_format($this->amount, 2))
+            ->line('Amount: ₦'.number_format($this->amount, 2))
             ->line('Thank you for using our platform.');
     }
 
@@ -36,7 +36,7 @@ class DepositSuccessful extends Notification
     {
         return [
             'message' => 'Wallet credited',
-            'amount' => $this->amount
+            'amount' => $this->amount,
         ];
     }
 }

@@ -12,7 +12,7 @@ class RoleMiddleware
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -22,7 +22,7 @@ class RoleMiddleware
         }
 
         // Email verification check
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 
@@ -32,7 +32,7 @@ class RoleMiddleware
             'super_admin' => 2,
         ];
 
-        if (!isset($roleLevels[$role])) {
+        if (! isset($roleLevels[$role])) {
             abort(500, 'Invalid role middleware');
         }
 

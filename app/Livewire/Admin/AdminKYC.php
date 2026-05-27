@@ -7,9 +7,13 @@ use Livewire\Component;
 class AdminKYC extends Component
 {
     public $searchQuery = '';
+
     public $filterStatus = 'pending';
+
     public $selectedSubmission = null;
+
     public $reviewNotes = '';
+
     public $showModal = false;
 
     protected $kycSubmissions = [
@@ -23,7 +27,7 @@ class AdminKYC extends Component
             'status' => 'pending',
             'submittedDate' => 'Feb 24, 2026',
             'tier' => 'Tier 1',
-            'documents' => 3
+            'documents' => 3,
         ],
         [
             'id' => 2,
@@ -35,7 +39,7 @@ class AdminKYC extends Component
             'status' => 'pending',
             'submittedDate' => 'Feb 24, 2026',
             'tier' => 'Tier 2',
-            'documents' => 5
+            'documents' => 5,
         ],
         [
             'id' => 3,
@@ -47,7 +51,7 @@ class AdminKYC extends Component
             'status' => 'pending',
             'submittedDate' => 'Feb 23, 2026',
             'tier' => 'Tier 1',
-            'documents' => 3
+            'documents' => 3,
         ],
         [
             'id' => 4,
@@ -60,7 +64,7 @@ class AdminKYC extends Component
             'submittedDate' => 'Feb 22, 2026',
             'approvedDate' => 'Feb 25, 2026',
             'tier' => 'Tier 1',
-            'documents' => 3
+            'documents' => 3,
         ],
         [
             'id' => 5,
@@ -74,8 +78,8 @@ class AdminKYC extends Component
             'rejectedDate' => 'Feb 24, 2026',
             'tier' => 'Tier 1',
             'documents' => 2,
-            'rejectionReason' => 'Documents not clear'
-        ]
+            'rejectionReason' => 'Documents not clear',
+        ],
     ];
 
     public function getFilteredSubmissionsProperty()
@@ -102,7 +106,7 @@ class AdminKYC extends Component
     {
         if ($this->selectedSubmission) {
             // Update status in database (dummy action for now)
-            session()->flash('message', 'KYC submission approved for ' . $this->selectedSubmission['name']);
+            session()->flash('message', 'KYC submission approved for '.$this->selectedSubmission['name']);
             $this->showModal = false;
             $this->selectedSubmission = null;
         }
@@ -110,9 +114,9 @@ class AdminKYC extends Component
 
     public function rejectSubmission()
     {
-        if ($this->selectedSubmission && !empty($this->reviewNotes)) {
+        if ($this->selectedSubmission && ! empty($this->reviewNotes)) {
             // Update status in database (dummy action for now)
-            session()->flash('message', 'KYC submission rejected for ' . $this->selectedSubmission['name']);
+            session()->flash('message', 'KYC submission rejected for '.$this->selectedSubmission['name']);
             $this->showModal = false;
             $this->selectedSubmission = null;
             $this->reviewNotes = '';

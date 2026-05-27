@@ -2,20 +2,20 @@
 
 namespace App\Jobs;
 
-        use Illuminate\Contracts\Queue\ShouldQueue;
-        use Illuminate\Foundation\Queue\Queueable;
-        use Illuminate\Queue\InteractsWithQueue;
-        use Illuminate\Queue\SerializesModels;
-        use App\Notifications\TransferCompleted;
-        use App\Models\AuditLog;
-        
+use App\Models\AuditLog;
+use App\Notifications\TransferCompleted;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
 class ProcessTransferJob implements ShouldQueue
 {
-    use Queueable;
-    
     use InteractsWithQueue, SerializesModels;
+    use Queueable;
 
     public $transaction;
+
     /**
      * Create a new job instance.
      */
@@ -31,7 +31,7 @@ class ProcessTransferJob implements ShouldQueue
     public function handle(): void
     {
         //
-         // Send notification
+        // Send notification
         $this->transaction->user->notify(
             new TransferCompleted($this->transaction)
         );
@@ -41,14 +41,14 @@ class ProcessTransferJob implements ShouldQueue
             'user_id' => $this->transaction->user_id,
             'action' => 'transfer_completed',
             'data' => json_encode([
-                'amount' => $this->transaction->amount
+                'amount' => $this->transaction->amount,
             ]),
-            'ip_address' => request()->ip()
+            'ip_address' => request()->ip(),
         ]);
 
-         // Update transaction status
-         $this->transaction->update([
-            'status' => 'completed'
+        // Update transaction status
+        $this->transaction->update([
+            'status' => 'completed',
         ]);
     }
 }

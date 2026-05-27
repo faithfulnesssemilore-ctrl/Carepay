@@ -8,16 +8,19 @@ use Illuminate\Support\Facades\Log;
 class VtpassService
 {
     protected string $baseUrl;
+
     protected string $apiKey;
+
     protected string $publicKey;
+
     protected string $secretKey;
 
     public function __construct()
     {
-        $this->baseUrl    = config('services.vtpass.base_url', 'https://sandbox.vtpass.com/api');
-        $this->apiKey     = config('services.vtpass.api_key',    '');
-        $this->publicKey  = config('services.vtpass.public_key', '');
-        $this->secretKey  = config('services.vtpass.secret_key', '');
+        $this->baseUrl = config('services.vtpass.base_url', 'https://sandbox.vtpass.com/api');
+        $this->apiKey = config('services.vtpass.api_key', '');
+        $this->publicKey = config('services.vtpass.public_key', '');
+        $this->secretKey = config('services.vtpass.secret_key', '');
     }
 
     // GET requests use api-key + public-key
@@ -25,13 +28,14 @@ class VtpassService
     {
         try {
             $response = Http::withHeaders([
-                'api-key'    => $this->apiKey,
+                'api-key' => $this->apiKey,
                 'public-key' => $this->publicKey,
-            ])->get($this->baseUrl . $endpoint, $params);
+            ])->get($this->baseUrl.$endpoint, $params);
 
             return $response->json() ?? ['code' => '999', 'response_description' => 'Empty response'];
         } catch (\Exception $e) {
-            Log::error('VTPass GET error: ' . $e->getMessage());
+            Log::error('VTPass GET error: '.$e->getMessage());
+
             return ['code' => '999', 'response_description' => $e->getMessage()];
         }
     }
@@ -41,14 +45,15 @@ class VtpassService
     {
         try {
             $response = Http::withHeaders([
-                'api-key'    => $this->apiKey,
+                'api-key' => $this->apiKey,
                 'secret-key' => $this->secretKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . $endpoint, $payload);
+            ])->post($this->baseUrl.$endpoint, $payload);
 
             return $response->json() ?? ['code' => '999', 'response_description' => 'Empty response'];
         } catch (\Exception $e) {
-            Log::error('VTPass POST error: ' . $e->getMessage());
+            Log::error('VTPass POST error: '.$e->getMessage());
+
             return ['code' => '999', 'response_description' => $e->getMessage()];
         }
     }
@@ -56,7 +61,7 @@ class VtpassService
     // generate unique request ID required by VTPass
     public function generateRequestId(): string
     {
-        return now()->format('YmdHi') . substr(md5(uniqid(mt_rand(), true)), 0, 8);
+        return now()->format('YmdHi').substr(md5(uniqid(mt_rand(), true)), 0, 8);
     }
 
     // check wallet balance on VTPass
@@ -70,9 +75,9 @@ class VtpassService
     {
         $payload = array_merge([
             'request_id' => $this->generateRequestId(),
-            'serviceID'  => $serviceId,
-            'amount'     => $amount,
-            'phone'      => $phone,
+            'serviceID' => $serviceId,
+            'amount' => $amount,
+            'phone' => $phone,
         ], $additionalData);
 
         return $this->postRequest('/pay', $payload);
@@ -94,9 +99,9 @@ class VtpassService
     public function verifyMeter(string $serviceId, string $meterNumber, string $meterType): array
     {
         return $this->getRequest('/merchant-verify', [
-            'billersCode'    => $meterNumber,
-            'serviceID'      => $serviceId,
-            'type'           => $meterType,
+            'billersCode' => $meterNumber,
+            'serviceID' => $serviceId,
+            'type' => $meterType,
         ]);
     }
 
@@ -105,7 +110,7 @@ class VtpassService
     {
         return $this->getRequest('/merchant-verify', [
             'billersCode' => $smartcard,
-            'serviceID'   => $serviceId,
+            'serviceID' => $serviceId,
         ]);
     }
 }

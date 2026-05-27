@@ -2,14 +2,17 @@
 
 namespace App\Livewire\Security;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Component;
 
 class PinModal extends Component
 {
     public $pin = '';
+
     public $action = null;
+
     public $payload = [];
+
     public $show = false;
 
     protected $listeners = ['openPinModal'];
@@ -25,13 +28,14 @@ class PinModal extends Component
     public function verifyPin()
     {
         $this->validate([
-            'pin' => 'required|digits:4'
+            'pin' => 'required|digits:4',
         ]);
 
         $user = auth()->user();
 
-        if (!Hash::check($this->pin, $user->transaction_pin)) {
+        if (! Hash::check($this->pin, $user->transaction_pin)) {
             session()->flash('error', 'Incorrect PIN');
+
             return;
         }
 
@@ -43,8 +47,8 @@ class PinModal extends Component
 
     public function render()
     {
-       
-return view('livewire.security.pin-model-class');
+
+        return view('livewire.security.pin-model-class');
 
     }
 }

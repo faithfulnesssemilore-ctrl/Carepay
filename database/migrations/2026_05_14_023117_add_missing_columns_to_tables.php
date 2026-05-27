@@ -11,14 +11,14 @@ return new class extends Migration
     public function up(): void
     {
         // Add kyc_rejection_reason to users table
-        if (!Schema::hasColumn('users', 'kyc_rejection_reason')) {
+        if (! Schema::hasColumn('users', 'kyc_rejection_reason')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->text('kyc_rejection_reason')->nullable();
             });
         }
 
         // Add recipient_id to transactions table
-        if (!Schema::hasColumn('transactions', 'recipient_id')) {
+        if (! Schema::hasColumn('transactions', 'recipient_id')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->foreignId('recipient_id')->nullable()->constrained('users')->onDelete('set null');
             });

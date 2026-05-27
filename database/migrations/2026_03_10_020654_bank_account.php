@@ -13,14 +13,14 @@ return new class extends Migration
     {
         //
         Schema::create('bank_accounts', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    $table->string('bank_name');
-    $table->string('bank_code');
-    $table->string('account_number');
-    $table->string('account_name');
-    $table->timestamps();
-});
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('bank_name');
+            $table->string('bank_code');
+            $table->string('account_number');
+            $table->string('account_name');
+            $table->timestamps();
+        });
     }
 
     /**

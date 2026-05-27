@@ -13,24 +13,24 @@ return new class extends Migration
     {
         Schema::create('admin', function (Blueprint $table) {
             $table->id();
-              $table->string('first_name');
+            $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('phone')->nullable();
-            $table->string('password');  
-            
-                $table->string('id_document')->nullable();
-                $table->string('id_type')->nullable();
-                $table->string('id_number')->nullable();
-                $table->boolean('kyc_verified')->default(false);
-                $table->string('transaction_pin')->nullable();
-                $table->boolean('registration_complete')->default(false);
-                $table->boolean('terms_accepted')->default(false);
-                $table->boolean('email_verified')->default(false);
-                $table->string('verification_code')->nullable();
-                $table->string('profile_picture')->nullable();
-                $table->string('role')->default('user'); // user, admin
-            
+            $table->string('password');
+
+            $table->string('id_document')->nullable();
+            $table->string('id_type')->nullable();
+            $table->string('id_number')->nullable();
+            $table->boolean('kyc_verified')->default(false);
+            $table->string('transaction_pin')->nullable();
+            $table->boolean('registration_complete')->default(false);
+            $table->boolean('terms_accepted')->default(false);
+            $table->boolean('email_verified')->default(false);
+            $table->string('verification_code')->nullable();
+            $table->string('profile_picture')->nullable();
+            $table->string('role')->default('user'); // user, admin
+
             $table->timestamps();
         });
     }

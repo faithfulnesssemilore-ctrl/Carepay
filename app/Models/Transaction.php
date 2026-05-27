@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
     use HasFactory;
-// Define transaction types
+
+    // Define transaction types
     protected $fillable = [
         'wallet_id',
         'user_id',
@@ -19,14 +20,14 @@ class Transaction extends Model
         'reference',
         'description',
         'recipient_id',
-        'idempotency_key'
+        'idempotency_key',
     ];
 
     protected $casts = [
         'amount' => 'integer',  // stored in kobo
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     /**

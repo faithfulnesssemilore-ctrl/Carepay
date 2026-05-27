@@ -34,19 +34,19 @@ class BankService
                 $secret = config('services.paystack.secret');
                 $response = Http::withToken($secret)
                     ->get('https://api.paystack.co/bank', [
-                        'country'    => 'nigeria',
+                        'country' => 'nigeria',
                         'use_cursor' => false,
-                        'perPage'    => 100,
+                        'perPage' => 100,
                     ]);
 
-                if ($response->successful() && !empty($response->json('data'))) {
-                    return array_map(fn($b) => [
+                if ($response->successful() && ! empty($response->json('data'))) {
+                    return array_map(fn ($b) => [
                         'code' => $b['code'],
                         'name' => $b['name'],
                     ], $response->json('data'));
                 }
             } catch (\Exception $e) {
-                Log::warning('Could not fetch banks from Paystack: ' . $e->getMessage());
+                Log::warning('Could not fetch banks from Paystack: '.$e->getMessage());
             }
 
             // fallback if Paystack is down or key not set
@@ -81,6 +81,7 @@ class BankService
                 return $bank;
             }
         }
+
         return null;
     }
 
@@ -88,11 +89,11 @@ class BankService
     public function resolveAccountName(string $accountNumber, string $bankCode): ?string
     {
         try {
-            $secret   = config('services.paystack.secret');
+            $secret = config('services.paystack.secret');
             $response = Http::withToken($secret)
                 ->get('https://api.paystack.co/bank/resolve', [
                     'account_number' => $accountNumber,
-                    'bank_code'      => $bankCode,
+                    'bank_code' => $bankCode,
                 ]);
 
             if ($response->successful()) {
@@ -101,11 +102,11 @@ class BankService
 
             Log::warning('Account resolution failed', [
                 'account_number' => $accountNumber,
-                'bank_code'      => $bankCode,
-                'response'       => $response->body(),
+                'bank_code' => $bankCode,
+                'response' => $response->body(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Account resolution error: ' . $e->getMessage());
+            Log::error('Account resolution error: '.$e->getMessage());
         }
 
         return null;
@@ -115,7 +116,9 @@ class BankService
     public function getUssdCode(string $bankCode, $amount, string $accountNumber): ?string
     {
         $template = $this->ussdCodes[$bankCode] ?? null;
-        if (!$template) return null;
+        if (! $template) {
+            return null;
+        }
 
         return str_replace(
             ['{amount}', '{account}'],

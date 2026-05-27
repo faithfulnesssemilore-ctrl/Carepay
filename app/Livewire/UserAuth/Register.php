@@ -1,90 +1,112 @@
 <?php
 
 namespace App\Livewire\UserAuth;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Facades\Hash;
-use Ichtrojan\Otp\Otp;
-use Illuminate\Support\Facades\Mail;
-use Livewire\Component;
+
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
+use Ichtrojan\Otp\Otp;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Register extends Component
 {
     use WithFileUploads; // Trait for handling file uploads in Livewire
+
     // Declare public properties for the form steps and current step
     public int $currentStep = 1;
 
     // Declare public properties for form data binding
     public string $firstName = '';
+
     public string $lastName = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
+
     public string $pin = '';
+
     public string $pin_confirmation = '';
-        public $idDocument = null;
+
+    public $idDocument = null;
+
     public string $idType = '';
+
     public string $idNumber = '';
-        public bool $termsAccepted = false;
-public bool $kycVerified = false;
+
+    public bool $termsAccepted = false;
+
+    public bool $kycVerified = false;
 
     // OTP related properties
     public string $verificationCode = '';
+
     public bool $emailVerified = false;
+
     public bool $verificationSent = false;
+
     public int $otpAttempts = 0;
+
     public $lastOtpSentAt = null;
+
     public bool $canResendOtp = true;
-public bool $otpVerified = false;
+
+    public bool $otpVerified = false;
 
     // Method to go to the next step
     public function nextStep()
     {
         if ($this->currentStep === 1) {
-                        $this->validate([
+            $this->validate([
                 'firstName' => 'required|string|min:2|max:255',
-                'lastName'  => 'required|string|min:2|max:255',
-                'email'     => 'required|email|unique:users,email',
-                'phone'     => 'required|string|min:11|max:20',
+                'lastName' => 'required|string|min:2|max:255',
+                'email' => 'required|email|unique:users,email',
+                'phone' => 'required|string|min:11|max:20',
             ]);
 
-                        $this->sendOtp();
+            $this->sendOtp();
             $this->currentStep++;
+
             return;
         }
 
-                if ($this->currentStep === 2) {
-// Check if OTP is verified before proceeding
-            if (!$this->otpVerified) {
+        if ($this->currentStep === 2) {
+            // Check if OTP is verified before proceeding
+            if (! $this->otpVerified) {
                 $this->addError('verificationCode', 'Please verify your email code first.');
+
                 return;
             }
 
             $this->currentStep++;
+
             return;
         }
 
-                if ($this->currentStep === 3) {
+        if ($this->currentStep === 3) {
             $this->validate([
                 'idDocument' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
                 'idType' => 'required|in:passport,drivers_license,national_id',
                 'idNumber' => 'required|string|max:255',
             ]);
-                    }
+        }
 
-                if ($this->currentStep === 4) {
+        if ($this->currentStep === 4) {
             $this->validate([
                 'pin' => 'required|digits:4|confirmed',
             ]);
-                    }
+        }
 
-                if ($this->currentStep === 5) {
+        if ($this->currentStep === 5) {
             $this->validate([
                 'password' => [
                     'required',
@@ -92,14 +114,15 @@ public bool $otpVerified = false;
                     Password::min(8)->mixedCase()->numbers()->symbols(),
                 ],
             ]);
-                    }
+        }
 
-                if ($this->currentStep === 6) {
+        if ($this->currentStep === 6) {
             $this->validate([
                 'termsAccepted' => 'accepted',
             ]);
 
             $this->submit();
+
             return;
         }
 
@@ -127,13 +150,14 @@ public bool $otpVerified = false;
         // Check if we can resend (60 seconds cooldown)
         if ($this->lastOtpSentAt && Carbon::parse($this->lastOtpSentAt)->addSeconds(60)->isFuture()) {
             $this->addError('verificationCode', 'Please wait before requesting a new code.');
+
             return;
         }
 
-                $otp = (new Otp)->generate($this->email, 'numeric', 6, 300);         // 5 minutes = 300 seconds
+        $otp = (new Otp)->generate($this->email, 'numeric', 6, 300);         // 5 minutes = 300 seconds
 
         $user = (object) [
-            'name' => trim($this->firstName . ' ' . $this->lastName) ?: $this->email,
+            'name' => trim($this->firstName.' '.$this->lastName) ?: $this->email,
             'email' => $this->email,
         ];
 
@@ -158,7 +182,7 @@ public bool $otpVerified = false;
 
         // Re-enable resend after 60 seconds
         $this->canResendOtp = false;
-$this->lastOtpSentAt = now();
+        $this->lastOtpSentAt = now();
     }
 
     // Method to verify OTP code
@@ -171,15 +195,17 @@ $this->lastOtpSentAt = now();
         // Check attempt limit
         if ($this->otpAttempts >= 5) {
             $this->addError('verificationCode', 'Too many failed attempts. Please request a new code.');
+
             return;
         }
 
-                $otp = new Otp();
+        $otp = new Otp;
         $result = $otp->validate($this->email, $this->verificationCode);
 
-        if (!$result->status) {
+        if (! $result->status) {
             $this->otpAttempts++;
-                        $this->addError('verificationCode', 'Invalid or expired OTP. ' . (5 - $this->otpAttempts) . ' attempts remaining.');
+            $this->addError('verificationCode', 'Invalid or expired OTP. '.(5 - $this->otpAttempts).' attempts remaining.');
+
             return;
         }
 
@@ -195,7 +221,7 @@ $this->lastOtpSentAt = now();
 
         // Move to next step automatically
         $this->currentStep = 3;
-        return;
+
     }
 
     // Method to enable resend button
@@ -203,19 +229,19 @@ $this->lastOtpSentAt = now();
     {
         $this->canResendOtp = true;
     }
-         public function create(){ // This create document  
-            $validate = $this->validate();
-            if ($this->idDocument) {
-                $validate['id_document'] = $this->idDocument->store('id_documents', 'public');
-            }
 
-         }
+    public function create() // This create document
+    {$validate = $this->validate();
+        if ($this->idDocument) {
+            $validate['id_document'] = $this->idDocument->store('id_documents', 'public');
+        }
 
+    }
 
     // Method to submit the registration
     public function submit()
     {
-                $this->validate([
+        $this->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -259,11 +285,12 @@ $this->lastOtpSentAt = now();
         // 3. Wallet, Virtual Account, and Limits auto-created by User model boot method
         // No need to create them here - they're already created automatically
 
-    // 4. Login
+        // 4. Login
         Auth::login($user);
-        
+
         return redirect()->route('dashboard');
     }
+
     // Validation messages
     protected $messages = [
         'firstName.required' => 'First name is required.',

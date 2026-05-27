@@ -7,8 +7,11 @@ use Livewire\Component;
 class AdminTransactions extends Component
 {
     public $searchQuery = '';
+
     public $filterStatus = 'all';
+
     public $selectedTransaction = null;
+
     public $showModal = false;
 
     protected $transactions = [
@@ -21,7 +24,7 @@ class AdminTransactions extends Component
             'fee' => 0.00,
             'status' => 'completed',
             'date' => 'Feb 25, 2026 - 2:30 PM',
-            'category' => 'P2P Transfer'
+            'category' => 'P2P Transfer',
         ],
         [
             'id' => 'TXN20260225002',
@@ -32,7 +35,7 @@ class AdminTransactions extends Component
             'fee' => 0.00,
             'status' => 'completed',
             'date' => 'Feb 25, 2026 - 9:15 AM',
-            'category' => 'Bill Payment'
+            'category' => 'Bill Payment',
         ],
         [
             'id' => 'TXN20260224003',
@@ -43,7 +46,7 @@ class AdminTransactions extends Component
             'fee' => 1.50,
             'status' => 'completed',
             'date' => 'Feb 24, 2026 - 3:45 PM',
-            'category' => 'Bank Transfer'
+            'category' => 'Bank Transfer',
         ],
         [
             'id' => 'TXN20260224004',
@@ -54,7 +57,7 @@ class AdminTransactions extends Component
             'fee' => 0.00,
             'status' => 'pending',
             'date' => 'Feb 24, 2026 - 8:20 PM',
-            'category' => 'P2P Transfer'
+            'category' => 'P2P Transfer',
         ],
         [
             'id' => 'TXN20260223005',
@@ -65,7 +68,7 @@ class AdminTransactions extends Component
             'fee' => 0.00,
             'status' => 'completed',
             'date' => 'Feb 23, 2026 - 12:00 PM',
-            'category' => 'Bill Payment'
+            'category' => 'Bill Payment',
         ],
         [
             'id' => 'TXN20260222006',
@@ -76,8 +79,8 @@ class AdminTransactions extends Component
             'fee' => 0.00,
             'status' => 'failed',
             'date' => 'Feb 22, 2026 - 5:30 PM',
-            'category' => 'P2P Transfer'
-        ]
+            'category' => 'P2P Transfer',
+        ],
     ];
 
     public function getFilteredTransactionsProperty()

@@ -7,8 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-
-class TransferCompleted extends Notification implements ShouldQueue{
+class TransferCompleted extends Notification implements ShouldQueue
+{
     use Queueable;
 
     /**

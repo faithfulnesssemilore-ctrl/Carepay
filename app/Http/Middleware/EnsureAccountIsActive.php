@@ -14,6 +14,7 @@ class EnsureAccountIsActive
 
         if ($user && $user->status !== 'active') {
             Auth::logout();
+
             return redirect()->route('login')
                 ->with('error', 'Account suspended. Contact support.');
         }

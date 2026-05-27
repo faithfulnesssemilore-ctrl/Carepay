@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Wallet;
-use App\Models\Transaction;
-use App\Models\User;
+use App\Http\Requests\DepositRequest;
 use App\Http\Requests\TransferRequest;
 use App\Http\Requests\WithdrawRequest;
-use App\Http\Requests\DepositRequest;
-use App\Services\PinService;
 use App\Models\AuditLog;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Services\PinService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 
 // wallet controller - handles all money movement
 // transfers, deposits, withdrawals all go through here
@@ -35,7 +35,7 @@ class WalletController extends Controller
         $wallet = $user->wallet;
 
         // make sure wallet exists
-        if (!$wallet) {
+        if (! $wallet) {
             return response()->json(['error' => 'wallet not found'], 404);
         }
 
@@ -50,7 +50,7 @@ class WalletController extends Controller
                 'balance' => $wallet->balance,
                 'currency' => $wallet->currency,
                 'user_id' => $wallet->user_id,
-            ]
+            ],
         ]);
     }
 
@@ -71,11 +71,11 @@ class WalletController extends Controller
     public function transfer(TransferRequest $request)
     {
         $user = Auth::user();
-        
+
         // check email is verified (security requirement)
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return response()->json([
-                'error' => 'verify your email first before transferring'
+                'error' => 'verify your email first before transferring',
             ], 403);
         }
 
@@ -90,12 +90,12 @@ class WalletController extends Controller
             $this->pinService->verifyPin($request->pin, $user->id);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 401);
         }
 
         // check daily limits
-        if (!$user->limits->canTransferAmount($request->amount)) {
+        if (! $user->limits->canTransferAmount($request->amount)) {
             return response()->json([
                 'error' => 'exceeds your daily limit',
                 'remaining' => $user->limits->getRemainingDailyTransfer(),
@@ -128,7 +128,7 @@ class WalletController extends Controller
                 'type' => 'transfer',
                 'status' => 'completed',
                 'description' => $request->description ?? 'transfer',
-                'reference' => 'TRF-' . time() . '-' . $user->id,
+                'reference' => 'TRF-'.time().'-'.$user->id,
             ]);
 
             // update daily limit tracking
@@ -173,9 +173,9 @@ class WalletController extends Controller
         $user = Auth::user();
 
         // make sure email is verified
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return response()->json([
-                'error' => 'verify your email first'
+                'error' => 'verify your email first',
             ], 403);
         }
 
@@ -189,7 +189,7 @@ class WalletController extends Controller
             'amount' => $request->amount,
             'type' => 'deposit',
             'status' => 'pending',
-            'reference' => 'DEP-' . time() . '-' . $user->id,
+            'reference' => 'DEP-'.time().'-'.$user->id,
         ]);
 
         // log the attempt
@@ -219,9 +219,9 @@ class WalletController extends Controller
         $user = Auth::user();
 
         // check email verified
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return response()->json([
-                'error' => 'verify your email first'
+                'error' => 'verify your email first',
             ], 403);
         }
 
@@ -236,7 +236,7 @@ class WalletController extends Controller
             $this->pinService->verifyPin($request->pin, $user->id);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 401);
         }
 
@@ -263,7 +263,7 @@ class WalletController extends Controller
                 'amount' => $request->amount,
                 'type' => 'withdrawal',
                 'status' => 'processing', // bank transfer takes time
-                'reference' => 'WID-' . time() . '-' . $user->id,
+                'reference' => 'WID-'.time().'-'.$user->id,
                 'bank_account_id' => $bankAccount->id,
             ]);
 

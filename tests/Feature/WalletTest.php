@@ -6,15 +6,15 @@ use App\Services\WalletService;
 
 beforeEach(function () {
     $this->user = User::factory()->create([
-        'status'            => 'active',
+        'status' => 'active',
         'email_verified_at' => now(),
     ]);
 
     Wallet::create([
-        'user_id'  => $this->user->id,
-        'balance'  => 0,
+        'user_id' => $this->user->id,
+        'balance' => 0,
         'currency' => 'NGN',
-        'status'   => 'active',
+        'status' => 'active',
     ]);
 });
 
@@ -24,22 +24,22 @@ test('wallet balance starts at zero', function () {
 });
 
 test('crediting wallet increases balance', function () {
-    (new WalletService())->credit($this->user->id, 50000, 'REF-001', 'Test');
+    (new WalletService)->credit($this->user->id, 50000, 'REF-001', 'Test');
 
     $balance = Wallet::where('user_id', $this->user->id)->first()->balance;
     expect($balance)->toBe(50000);
 });
 
 test('same reference cannot credit wallet twice', function () {
-    (new WalletService())->credit($this->user->id, 50000, 'SAME-REF', 'First');
-    (new WalletService())->credit($this->user->id, 50000, 'SAME-REF', 'Duplicate');
+    (new WalletService)->credit($this->user->id, 50000, 'SAME-REF', 'First');
+    (new WalletService)->credit($this->user->id, 50000, 'SAME-REF', 'Duplicate');
 
     $balance = Wallet::where('user_id', $this->user->id)->first()->balance;
     expect($balance)->toBe(50000); // not 100000
 });
 
 test('cannot debit more than wallet balance', function () {
-    expect(fn () => (new WalletService())->debit($this->user->id, 10000, 'REF-002', 'Test'))
+    expect(fn () => (new WalletService)->debit($this->user->id, 10000, 'REF-002', 'Test'))
         ->toThrow(Exception::class, 'Insufficient balance');
 });
 

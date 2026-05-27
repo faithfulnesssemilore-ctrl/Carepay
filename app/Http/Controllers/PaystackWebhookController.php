@@ -2,29 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\VirtualAccount;
+use App\Notifications\DepositSuccessful;
+use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\VirtualAccount;
-use App\Models\User;
-use App\Notifications\DepositSuccessful;
-use App\Services\WalletService;
 
 class PaystackWebhookController extends Controller
 {
     public function handleEvent(Request $request)
     {
-        $payload   = $request->getContent();
+        $payload = $request->getContent();
         $signature = $request->header('x-paystack-signature');
 
         // verify the webhook is actually from Paystack
         if ($signature !== hash_hmac('sha512', $payload, config('services.paystack.secret'))) {
             Log::warning('Invalid Paystack webhook signature');
+
             return response()->json(['message' => 'Invalid signature'], 401);
         }
 
         $event = $request->input('event');
-        $data  = $request->input('data');
+        $data = $request->input('data');
 
         if ($event === 'charge.success') {
             $this->handleChargeSuccess($data);
@@ -44,23 +45,25 @@ class PaystackWebhookController extends Controller
 
     private function handleChargeSuccess(array $data): void
     {
-        $reference     = $data['reference']     ?? null;
-        $amountInKobo  = (int) ($data['amount'] ?? 0);
+        $reference = $data['reference'] ?? null;
+        $amountInKobo = (int) ($data['amount'] ?? 0);
         $accountNumber = $data['authorization']['receiver_bank_account_number'] ?? null;
 
-        if (!$reference || $amountInKobo <= 0) {
+        if (! $reference || $amountInKobo <= 0) {
             Log::warning('Paystack charge.success missing reference or amount', $data);
+
             return;
         }
 
-        $walletService = new WalletService();
+        $walletService = new WalletService;
 
         // check if this is a card deposit (reference starts with DEP_)
         if (str_starts_with($reference, 'DEP_')) {
             $deposit = DB::table('deposits')->where('reference_id', $reference)->first();
 
-            if (!$deposit) {
+            if (! $deposit) {
                 Log::warning('Paystack webhook: deposit not found for reference', ['reference' => $reference]);
+
                 return;
             }
 
@@ -71,9 +74,9 @@ class PaystackWebhookController extends Controller
 
             try {
                 $walletService->credit(
-                    userId:      $deposit->user_id,
-                    amountKobo:  $amountInKobo,
-                    reference:   $reference,
+                    userId: $deposit->user_id,
+                    amountKobo: $amountInKobo,
+                    reference: $reference,
                     description: 'Card deposit'
                 );
 
@@ -89,7 +92,7 @@ class PaystackWebhookController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to credit wallet for card deposit', [
                     'reference' => $reference,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -100,16 +103,17 @@ class PaystackWebhookController extends Controller
         if ($accountNumber) {
             $virtual = VirtualAccount::where('account_number', $accountNumber)->first();
 
-            if (!$virtual) {
+            if (! $virtual) {
                 Log::warning('Paystack webhook: virtual account not found', ['account_number' => $accountNumber]);
+
                 return;
             }
 
             try {
                 $walletService->credit(
-                    userId:      $virtual->user_id,
-                    amountKobo:  $amountInKobo,
-                    reference:   $reference,
+                    userId: $virtual->user_id,
+                    amountKobo: $amountInKobo,
+                    reference: $reference,
                     description: 'Bank transfer deposit'
                 );
 
@@ -121,7 +125,7 @@ class PaystackWebhookController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to credit wallet for bank transfer', [
                     'reference' => $reference,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -130,7 +134,9 @@ class PaystackWebhookController extends Controller
     private function handleTransferSuccess(array $data): void
     {
         $reference = $data['reference'] ?? null;
-        if (!$reference) return;
+        if (! $reference) {
+            return;
+        }
 
         // mark the transaction as completed
         \App\Models\Transaction::where('reference', $reference)
@@ -142,7 +148,9 @@ class PaystackWebhookController extends Controller
     private function handleTransferFailed(array $data): void
     {
         $reference = $data['reference'] ?? null;
-        if (!$reference) return;
+        if (! $reference) {
+            return;
+        }
 
         // mark the transaction as failed and refund the wallet
         $tx = \App\Models\Transaction::where('reference', $reference)->first();
@@ -152,11 +160,11 @@ class PaystackWebhookController extends Controller
 
             // refund the sender
             try {
-                $refundRef = 'REFUND_' . $reference;
-                (new WalletService())->credit(
-                    userId:      $tx->user_id,
-                    amountKobo:  $tx->amount,
-                    reference:   $refundRef,
+                $refundRef = 'REFUND_'.$reference;
+                (new WalletService)->credit(
+                    userId: $tx->user_id,
+                    amountKobo: $tx->amount,
+                    reference: $refundRef,
                     description: 'Transfer failed - refund'
                 );
 

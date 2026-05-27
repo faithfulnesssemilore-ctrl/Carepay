@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'active' => \App\Http\Middleware\EnsureAccountIsActive::class,
             'pin' => \App\Http\Middleware\RequireTransactionPin::class,
-            'idempotency' => \App\Http\Middleware\IdempotencyMiddleware::class
+            'idempotency' => \App\Http\Middleware\IdempotencyMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

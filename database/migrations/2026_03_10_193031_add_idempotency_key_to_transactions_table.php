@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            //this column will be used to store the idempotency key for each transaction, ensuring that duplicate transactions can be identified and prevented.
+            // this column will be used to store the idempotency key for each transaction, ensuring that duplicate transactions can be identified and prevented.
             $table->string('idempotency_key')->nullable()->index()->after('reference');
             $table->unique('idempotency_key'); // Ensure that each idempotency key is unique across the transactions table
 

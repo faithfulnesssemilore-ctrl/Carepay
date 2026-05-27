@@ -7,8 +7,11 @@ use Livewire\Component;
 class AdminUsers extends Component
 {
     public $searchQuery = '';
+
     public $filterStatus = 'all';
+
     public $selectedUser = null;
+
     public $showModal = false;
 
     protected $users = [
@@ -21,7 +24,7 @@ class AdminUsers extends Component
             'tier' => 'Tier 1',
             'balance' => 12450.00,
             'status' => 'active',
-            'joined' => 'Jan 15, 2026'
+            'joined' => 'Jan 15, 2026',
         ],
         [
             'id' => 2,
@@ -32,7 +35,7 @@ class AdminUsers extends Component
             'tier' => 'Tier 2',
             'balance' => 8200.50,
             'status' => 'active',
-            'joined' => 'Jan 20, 2026'
+            'joined' => 'Jan 20, 2026',
         ],
         [
             'id' => 3,
@@ -43,7 +46,7 @@ class AdminUsers extends Component
             'tier' => 'Tier 1',
             'balance' => 3500.00,
             'status' => 'active',
-            'joined' => 'Feb 5, 2026'
+            'joined' => 'Feb 5, 2026',
         ],
         [
             'id' => 4,
@@ -54,7 +57,7 @@ class AdminUsers extends Component
             'tier' => 'Tier 1',
             'balance' => 5750.25,
             'status' => 'active',
-            'joined' => 'Feb 10, 2026'
+            'joined' => 'Feb 10, 2026',
         ],
         [
             'id' => 5,
@@ -65,8 +68,8 @@ class AdminUsers extends Component
             'tier' => 'Tier 1',
             'balance' => 1200.00,
             'status' => 'suspended',
-            'joined' => 'Feb 15, 2026'
-        ]
+            'joined' => 'Feb 15, 2026',
+        ],
     ];
 
     public function getFilteredUsersProperty()
@@ -106,7 +109,7 @@ class AdminUsers extends Component
     public function suspendUser()
     {
         if ($this->selectedUser) {
-            session()->flash('message', 'User ' . $this->selectedUser['name'] . ' has been suspended');
+            session()->flash('message', 'User '.$this->selectedUser['name'].' has been suspended');
             $this->showModal = false;
             $this->selectedUser = null;
         }
@@ -115,7 +118,7 @@ class AdminUsers extends Component
     public function unsuspendUser()
     {
         if ($this->selectedUser) {
-            session()->flash('message', 'User ' . $this->selectedUser['name'] . ' has been unsuspended');
+            session()->flash('message', 'User '.$this->selectedUser['name'].' has been unsuspended');
             $this->showModal = false;
             $this->selectedUser = null;
         }
@@ -124,7 +127,7 @@ class AdminUsers extends Component
     public function verifyUser()
     {
         if ($this->selectedUser) {
-            session()->flash('message', 'User ' . $this->selectedUser['name'] . ' has been verified');
+            session()->flash('message', 'User '.$this->selectedUser['name'].' has been verified');
             $this->showModal = false;
             $this->selectedUser = null;
         }

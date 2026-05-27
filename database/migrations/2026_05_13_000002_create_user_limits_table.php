@@ -14,22 +14,22 @@ return new class extends Migration
     {
         Schema::create('user_limits', function (Blueprint $table) {
             $table->id();
-            
+
             // which user
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
-            
+
             // max amount per single transaction
             $table->decimal('single_transaction_limit', 12, 2)->default(100000);
-            
+
             // max amount per day
             $table->decimal('daily_transfer_limit', 12, 2)->default(500000);
-            
+
             // how much they've used today
             $table->decimal('daily_transfer_used', 12, 2)->default(0);
-            
+
             // when their daily limit resets
             $table->date('limit_reset_date');
-            
+
             // timestamps
             $table->timestamps();
         });

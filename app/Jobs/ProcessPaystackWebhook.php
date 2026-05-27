@@ -2,17 +2,17 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
-use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Models\VirtualAccount;
+use App\Models\Wallet;
 use App\Notifications\DepositSuccessful;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ProcessPaystackWebhook implements ShouldQueue
 {
@@ -31,7 +31,7 @@ class ProcessPaystackWebhook implements ShouldQueue
 
         $accountNumber = $data['authorization']['receiver_bank_account_number'] ?? null;
 
-        if (!$accountNumber) {
+        if (! $accountNumber) {
             return;
         }
 
@@ -39,7 +39,9 @@ class ProcessPaystackWebhook implements ShouldQueue
 
             $virtual = VirtualAccount::where('account_number', $accountNumber)->first();
 
-            if (!$virtual) return;
+            if (! $virtual) {
+                return;
+            }
 
             $wallet = Wallet::where('user_id', $virtual->user_id)->first();
 
@@ -60,7 +62,7 @@ class ProcessPaystackWebhook implements ShouldQueue
                 'amount' => $amount,
                 'reference' => $data['reference'],
                 'description' => 'Bank Transfer Deposit',
-                'status' => 'success'
+                'status' => 'success',
             ]);
 
             // Notify user

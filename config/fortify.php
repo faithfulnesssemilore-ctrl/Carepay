@@ -151,7 +151,7 @@ return [
     'features' => [
         // Features::registration(), // Disabled - using custom Livewire registration with OTP
         Features::resetPasswords(),
-       // Features::emailVerification(),
+        // Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
