@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\TransactionStatus;
 use App\Services\VtpassService;
 use App\Services\WalletService;
 use Illuminate\Support\Facades\Auth;
@@ -96,7 +97,7 @@ class BillPayment extends Component
     public function loadBalance(): void
     {
         $wallet = Auth::user()->wallet;
-        $this->currentBalance = $wallet ? round($wallet->balance / 100, 2) : 0;
+        $this->currentBalance = $wallet ? round($wallet->balance, 2) : 0;
     }
 
     public function loadRecentBills(): void
@@ -302,7 +303,7 @@ class BillPayment extends Component
 
             // success - update transaction to completed
             Transaction::where('reference', $reference)
-                ->update(['status' => 'success']);
+                ->update(['status' => TransactionStatus::Completed]);
 
             // extract token for electricity
             $this->token = $result['Token'] ??
@@ -310,7 +311,10 @@ class BillPayment extends Component
                 $result['content']['transactions']['token'] ?? '';
 
             $this->referenceNumber = $requestId;
-            $this->currentBalance = round(($wallet->balance - $amountKobo) / 100, 2);
+            // balance is cast to naira, amountKobo is in kobo, need to compare properly
+            // subtract kobo amount and convert the result to naira
+            $remainingKobo = $wallet->balance * 100 - $amountKobo;  // convert naira back to kobo, subtract, get result in kobo
+            $this->currentBalance = round($remainingKobo / 100, 2);  // convert result back to naira
             $this->currentStep = 'success';
             $this->successMessage = 'Payment successful!';
 

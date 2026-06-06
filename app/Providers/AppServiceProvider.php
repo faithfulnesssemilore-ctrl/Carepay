@@ -6,6 +6,12 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Transaction;
+use App\Models\ScheduledPayment;
+use App\Models\Wallet;
+use App\Livewire\DashboardPage;
+use App\Livewire\SendMoney;
 use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
 use Symfony\Component\Mailer\Transport\Dsn;
 
@@ -24,6 +30,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading(!app()->isProduction());
+     
+        Model::shouldBeStrict(!app()->isProduction());
+ 
         // Force HTTPS in production
         if (config('app.env') === 'production') {
             URL::forceScheme('https');

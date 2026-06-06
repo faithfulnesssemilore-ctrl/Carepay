@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'CarePay' }}</title>
     @vite(['resources/css/app.css', 'resources/css/bootstrap.css', 'resources/css/custom.css', 'resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+   <script>
+    document.addEventListener('livewire:init', () => {
+    })
+</script>
     @livewireStyles
 </head>
 <body style="background:#0a0a0f;color:white;min-height:100vh;overflow-x:hidden;">

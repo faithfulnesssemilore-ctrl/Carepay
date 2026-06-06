@@ -75,7 +75,7 @@
                         </div>
                     </div>
                     <div style="font-weight:700;color:#ef4444;">
-                        -₦{{ number_format($bill->amount / 100, 2) }}
+                        -₦{{ number_format($bill->amount, 2) }}
                     </div>
                 </div>
                 @endforeach

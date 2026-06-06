@@ -9,14 +9,14 @@
         "php": "^8.2",
         "blade-ui-kit/blade-icons": "^1.9",
         "dedoc/scramble": "^0.13.22",
-        "filament/filament": "^3.2",
+        "filament/filament": "^5.6",
         "ichtrojan/laravel-otp": "^2.0",
         "laravel/fortify": "^1.35",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.45",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
-        "livewire/livewire": "^3.6.4",
+        "livewire/livewire": "^4.1",
         "livewire/volt": "^1.7.0",
         "mallardduck/blade-lucide-icons": "^1.26",
         "predis/predis": "^3.4",
@@ -30,6 +30,7 @@
         "guizoxxv/laravel-breeze-bootstrap": "^1.0",
         "larastan/larastan": "^3.9",
         "laravel/breeze": "^2.4",
+        "laravel/dusk": "^8.6",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.29",
         "laravel/sail": "^1.41",
@@ -68,7 +69,8 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,11 +23,16 @@ class ScheduledPayment extends Model
     ];
 
     protected $casts = [
-        'amount' => 'integer',  // stored in kobo
+        'amount' => MoneyCast::class,  // cast to naira (stored in kobo in DB)
         'scheduled_date' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function getAmountNairaAttribute(): float
+    {
+        return $this->amount;  // already cast to naira
+    }
 
     /**
      * Get the wallet that owns this scheduled payment

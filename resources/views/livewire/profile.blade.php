@@ -211,7 +211,7 @@
                         Wallet Balance
                     </div>
                     <div style="font-size:14px;font-weight:700;color:#a855f7;">
-                        ₦{{ number_format(($user->wallet->balance ?? 0) / 100, 2) }}
+                        ₦{{ number_format($user->wallet->balance ?? 0, 2) }}
                     </div>
                 </div>
             </div>

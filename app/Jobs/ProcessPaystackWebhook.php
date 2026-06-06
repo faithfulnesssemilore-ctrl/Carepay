@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
+use App\TransactionStatus;
 use App\Notifications\DepositSuccessful;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -58,11 +59,13 @@ class ProcessPaystackWebhook implements ShouldQueue
             // Save transaction
             Transaction::create([
                 'user_id' => $virtual->user_id,
+                'wallet_id' => $wallet->id,
                 'type' => 'credit',
+                'category' => 'deposit',
                 'amount' => $amount,
                 'reference' => $data['reference'],
                 'description' => 'Bank Transfer Deposit',
-                'status' => 'success',
+                'status' => TransactionStatus::Completed,
             ]);
 
             // Notify user

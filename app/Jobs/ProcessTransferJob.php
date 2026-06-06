@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\AuditLog;
 use App\Notifications\TransferCompleted;
+use App\TransactionStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -48,7 +49,7 @@ class ProcessTransferJob implements ShouldQueue
 
         // Update transaction status
         $this->transaction->update([
-            'status' => 'completed',
+            'status' => TransactionStatus::Completed,
         ]);
     }
 }

@@ -78,7 +78,7 @@
                         <tr wire:click="selectTransaction('{{ $tx->id }}')" style="cursor:pointer">
 
                             <td>
-                                {{ ucfirst($tx->transaction_type) }}
+                                {{ ucfirst($tx->transaction_label) }}
                             </td>
 
                             <td>
@@ -102,12 +102,12 @@
                             <td class="text-end">
 
                                 @php
-                                    $isCredit = in_array($tx->transaction_type, ['deposit','received']);
+                                    $isCredit = $tx->type === 'credit';
                                 @endphp
 
                                 <strong class="{{ $isCredit ? 'text-success':'text-danger' }}">
                                     {{ $isCredit ? '+' : '-' }}
-                                    ₦{{ number_format($tx->amount,2) }}
+                                    ₦{{ number_format($tx->amount_naira,2) }}
                                 </strong>
 
                             </td>
@@ -146,9 +146,9 @@
                 <div class="modal-body">
 
                     <p><strong>Reference:</strong> {{ $selectedTransaction->reference }}</p>
-                    <p><strong>Type:</strong> {{ $selectedTransaction->transaction_type }}</p>
+                    <p><strong>Type:</strong> {{ ucfirst($selectedTransaction->transaction_label) }}</p>
                     <p><strong>Status:</strong> {{ $selectedTransaction->status }}</p>
-                    <p><strong>Amount:</strong> ₦{{ number_format($selectedTransaction->amount,2) }}</p>
+                    <p><strong>Amount:</strong> ₦{{ number_format($selectedTransaction->amount_naira,2) }}</p>
                     <p><strong>Date:</strong> {{ $selectedTransaction->created_at }}</p>
                     <p><strong>Description:</strong> {{ $selectedTransaction->description }}</p>
 

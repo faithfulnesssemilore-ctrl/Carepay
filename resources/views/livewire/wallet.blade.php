@@ -1,166 +1,208 @@
 
 <div class="d-flex flex-column gap-3 gap-md-4">
     {{-- Header --}}
-    <div>
-        <h1 class="display-5 fw-bold mb-2">Wallet</h1>
-        <p class="text-muted-custom fs-6">Manage your digital wallet and funds</p>
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+        <div>
+            <h1 class="display-6 fw-bold mb-1">Wallet</h1>
+            <p class="text-muted-custom mb-0">Manage funds, scheduled payments, and quick actions in one place.</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <button wire:click="refresh" class="btn btn-outline-light btn-sm">
+                <x-lucide-refresh-cw class="me-1" /> Refresh
+            </button>
+            <a href="{{ route('transactions') }}" class="btn btn-primary btn-sm">
+                <x-lucide-list-check class="me-1" /> All Transactions
+            </a>
+        </div>
     </div>
 
-    {{-- Balance Cards - Responsive grid --}}
-    <div class="row g-2 g-md-3">
-        @forelse($balanceData as $item)
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card {{ $loop->first ? 'gradient-bg-primary text-white' : 'card-luxury' }} border-0 h-100 p-3 p-md-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    @if($loop->first)
-                        <x-lucide-wallet class="w-5 h-5 opacity-75" />
-                    @elseif($loop->index === 1)
-                        <x-lucide-calendar class="w-5 h-5 text-muted-custom opacity-75" />
-                    @else
-                        <x-lucide-credit-card class="w-5 h-5 text-muted-custom opacity-75" />
-                    @endif
-                    <span class="small {{ $loop->first ? 'opacity-75' : '' }}">{{ $item['name'] }}</span>
+    @if($errorMessage)
+        <div class="alert alert-danger py-2">
+            <strong>Wallet load failed:</strong> {{ $errorMessage }}
+        </div>
+    @endif
+
+    @if($successMessage)
+        <div class="alert alert-success py-2">
+            {{ $successMessage }}
+        </div>
+    @endif
+
+    {{-- Balance summary --}}
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card gradient-bg-primary text-white border-0 h-100 p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <div class="small opacity-75">Available Wallet Balance</div>
+                        <div class="display-6 fw-bold mt-2">
+                            @if($balanceVisible)
+                                ₦{{ number_format($balance, 2) }}
+                            @else
+                                ••••••••
+                            @endif
+                        </div>
+                    </div>
+                    <button wire:click="toggleBalance" class="btn btn-soft-light btn-sm">
+                        @if($balanceVisible)
+                            Hide
+                        @else
+                            Show
+                        @endif
+                    </button>
                 </div>
-                <div class="display-6 fw-bold mb-2">₦{{ number_format($item['value'], 2) }}</div>
-                <div class="small {{ $loop->first ? 'opacity-75' : 'text-muted-custom' }}">
-                    @if($loop->first && $item['value'] > 0)
-                        <x-lucide-trending-up class="w-3 h-3 d-inline me-1" />
-                        Ready to use
-                    @elseif($loop->index === 1)
-                        <x-lucide-hourglass class="w-3 h-3 d-inline me-1" />
-                        Processing
-                    @else
-                        <x-lucide-lock class="w-3 h-3 d-inline me-1" />
-                        For upcoming
-                    @endif
+                <div class="small opacity-75">Currency: {{ $currency }} · Status: {{ ucfirst($walletStatus) }}</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="card card-luxury p-3 h-100 border-0 shadow-sm">
+                        <div class="small text-muted-custom mb-2">Available</div>
+                        <div class="h4 fw-bold">₦{{ number_format($balance, 2) }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card card-luxury p-3 h-100 border-0 shadow-sm">
+                        <div class="small text-muted-custom mb-2">Pending</div>
+                        <div class="h4 fw-bold">₦{{ number_format($pendingBalance, 2) }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card card-luxury p-3 h-100 border-0 shadow-sm">
+                        <div class="small text-muted-custom mb-2">Reserved</div>
+                        <div class="h4 fw-bold">₦{{ number_format($reservedBalance, 2) }}</div>
+                    </div>
                 </div>
             </div>
         </div>
-        @empty
-        <div class="col-12 text-center py-4">
-            <p class="text-muted-custom">Wallet data loading...</p>
-        </div>
-        @endforelse
     </div>
 
-    {{-- Action Buttons - 2x2 on mobile, 1x4 on larger --}}
-    <div class="row g-2 g-md-3">
+    {{-- Quick actions --}}
+    <div class="row g-3">
         <div class="col-6 col-md-3">
             <a href="{{ route('add-money') }}" class="text-decoration-none d-block">
-                <div class="card card-luxury p-3 p-md-4 text-center h-100 hover-lift">
-                    <div class="icon-container icon-container-sm mx-auto mb-2" style="background: rgba(168, 85, 247, 0.2);">
+                <div class="card card-luxury p-3 h-100 text-center hover-lift border-0 shadow-sm">
+                    <div class="icon-container icon-container-sm mx-auto mb-3" style="background: rgba(168, 85, 247, 0.15);">
                         <x-lucide-plus class="w-5 h-5 text-primary-custom" />
                     </div>
-                    <h6 class="fw-medium small mb-1">Add Money</h6>
-                    <p class="text-muted-custom small mb-0">Deposit funds</p>
+                    <div class="fw-semibold mb-1">Add Money</div>
+                    <div class="text-muted-custom small">Deposit funds</div>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3">
             <a href="{{ route('send-money') }}" class="text-decoration-none d-block">
-                <div class="card card-luxury p-3 p-md-4 text-center h-100 hover-lift">
-                    <div class="icon-container icon-container-sm mx-auto mb-2" style="background: rgba(34, 197, 94, 0.2);">
+                <div class="card card-luxury p-3 h-100 text-center hover-lift border-0 shadow-sm">
+                    <div class="icon-container icon-container-sm mx-auto mb-3" style="background: rgba(34, 197, 94, 0.15);">
                         <x-lucide-send class="w-5 h-5 text-success" />
                     </div>
-                    <h6 class="fw-medium small mb-1">Send Money</h6>
-                    <p class="text-muted-custom small mb-0">Transfer funds</p>
+                    <div class="fw-semibold mb-1">Send Money</div>
+                    <div class="text-muted-custom small">Transfer funds</div>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3">
             <a href="{{ route('bill-payment') }}" class="text-decoration-none d-block">
-                <div class="card card-luxury p-3 p-md-4 text-center h-100 hover-lift">
-                    <div class="icon-container icon-container-sm mx-auto mb-2" style="background: rgba(59, 130, 246, 0.2);">
+                <div class="card card-luxury p-3 h-100 text-center hover-lift border-0 shadow-sm">
+                    <div class="icon-container icon-container-sm mx-auto mb-3" style="background: rgba(59, 130, 246, 0.15);">
                         <x-lucide-receipt class="w-5 h-5 text-info" />
                     </div>
-                    <h6 class="fw-medium small mb-1">Pay Bills</h6>
-                    <p class="text-muted-custom small mb-0">Utilities & more</p>
+                    <div class="fw-semibold mb-1">Pay Bills</div>
+                    <div class="text-muted-custom small">Utilities & more</div>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="#" class="text-decoration-none d-block" wire:click="toggleBalance">
-                <div class="card card-luxury p-3 p-md-4 text-center h-100 hover-lift">
-                    <div class="icon-container icon-container-sm mx-auto mb-2" style="background: rgba(192, 132, 252, 0.2);">
+            <button wire:click="toggleBalance" class="btn btn-link p-0 w-100 text-start text-decoration-none">
+                <div class="card card-luxury p-3 h-100 text-center hover-lift border-0 shadow-sm">
+                    <div class="icon-container icon-container-sm mx-auto mb-3" style="background: rgba(192, 132, 252, 0.15);">
                         @if($balanceVisible)
                             <x-lucide-eye class="w-5 h-5 text-accent-custom" />
                         @else
                             <x-lucide-eye-off class="w-5 h-5 text-accent-custom" />
                         @endif
                     </div>
-                    <h6 class="fw-medium small mb-1">{{ $balanceVisible ? 'Hide' : 'Show' }}</h6>
-                    <p class="text-muted-custom small mb-0">Balance</p>
+                    <div class="fw-semibold mb-1">{{ $balanceVisible ? 'Hide' : 'Show' }}</div>
+                    <div class="text-muted-custom small">Balance</div>
                 </div>
-            </a>
+            </button>
         </div>
     </div>
 
-    {{-- Balance Distribution & Scheduled Payments - Stack on mobile --}}
+    {{-- Balance breakdown and recent activity --}}
     <div class="row g-3 g-md-4">
-        {{-- Balance Distribution Chart --}}
-        <div class="col-12 col-lg-8">
-            <div class="card card-luxury p-3 p-md-4 border">
+        <div class="col-12 col-xl-7">
+            <div class="card card-luxury p-4 border-0 shadow-sm h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0">Balance Breakdown</h5>
-                    <small class="text-muted-custom">₦{{ number_format($balance + $pendingBalance + $reservedBalance, 2) }}</small>
+                    <div>
+                        <h5 class="fw-bold mb-1">Balance Breakdown</h5>
+                        <div class="small text-muted-custom">Total across active, pending and reserved funds.</div>
+                    </div>
+                    <div class="small text-muted-custom">Total: ₦{{ number_format($balance + $pendingBalance + $reservedBalance, 2) }}</div>
                 </div>
-                
-                <div class="row g-2">
+                <div class="row g-3">
                     @forelse($bphp as $item)
-                    <div class="col-6 col-md-4">
-                        <div class="text-center">
-                            <div class="rounded-circle mx-auto mb-2" 
-                                 style="width: 16px; height: 16px; background: {{ $item['color'] }};"></div>
-                            <div class="small text-muted-custom mb-1">{{ $item['name'] }}</div>
-                            <div class="fw-semibold">₦{{ number_format($item['value'], 0) }}</div>
+                        <div class="col-12 col-sm-4">
+                            <div class="rounded-4 p-3 h-100" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: {{ $item['color'] }}33;"></span>
+                                    <div class="small text-muted-custom mb-0">{{ $item['name'] }}</div>
+                                </div>
+                                <div class="h5 fw-bold">₦{{ number_format($item['value'], 2) }}</div>
+                            </div>
                         </div>
-                    </div>
                     @empty
-                    <div class="col-12 text-center py-4">
-                        <p class="text-muted-custom small">No balance data</p>
-                    </div>
+                        <div class="col-12 text-center py-4">
+                            <p class="text-muted-custom small">No balance breakdown available.</p>
+                        </div>
                     @endforelse
                 </div>
             </div>
         </div>
 
-        {{-- Recent Activity/Scheduled Payments --}}
-        <div class="col-12 col-lg-4">
-            <div class="card card-luxury p-3 p-md-4 border">
+        <div class="col-12 col-xl-5">
+            <div class="card card-luxury p-4 border-0 shadow-sm h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0">Recent Activity</h5>
-                    <a href="{{ route('transactions') }}" class="btn btn-link text-primary-custom small p-0">View all</a>
+                    <div>
+                        <h5 class="fw-bold mb-1">Recent Activity</h5>
+                        <div class="small text-muted-custom">Latest transactions at a glance.</div>
+                    </div>
+                    <a href="{{ route('transactions') }}" class="small text-primary-custom">View all</a>
                 </div>
 
-                <div class="d-flex flex-column gap-2">
-                   @forelse(collect($transactions)->take(5) as $tx)
-                    <div class="p-2 p-md-3 rounded" style="background: rgba(255, 255, 255, 0.03);">
-                        <div class="d-flex justify-content-between align-items-center gap-2">
-                            <div class="d-flex align-items-center gap-2 flex-fill">
-                                <div class="icon-container icon-container-sm" 
-                                     style="background: {{ $tx->type === 'credit' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(168, 85, 247, 0.2)' }};">
-                                    @if($tx->type === 'credit')
-                                        <x-lucide-arrow-down-left class="w-4 h-4 text-success" />
-                                    @else
-                                        <x-lucide-arrow-up-right class="w-4 h-4 text-primary-custom" />
-                                    @endif
+                <div class="d-flex flex-column gap-3">
+                    @forelse(collect($transactions)->take(5) as $tx)
+                        <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04);">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div class="d-flex align-items-center gap-3 flex-grow-1">
+                                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: {{ $tx->type === 'credit' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(168, 85, 247, 0.15)' }};">
+                                        @if($tx->type === 'credit')
+                                            <x-lucide-arrow-down-left class="w-4 h-4 text-success" />
+                                        @else
+                                            <x-lucide-arrow-up-right class="w-4 h-4 text-primary-custom" />
+                                        @endif
+                                    </span>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold">{{ ucfirst($tx->transaction_label) }}</div>
+                                        <div class="small text-muted-custom">{{ $tx->created_at->format('d M, h:i A') }}</div>
+                                    </div>
                                 </div>
-                                <div class="text-truncate">
-                                    <div class="small fw-semibold">{{ ucfirst($tx->type) }}</div>
-                                    <div class="text-muted-custom" style="font-size: 0.75rem;">{{ $tx->created_at->format('M d') }}</div>
+                                <div class="text-end">
+                                    <div class="fw-bold {{ $tx->type === 'credit' ? 'text-success' : 'text-primary-custom' }}">
+                                        {{ $tx->type === 'credit' ? '+' : '-' }}₦{{ number_format(abs($tx->amount_naira), 2) }}
+                                    </div>
+                                    <div class="small text-muted-custom">{{ ucfirst($tx->status) }}</div>
                                 </div>
-                            </div>
-                            <div class="fw-semibold text-nowrap" 
-                                 style="color: {{ $tx->type === 'credit' ? '#10b981' : '#a855f7' }}">
-                                {{ $tx->type === 'credit' ? '+' : '-' }}₦{{ number_format(abs($tx->amount), 0) }}
                             </div>
                         </div>
-                    </div>
                     @empty
-                    <div class="text-center py-4">
-                        <x-lucide-inbox class="w-8 h-8 text-muted-custom mx-auto mb-2" />
-                        <p class="text-muted-custom small">No transactions yet</p>
-                    </div>
+                        <div class="text-center py-4">
+                            <x-lucide-inbox class="w-10 h-10 text-muted-custom mx-auto mb-2" />
+                            <p class="text-muted-custom small mb-0">No recent activity yet.</p>
+                        </div>
                     @endforelse
                 </div>
             </div>
@@ -169,27 +211,33 @@
 
     {{-- Scheduled Payments Section --}}
     @if(count($scheduledPayments) > 0)
-    <div class="card card-luxury p-3 p-md-4 border">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold mb-0">Scheduled Payments</h5>
-            <span class="badge bg-warning text-dark">{{ count($scheduledPayments) }}</span>
-        </div>
-
-        <div class="row g-2">
-            @foreach($scheduledPayments as $payment)
-            <div class="col-12 col-md-6">
-                <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border-left: 3px solid #a855f7;">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <div class="fw-medium small">{{ $payment->description ?? 'Scheduled Payment' }}</div>
-                            <div class="text-muted-custom small">{{ $payment->scheduled_date->format('M d, Y') }}</div>
-                        </div>
-                        <span class="badge bg-primary">₦{{ number_format($payment->amount, 0) }}</span>
-                    </div>
+        <div class="card card-luxury p-4 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1">Scheduled Payments</h5>
+                    <div class="small text-muted-custom">Upcoming payments due soon.</div>
                 </div>
+                <span class="badge bg-warning text-dark">{{ count($scheduledPayments) }}</span>
             </div>
-            @endforeach
+
+            <div class="row g-3">
+                @foreach($scheduledPayments as $payment)
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04); border-left: 4px solid #a855f7;">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">{{ $payment->description ?? 'Scheduled Payment' }}</div>
+                                    <div class="small text-muted-custom">{{ $payment->scheduled_date->format('d M, Y') }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-semibold">₦{{ number_format($payment->amount_naira, 2) }}</div>
+                                    <div class="small text-muted-custom">{{ ucfirst($payment->status) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
     @endif
 </div>

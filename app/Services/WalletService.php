@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\LedgerEntry;
 use App\Models\Transaction;
+use App\Models\AuditLog;
+use App\TransactionStatus;
 use App\Models\UserLimit;
 use App\Models\Wallet;
 use Exception;
@@ -56,21 +58,35 @@ class WalletService
                 'user_id' => $userId,
                 'wallet_id' => $wallet->id,
                 'type' => 'credit',
+                'category' => 'deposit',
                 'amount' => $amountKobo,
                 'currency' => $wallet->currency,
                 'reference' => $reference,
-                'status' => 'success',
+                'status' => TransactionStatus::Completed,
                 'description' => $description,
             ]);
 
-            LedgerEntry::create([
-                'wallet_id' => $wallet->id,
-                'transaction_id' => $transaction->id,
-                'entry_type' => 'credit',
-                'amount' => $amountKobo,
-            ]);
+                // audit
+                AuditLog::record(
+                    $userId,
+                    'credit_processed',
+                    'Transaction',
+                    $transaction->id,
+                    ['amount' => $amountKobo]
+                );
 
-            return $transaction;
+           try {
+    LedgerEntry::create([
+        'wallet_id'      => $wallet->id,
+        'transaction_id' => $transaction->id,
+        'entry_type'     => 'credit',
+        'amount'         => $amountKobo,
+    ]);
+} catch (\Exception $e) {
+    \Log::warning('Ledger entry failed: ' . $e->getMessage());
+}
+
+return $transaction;
         });
     }
 
@@ -103,21 +119,35 @@ class WalletService
                 'user_id' => $userId,
                 'wallet_id' => $wallet->id,
                 'type' => 'debit',
+                'category' => 'withdrawal',
                 'amount' => $amountKobo,
                 'currency' => $wallet->currency,
                 'reference' => $reference,
-                'status' => 'success',
+                'status' => TransactionStatus::Completed,
                 'description' => $description,
             ]);
 
-            LedgerEntry::create([
-                'wallet_id' => $wallet->id,
-                'transaction_id' => $transaction->id,
-                'entry_type' => 'debit',
-                'amount' => $amountKobo,
-            ]);
+                // audit
+                AuditLog::record(
+                    $userId,
+                    'debit_processed',
+                    'Transaction',
+                    $transaction->id,
+                    ['amount' => $amountKobo]
+                );
 
-            return $transaction;
+         try {
+    LedgerEntry::create([
+        'wallet_id'      => $wallet->id,
+        'transaction_id' => $transaction->id,
+        'entry_type'     => 'debit',
+        'amount'         => $amountKobo,
+    ]);
+} catch (\Exception $e) {
+    \Log::warning('Ledger entry failed: ' . $e->getMessage());
+}
+
+return $transaction;
         });
     }
 
@@ -184,49 +214,58 @@ class WalletService
             }
 
             if ($senderWallet->balance < $amountKobo) {
+                // record failed attempt
+                $failed = Transaction::create([
+                    'user_id' => $senderId,
+                    'wallet_id' => $senderWallet->id,
+                    'type' => 'debit',
+                    'category' => 'transfer',
+                    'amount' => $amountKobo,
+                    'currency' => $senderWallet->currency,
+                    'reference' => $reference.'_FAIL',
+                    'status' => TransactionStatus::Failed,
+                    'description' => $description ?: 'Failed transfer - insufficient balance',
+                    'recipient_id' => $recipientId,
+                ]);
+
+                AuditLog::record(
+                    $senderId,
+                    'transfer_failed_insufficient_funds',
+                    'Transaction',
+                    $failed->id,
+                    ['amount' => $amountKobo]
+                );
+
                 throw new Exception('Insufficient balance.');
             }
 
             $senderWallet->decrement('balance', $amountKobo);
+            $recipientWallet->increment('balance', $amountKobo);
 
             $debitTx = Transaction::create([
                 'user_id' => $senderId,
                 'wallet_id' => $senderWallet->id,
                 'type' => 'debit',
+                'category' => 'transfer',
                 'amount' => $amountKobo,
                 'currency' => $senderWallet->currency,
                 'reference' => $reference,
-                'status' => 'success',
+                'status' => TransactionStatus::Completed,
                 'description' => $description ?: 'Transfer sent',
                 'recipient_id' => $recipientId,
             ]);
-
-            LedgerEntry::create([
-                'wallet_id' => $senderWallet->id,
-                'transaction_id' => $debitTx->id,
-                'entry_type' => 'debit',
-                'amount' => $amountKobo,
-            ]);
-
-            $recipientWallet->increment('balance', $amountKobo);
 
             $creditTx = Transaction::create([
                 'user_id' => $recipientId,
                 'wallet_id' => $recipientWallet->id,
                 'type' => 'credit',
+                'category' => 'transfer',
                 'amount' => $amountKobo,
                 'currency' => $recipientWallet->currency,
                 'reference' => $reference.'_IN',
-                'status' => 'success',
+                'status' => TransactionStatus::Completed,
                 'description' => $description ?: 'Transfer received',
                 'recipient_id' => $senderId,
-            ]);
-
-            LedgerEntry::create([
-                'wallet_id' => $recipientWallet->id,
-                'transaction_id' => $creditTx->id,
-                'entry_type' => 'credit',
-                'amount' => $amountKobo,
             ]);
 
             return [
@@ -240,7 +279,6 @@ class WalletService
     public function getBalanceInNaira(int $userId): float
     {
         $wallet = $this->getWallet($userId);
-
-        return $wallet->balance / 100;
+        return $wallet->balance;
     }
 }

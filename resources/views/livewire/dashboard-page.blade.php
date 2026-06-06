@@ -59,7 +59,7 @@
                         <div class="mb-4">
                             <div class="display-3 fw-bold mb-2">
                                 @if($balanceVisible)
-                                    ₦{{ number_format($balance, 2) }}
+                                  ₦{{ number_format($balance , 2) }}
                                 @else
                                     ••••••
                                 @endif
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <p class="text-muted-custom" style="font-size: 0.8rem;">{{ $payment->scheduled_date->format('M d, Y') }}</p>
                                     </div>
                                 </div>
-                                <span class="badge bg-warning text-dark small">₦{{ number_format($payment->amount, 2) }}</span>
+                                <span class="badge bg-warning text-dark small">₦{{ number_format($payment->amount_naira, 2) }}</span>
                             </div>
                             @endforeach
                         </div>
@@ -345,8 +345,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <p class="text-muted-custom" style="font-size: 0.8rem;">{{ $tx->created_at->format('M d, Y') }}</p>
                                     </div>
                                 </div>
-                                <span class="fw-semibold @if($tx->amount > 0) text-success @else text-primary-custom @endif" style="font-size: 0.9rem;">
-                                    @if($tx->amount > 0) + @endif ₦{{ number_format(abs($tx->amount), 0) }}
+                                <span class="fw-semibold @if($tx->type === 'credit') text-success @else text-primary-custom @endif" style="font-size: 0.9rem;">
+                                    {{ $tx->type === 'credit' ? '+' : '-' }} ₦{{ number_format(abs($tx->amount_naira), 2) }}
                                 </span>
                             </div>
                             @endforeach

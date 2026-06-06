@@ -100,7 +100,7 @@ class SendMoney extends Component
 
         // load wallet balance in naira
         $this->walletBalance = $user->wallet
-            ? round($user->wallet->balance / 100, 2)
+            ? round($user->wallet->balance, 2)
             : 0;
 
         // load limits
@@ -110,17 +110,38 @@ class SendMoney extends Component
             $this->singleLimit = (float) $limits->single_transaction_limit;
         }
 
-        // how much has been sent today in naira
+        // how much has been sent today (amount is cast to naira)
         $this->dailyUsed = round(
             Transaction::where('user_id', $user->id)
                 ->where('type', 'debit')
                 ->whereDate('created_at', today())
-                ->sum('amount') / 100,
+                ->sum('amount'),
             2
         );
 
         $this->loadRecentContacts();
     }
+    // search for a CarePay user by username or email
+public function searchInternalUser(): void
+{
+    $query = trim($this->accountNumber);
+    if (empty($query)) return;
+
+    $found = \App\Models\User::where('username', $query)
+        ->orWhere('email', $query)
+        ->where('status', 'active')
+        ->first();
+
+    if ($found) {
+        $this->resolvedAccountName = $found->first_name . ' ' . $found->last_name;
+        $this->selectedBankCode    = 'CAREPAY_INTERNAL';
+        $this->selectedBankName    = 'CarePay';
+        // store recipient id for internal transfer
+        $this->dispatch('internal-recipient-found', userId: $found->id);
+    } else {
+        $this->accountResolutionError = 'No CarePay user found with that username or email.';
+    }
+}
 
     public function loadRecentContacts(): void
     {
@@ -404,7 +425,9 @@ class SendMoney extends Component
             // record the transaction
             Transaction::create([
                 'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
                 'type' => 'debit',
+                'category' => 'transfer',
                 'amount' => $amountKobo,
                 'reference' => $reference,
                 'status' => $status,
@@ -426,7 +449,8 @@ class SendMoney extends Component
             $this->dailyUsed += $amountNaira;
 
             // update wallet balance display
-            $this->walletBalance = round(($wallet->balance) / 100, 2);
+            // balance is cast to naira
+            $this->walletBalance = round($wallet->balance, 2);
 
             $this->setStep('success');
             $this->dispatch('toast', type: 'success', message: 'Transfer successful!');

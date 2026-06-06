@@ -7,6 +7,7 @@ use App\Http\Requests\TransferRequest;
 use App\Http\Requests\WithdrawRequest;
 use App\Models\AuditLog;
 use App\Models\Transaction;
+use App\TransactionStatus;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\PinService;
@@ -47,7 +48,7 @@ class WalletController extends Controller
         return response()->json([
             'wallet' => [
                 'id' => $wallet->id,
-                'balance' => $wallet->balance,
+                'balance' => round($wallet->balance, 2),
                 'currency' => $wallet->currency,
                 'user_id' => $wallet->user_id,
             ],
@@ -104,9 +105,29 @@ class WalletController extends Controller
 
         // check balance
         if ($wallet->balance < $request->amount) {
+            // record failed attempt for audit/tracking
+            $failed = Transaction::create([
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'amount' => $request->amount,
+                'type' => 'debit',
+                'category' => 'transfer',
+                'status' => TransactionStatus::Failed,
+                'reference' => 'TRF_FAIL-'.time().'-'.$user->id,
+                'description' => 'Failed transfer - insufficient balance',
+            ]);
+
+            AuditLog::record(
+                $user->id,
+                'transfer_failed_insufficient_funds',
+                'Transaction',
+                $failed->id,
+                ['amount' => $request->amount]
+            );
+
             return response()->json([
                 'error' => 'not enough money',
-                'balance' => $wallet->balance,
+                'balance' => round($wallet->balance, 2),
             ], 422);
         }
 
@@ -120,15 +141,30 @@ class WalletController extends Controller
             // increase recipient balance
             $recipient->wallet->increment('balance', $request->amount);
 
-            // create transaction record
+            // create sender transaction record
             $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
                 'amount' => $request->amount,
-                'type' => 'transfer',
-                'status' => 'completed',
-                'description' => $request->description ?? 'transfer',
+                'type' => 'debit',
+                'category' => 'transfer',
+                'status' => TransactionStatus::Completed,
+                'description' => $request->description ?? 'transfer sent',
                 'reference' => 'TRF-'.time().'-'.$user->id,
+                'recipient_id' => $recipient->id,
+            ]);
+
+            // create recipient transaction record
+            Transaction::create([
+                'user_id' => $recipient->id,
+                'wallet_id' => $recipient->wallet->id,
+                'amount' => $request->amount,
+                'type' => 'credit',
+                'category' => 'transfer',
+                'status' => TransactionStatus::Completed,
+                'description' => $request->description ?? 'transfer received',
+                'reference' => $transaction->reference.'_IN',
+                'recipient_id' => $user->id,
             ]);
 
             // update daily limit tracking
@@ -163,7 +199,7 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'transferred successfully',
-            'balance' => $wallet->balance,
+            'balance' => round($wallet->balance, 2),
         ]);
     }
 
@@ -186,9 +222,10 @@ class WalletController extends Controller
         $transaction = Transaction::create([
             'user_id' => $user->id,
             'wallet_id' => $user->wallet->id,
-            'amount' => $request->amount,
-            'type' => 'deposit',
-            'status' => 'pending',
+            'amount' => $amountInKobo,
+            'type' => 'credit',
+            'category' => 'deposit',
+            'status' => TransactionStatus::Pending,
             'reference' => 'DEP-'.time().'-'.$user->id,
         ]);
 
@@ -244,7 +281,7 @@ class WalletController extends Controller
         if ($wallet->balance < $request->amount) {
             return response()->json([
                 'error' => 'not enough money',
-                'balance' => $wallet->balance,
+                'balance' => round($wallet->balance, 2),
             ], 422);
         }
 
@@ -261,7 +298,8 @@ class WalletController extends Controller
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
                 'amount' => $request->amount,
-                'type' => 'withdrawal',
+                'type' => 'debit',
+                'category' => 'withdrawal',
                 'status' => 'processing', // bank transfer takes time
                 'reference' => 'WID-'.time().'-'.$user->id,
                 'bank_account_id' => $bankAccount->id,
@@ -287,7 +325,7 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'withdrawal initiated. will process in 24 hours',
-            'balance' => $wallet->balance,
+            'balance' => round($wallet->balance, 2),
         ]);
     }
 
@@ -306,7 +344,7 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'test money added',
-            'balance' => $user->wallet->balance,
+            'balance' => round($user->wallet->balance, 2),
         ]);
     }
 }

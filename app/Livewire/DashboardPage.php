@@ -6,6 +6,7 @@ use App\Models\ScheduledPayment;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class DashboardPage extends Component
@@ -63,8 +64,8 @@ class DashboardPage extends Component
                 ['balance' => 0, 'currency' => 'NGN', 'status' => 'active']
             );
 
-            // balance stored in kobo — divide by 100 for naira display
-            $this->balance = round($wallet->balance / 100, 2);
+            // Balance is cast to naira by MoneyCast
+            $this->balance = round($wallet->balance, 2);
 
             // recent transactions
             $this->recentTransactions = Transaction::where('user_id', $userId)
@@ -96,16 +97,17 @@ class DashboardPage extends Component
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->get();
 
-            // amounts are stored in kobo — divide by 100
-            $this->monthlyIncome = round($monthlyTx->where('type', 'credit')->sum('amount') / 100, 2);
-            $this->monthlyExpenses = round($monthlyTx->where('type', 'debit')->sum('amount') / 100, 2);
+            // Transaction models cast `amount` to naira via MoneyCast, so sums on the collection are already in naira
+            $this->monthlyIncome = round($monthlyTx->where('type', 'credit')->sum('amount'), 2);
+            $this->monthlyExpenses = round($monthlyTx->where('type', 'debit')->sum('amount'), 2);
             $this->transactionCount = $monthlyTx->count();
 
+            // amount field is cast to naira, don't divide
             $this->billsPaid = round(
                 ScheduledPayment::where('user_id', $userId)
                     ->where('status', 'completed')
                     ->whereBetween('scheduled_date', [$monthStart, $monthEnd])
-                    ->sum('amount') / 100,
+                    ->sum('amount'),
                 2
             );
 
@@ -113,15 +115,16 @@ class DashboardPage extends Component
             $prevStart = now()->subMonth()->startOfMonth();
             $prevEnd = now()->subMonth()->endOfMonth();
 
+            // amount is cast to naira
             $prevIncome = Transaction::where('user_id', $userId)
                 ->where('type', 'credit')
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
-                ->sum('amount') / 100;
+                ->sum('amount');
 
             $prevExpenses = Transaction::where('user_id', $userId)
                 ->where('type', 'debit')
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
-                ->sum('amount') / 100;
+                ->sum('amount');
 
             $this->incomePercentage = $prevIncome > 0
                 ? round((($this->monthlyIncome - $prevIncome) / $prevIncome) * 100, 1)
@@ -134,16 +137,17 @@ class DashboardPage extends Component
             // daily limit progress
             $limits = $user->limits;
             if ($limits) {
-                $dailyLimitKobo = $limits->daily_transfer_limit * 100;
-                $todaySpentKobo = Transaction::where('user_id', $userId)
+                // daily_transfer_limit is in naira, amount is cast to naira
+                $dailyLimit = $limits->daily_transfer_limit;
+                $todaySpent = Transaction::where('user_id', $userId)
                     ->where('type', 'debit')
                     ->whereDate('created_at', today())
                     ->sum('amount');
 
-                $this->dailyLimitTotal = round($dailyLimitKobo / 100, 2);
-                $this->dailyLimitUsed = round($todaySpentKobo / 100, 2);
-                $this->dailyLimitUsedPercent = $dailyLimitKobo > 0
-                    ? min(100, round(($todaySpentKobo / $dailyLimitKobo) * 100))
+                $this->dailyLimitTotal = round($dailyLimit, 2);
+                $this->dailyLimitUsed = round($todaySpent, 2);
+                $this->dailyLimitUsedPercent = $dailyLimit > 0
+                    ? min(100, round(($todaySpent / $dailyLimit) * 100))
                     : 0;
             }
 
@@ -156,12 +160,13 @@ class DashboardPage extends Component
                 $m = now()->subMonths($i);
                 $chartMonths[] = $m->format('M');
 
+                // amount is cast to naira
                 $chartIncome[] = round(
                     Transaction::where('user_id', $userId)
                         ->where('type', 'credit')
                         ->whereYear('created_at', $m->year)
                         ->whereMonth('created_at', $m->month)
-                        ->sum('amount') / 100,
+                        ->sum('amount'),
                     2
                 );
 
@@ -170,7 +175,7 @@ class DashboardPage extends Component
                         ->where('type', 'debit')
                         ->whereYear('created_at', $m->year)
                         ->whereMonth('created_at', $m->month)
-                        ->sum('amount') / 100,
+                        ->sum('amount'),
                     2
                 );
             }
@@ -182,16 +187,17 @@ class DashboardPage extends Component
             ]);
 
         } catch (\Exception $e) {
-            // graceful fallback so page never crashes
-            $this->balance = 0;
-            $this->recentTransactions = collect();
-            $this->upcomingPayments = collect();
-            $this->notificationCount = 0;
-            $this->monthlyIncome = 0;
-            $this->monthlyExpenses = 0;
-            $this->transactionCount = 0;
-            $this->billsPaid = 0;
-            $this->chartData = '{"labels":[],"income":[],"expenses":[]}';
+            // Log the exception and preserve any successfully loaded balance
+            Log::error('DashboardPage loadData failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
+            $this->recentTransactions = $this->recentTransactions ?? collect();
+            $this->upcomingPayments = $this->upcomingPayments ?? collect();
+            $this->notificationCount = $this->notificationCount ?? 0;
+            $this->monthlyIncome = $this->monthlyIncome ?? 0;
+            $this->monthlyExpenses = $this->monthlyExpenses ?? 0;
+            $this->transactionCount = $this->transactionCount ?? 0;
+            $this->billsPaid = $this->billsPaid ?? 0;
+            $this->chartData = $this->chartData ?? '{"labels":[],"income":[],"expenses":[]}';
         }
     }
 
@@ -224,6 +230,6 @@ class DashboardPage extends Component
             'dailyLimitUsedPercent' => $this->dailyLimitUsedPercent,
             'dailyLimitTotal' => $this->dailyLimitTotal,
             'dailyLimitUsed' => $this->dailyLimitUsed,
-        ]);
+        ])->layout('components.layouts.app');
     }
 }

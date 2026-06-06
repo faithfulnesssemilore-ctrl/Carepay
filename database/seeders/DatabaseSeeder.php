@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // create test admin user
-        User::factory()->create([
+        $admin = User::factory()->create([
             'first_name' => 'Admin',
             'last_name' => 'User',
             'email' => 'admin@test.com',
@@ -26,8 +26,14 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
             'pin' => bcrypt('1234'), // test PIN: 1234
         ]);
+        // create wallet for admin
+        Wallet::create([
+            'user_id' => $admin->id,
+            'balance' => 500000, // ₦5,000
+            'currency' => 'NGN',
+        ]);
         // create test  user
-        User::factory()->create([
+        $testUser = User::factory()->create([
             'first_name' => 'Test',
             'last_name' => 'User',
             'email' => 'testuser@test.com',
@@ -35,6 +41,11 @@ class DatabaseSeeder extends Seeder
             'role' => 0, // 0 = user
             'email_verified_at' => now(),
             'pin' => bcrypt('1234'), // test PIN: 1234
+        ]);
+        Wallet::create([
+            'user_id' => $testUser->id,
+            'balance' => 100000, // ₦1,000
+            'currency' => 'NGN',
         ]);
 
         // create 5 regular test users
@@ -61,9 +72,10 @@ class DatabaseSeeder extends Seeder
 
                 // set up transaction limits
                 // these prevent users from transferring too much too fast
-                $user->limits()->create([
+                $user->limits()->updateOrCreate([], [
                     'single_transaction_limit' => 100000,
                     'daily_transfer_limit' => 500000,
+                    'limit_reset_date' => now()->toDateString(),
                 ]);
 
                 // create sample transactions for testing

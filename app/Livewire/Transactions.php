@@ -48,13 +48,14 @@ class Transactions extends Component
 
         $this->totalTransactions = $transactions->count();
 
-        $this->totalIn = $transactions
-            ->whereIn('transaction_type', ['deposit', 'received'])
-            ->sum('amount');
+        // amount is already cast to naira, don't divide again
+        $this->totalIn = round($transactions
+            ->where('type', 'credit')
+            ->sum('amount'), 2);
 
-        $this->totalOut = $transactions
-            ->whereIn('transaction_type', ['withdrawal', 'sent', 'transfer'])
-            ->sum('amount');
+        $this->totalOut = round($transactions
+            ->where('type', 'debit')
+            ->sum('amount'), 2);
     }
 
     public function selectTransaction($id)

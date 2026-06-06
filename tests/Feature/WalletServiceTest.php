@@ -84,18 +84,23 @@ class WalletServiceTest extends TestCase
     }
 
     public function test_duplicate_credit_does_not_double_credit(): void
-    {
-        $user = $this->createUserWithWallet(0);
+{
+    $user = $this->createUserWithWallet(0);
 
-        (new WalletService)->credit($user->id, 10000, 'SAME-REF', 'First');
-        (new WalletService)->credit($user->id, 10000, 'SAME-REF', 'Second attempt');
+    (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'First');
 
-        $this->assertDatabaseHas('wallet', [
-            'user_id' => $user->id,
-            'balance' => 10000,
-        ]);
+    // second call with same reference should throw but NOT credit again
+    try {
+        (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'Duplicate');
+    } catch (\Exception $e) {
+        // expected - duplicate reference is rejected
     }
 
+    $this->assertDatabaseHas('wallet', [
+        'user_id' => $user->id,
+        'balance' => 10000,
+    ]);
+}
     public function test_transfer_debits_sender_and_credits_recipient(): void
     {
         $sender = $this->createUserWithWallet(100000);

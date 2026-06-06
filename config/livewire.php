@@ -3,6 +3,15 @@
 return [
     'class_namespace' => 'App\\Livewire',
     'view_path' => resource_path('views/livewire'),
+    // Livewire expects `component_layout` and `component_namespaces` keys for
+    // page-based components. Ensure they point to the components layout
+    // folder used in this project.
+    'component_namespaces' => [
+        'layouts' => resource_path('views/components/layouts'),
+        'pages' => resource_path('views/pages'),
+    ],
+    'component_layout' => 'layouts::app',
+    // Backwards-compatible alias used elsewhere in the app
     'layout' => 'components.layouts.app',
     'inject_assets' => true,
     'inject_morph_markers' => true,

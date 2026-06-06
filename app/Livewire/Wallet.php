@@ -74,7 +74,7 @@ class Wallet extends Component
             }
 
             $this->walletId = $wallet->id;
-            $this->balance = round((float) $wallet->balance / 100, 2);
+            $this->balance = round((float) $wallet->balance, 2);
             $this->currency = $wallet->currency;
             $this->walletStatus = $wallet->status;
 
@@ -110,14 +110,19 @@ class Wallet extends Component
         $userId = $wallet->user_id;
 
         // Pending = transactions in pending status
-        $this->pendingBalance = Transaction::where('user_id', $userId)
+        // sum('amount') returns raw kobo from the database, so convert to naira
+        $pendingKobo = Transaction::where('user_id', $userId)
             ->where('status', 'pending')
             ->sum('amount');
 
-        // Reserved = scheduled payments
-        $this->reservedBalance = ScheduledPayment::where('user_id', $userId)
+        $this->pendingBalance = round($pendingKobo / 100, 2);
+
+        // Reserved = scheduled payments (amount stored in kobo in DB)
+        $reservedKobo = ScheduledPayment::where('user_id', $userId)
             ->where('status', 'pending')
             ->sum('amount');
+
+        $this->reservedBalance = round($reservedKobo / 100, 2);
     }
 
     /**
@@ -182,7 +187,7 @@ class Wallet extends Component
      */
     public function getTotalBalance()
     {
-        return $this->balance + $this->pendingBalance + $this->reservedBalance;
+        return round($this->balance + $this->pendingBalance + $this->reservedBalance, 2);
     }
 
     public function render()

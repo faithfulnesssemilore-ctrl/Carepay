@@ -54,8 +54,8 @@
         type="button"
         class="btn btn-gradient w-100 py-3"
         wire:click="handleComplete"
-    >
+    ><a href="{{ route('transactions') }}">
         <x-lucide-list style="width: 18px; height: 18px; display: inline; margin-right: 8px;" />
-        View Transactions
+        View Transactions </a>
     </button>
 </div>

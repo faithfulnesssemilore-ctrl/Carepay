@@ -89,7 +89,8 @@ class AddMoney extends Component
             return;
         }
 
-        $this->currentBalance = $user->wallet->balance;
+        // Wallet cast exposes balance in naira
+        $this->currentBalance = round($user->wallet->balance, 2);
     }
 
     /**

@@ -1,11 +1,8 @@
 <?php
 
+use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\PaystackWebhookController;
 use App\Livewire\AddMoney;
-use App\Livewire\Admin\Admin;
-use App\Livewire\Admin\AdminKYC;
-use App\Livewire\Admin\AdminTransactions;
-use App\Livewire\Admin\AdminUsers;
 use App\Livewire\BillPayment;
 use App\Livewire\DashboardPage;
 use App\Livewire\Profile;
@@ -72,37 +69,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
 });
 
-// Admin ROute
-Route::prefix('admin')
-    ->middleware(['auth', 'role:admin'])
-    ->name('admin.')
-    ->group(function () {
 
-        Route::get('/dashboard', Admin::class)->name('dashboard');
-
-        Route::get('/kyc', AdminKYC::class)->name('kyc');
-
-        Route::get('/transactions', AdminTransactions::class)->name('transactions');
-
-        Route::get('/users', AdminUsers::class)->name('users');
-
-    });
-
-/*
-|--------------------------------------------------------------------------
-| SUPER ADMIN ROUTES
-|--------------------------------------------------------------------------
-*/
-Route::prefix('super-admin')
-    ->middleware(['auth', 'role:super_admin'])
-    ->name('super_admin.')
-    ->group(function () {
-
-        Route::get('/dashboard', function () {
-            return view('super_admin.dashboard');
-        })->name('dashboard');
-
-    });
 
 /*
 |--------------------------------------------------------------------------
@@ -131,13 +98,13 @@ Route::get('verify-pin', VerifyPin::class)->name('pin-verify');
 // user clicks verification link in email
 // link looks like: /email/verify/user-id/hash
 Route::get('/email/verify/{user}/{hash}', [
-    \App\Http\Controllers\Auth\VerifyEmailController::class,
+    VerifyEmailController::class,
     'verify',
 ])->name('verification.verify');
 
 // user can request new verification email if they didn't get first one
 Route::post('/email/verification-notification', [
-    \App\Http\Controllers\Auth\VerifyEmailController::class,
+    VerifyEmailController::class,
     'resend',
 ])->middleware('auth')
     ->name('verification.resend');
