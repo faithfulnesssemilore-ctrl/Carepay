@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string $role = 'admin'): Response
     {
         $user = auth()->user();
 
@@ -26,6 +26,7 @@ class RoleMiddleware
             return redirect()->route('verification.notice');
         }
 
+        // Role levels: 0=user, 1=admin, 2=super_admin
         $roleLevels = [
             'user' => 0,
             'admin' => 1,
@@ -36,7 +37,11 @@ class RoleMiddleware
             abort(500, 'Invalid role middleware');
         }
 
-        if ($user->role < $roleLevels[$role]) {
+        // $user->role is stored as integer (0, 1, or 2)
+        $requiredLevel = $roleLevels[$role];
+        $userLevel = (int) $user->role;
+
+        if ($userLevel < $requiredLevel) {
             abort(403, 'Unauthorized');
         }
 

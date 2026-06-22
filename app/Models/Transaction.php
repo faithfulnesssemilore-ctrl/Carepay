@@ -3,12 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
-use App\Models\AuditLog;
-use App\Models\LedgerEntry;
-use App\Models\ScheduledPayment;
-use App\Models\TransactionCategory;
-use App\Models\User;
-use App\Models\Wallet;
+use App\Notifications\TransactionCreated;
 use App\TransactionStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -53,7 +48,7 @@ class Transaction extends Model
     protected function transactionLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => ucfirst($this->type) . ' ' . ucfirst($this->category)
+            get: fn () => ucfirst($this->type).' '.ucfirst($this->category)
         );
     }
 
@@ -74,7 +69,7 @@ class Transaction extends Model
     protected function formattedAmount(): Attribute
     {
         return Attribute::make(
-            get: fn () => number_format($this->amount, 2) . ' ' . $this->currency
+            get: fn () => number_format($this->amount, 2).' '.$this->currency
         );
     }
 
@@ -135,6 +130,14 @@ class Transaction extends Model
                 );
             } catch (\Exception $e) {
                 \Log::warning('AuditLog failed for transaction: '.$e->getMessage());
+            }
+
+            try {
+                if ($tx->status === TransactionStatus::Completed && $tx->user) {
+                    $tx->user->notify(new TransactionCreated($tx));
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Transaction notification failed: '.$e->getMessage());
             }
         });
     }

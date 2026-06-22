@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'CarePay' }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
             integrity="sha512-pnKJYqw+4KRFz3LrL0rwO6+Hh2Z07W8uT+Zk4l3e5rT+q6b0XuwmZ4Kk3T7xma6p4eXirHJf9p8rvpqk2aEzqQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer" />

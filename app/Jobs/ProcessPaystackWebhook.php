@@ -6,8 +6,8 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
-use App\TransactionStatus;
 use App\Notifications\DepositSuccessful;
+use App\TransactionStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,15 +46,16 @@ class ProcessPaystackWebhook implements ShouldQueue
 
             $wallet = Wallet::where('user_id', $virtual->user_id)->first();
 
-            $amount = $data['amount'] / 100;
+            $amountKobo = (int) $data['amount'];
+            $amount = $amountKobo / 100;
 
             // Prevent duplicate
             if (Transaction::where('reference', $data['reference'])->exists()) {
                 return;
             }
 
-            // Credit wallet
-            $wallet->increment('balance', $amount);
+            // Credit wallet (pass kobo to raw DB increment)
+            $wallet->increment('balance', $amountKobo);
 
             // Save transaction
             Transaction::create([

@@ -3,17 +3,15 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class NotificationBell extends Component
 {
-    // How many unread notifications
     public int $unreadCount = 0;
 
-    // The list to show in the dropdown
     public $notifications = [];
 
-    // Whether the dropdown is open
     public bool $open = false;
 
     public function mount(): void
@@ -24,8 +22,6 @@ class NotificationBell extends Component
     public function loadNotifications(): void
     {
         $user = Auth::user();
-
-        // Get last 10 notifications
         $this->notifications = $user->notifications()
             ->latest()
             ->take(10)
@@ -39,26 +35,28 @@ class NotificationBell extends Component
             ])
             ->toArray();
 
-        // Count unread ones
         $this->unreadCount = $user->unreadNotifications()->count();
     }
 
-    // Mark all as read when user opens the dropdown
+    #[On('notification-received')]
+    public function notificationReceived($data): void
+    {
+        $this->unreadCount = $data['unread_count'] ?? 0;
+        $this->loadNotifications();
+        $this->dispatch('show-notification-toast', data: $data);
+    }
+
     public function toggleDropdown(): void
     {
         $this->open = ! $this->open;
 
         if ($this->open) {
-            // Mark all as read
             Auth::user()->unreadNotifications()->update(['read_at' => now()]);
             $this->unreadCount = 0;
-
-            // Reload so they show as read
             $this->loadNotifications();
         }
     }
 
-    // Close the dropdown
     public function close(): void
     {
         $this->open = false;

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('first_name')->nullable();
             $table->string('last_name');
             $table->string('email')->unique();
-            $table->text('phone')->nullable();//i changed to text to store long encrypted strings.
+            $table->text('phone')->nullable(); // i changed to text to store long encrypted strings.
             $table->string('password');
 
             // KYC

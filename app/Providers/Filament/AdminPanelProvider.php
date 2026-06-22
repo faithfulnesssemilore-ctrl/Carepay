@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(fn () => redirect()->route('login'))
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -54,6 +54,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                // Use the route middleware alias with parameter to restrict access to admins
+                'role:admin',
             ]);
     }
 }

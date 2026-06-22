@@ -166,6 +166,27 @@
             </div>
         </div>
 
+        <div class="row g-3 mb-4 mb-md-5">
+            <div class="col-12">
+                <div class="card card-luxury border p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h6 class="fw-semibold mb-1">Daily Transfer Limit</h6>
+                            <p class="small text-muted-custom mb-0">Track today’s spending against your daily transfer limit.</p>
+                        </div>
+                        <span class="small text-muted-custom">{{ $dailyLimitUsedPercent }}% used</span>
+                    </div>
+                    <div class="progress" style="height: 12px; background: rgba(255,255,255,0.08);">
+                        <div class="progress-bar bg-primary-custom" role="progressbar" style="width: {{ $dailyLimitUsedPercent }}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 small text-muted-custom">
+                        <span>₦{{ number_format($dailyLimitUsed, 2) }} spent</span>
+                        <span>Limit ₦{{ number_format($dailyLimitTotal, 2) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- MAIN CONTENT ROW --}}
         <div class="row g-4 mb-4 mb-md-5">
             {{-- Spending Overview Chart --}}
@@ -360,12 +381,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     {{-- Notifications Offcanvas --}}
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="notificationsOffcanvas" aria-labelledby="offcanvasLabel" style="background: #0f172a;">
+    <div href="{{ route('transactions') }}" class="offcanvas offcanvas-end" tabindex="-1" id="notificationsOffcanvas" aria-labelledby="offcanvasLabel" style="background: #0f172a;">
         <div class="offcanvas-header border-bottom" style="border-color: rgba(255, 255, 255, 0.1) !important;">
             <h5 class="offcanvas-title fw-bold" id="offcanvasLabel">Notifications</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <div class="offcanvas-body p-0">
+        <div  href="{{ route('transactions') }}" class="offcanvas-body p-0">
             @forelse($upcomingPayments as $payment)
             <div class="p-3 border-bottom" style="border-color: rgba(255, 255, 255, 0.1) !important;">
                 <div class="d-flex gap-3">
@@ -382,18 +403,20 @@ document.addEventListener('DOMContentLoaded', function() {
             @endforelse
 
             @forelse($recentTransactions->take(3) as $tx)
-            <div class="p-3 border-bottom" style="border-color: rgba(255, 255, 255, 0.1) !important;">
+            <div   class="p-3 border-bottom" style="border-color: rgba(255, 255, 255, 0.1) !important;">
                 <div class="d-flex gap-3">
                     <div class="icon-container icon-container-sm flex-shrink-0" style="background: @if($tx->transaction_type === 'in') rgba(34, 197, 94, 0.2) @else rgba(168, 85, 247, 0.2) @endif;">
-                        @if($tx->transaction_type === 'in')
+                        
+                        <a href="{{ route('transactions') }}" class="text-primary-custom small text-decoration-none">@if($tx->transaction_type === 'in')
                             <x-lucide-arrow-down-left class="w-4 h-4 text-success" />
                         @else
                             <x-lucide-arrow-up-right class="w-4 h-4 text-primary-custom" />
                         @endif
                     </div>
-                    <div>
-                        <p class="small fw-semibold mb-1">{{ ucfirst($tx->transaction_type === 'in' ? 'Received' : 'Sent') }}</p>
+                    <div >
+                        <p class="small fw-semibold mb-1">{{ ucfirst($tx->transaction_type === 'in' ? 'Received' : 'Transaction') }}</p>
                         <p class="text-muted-custom small mb-0">{{ $tx->created_at->format('M d, Y H:i') }}</p>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -31,7 +31,7 @@ class Wallet extends Component
     // Transaction history
     public $transactions = [];
 
-    public $scheduledPayments = [];
+    public $scheduledPayment = [];
 
     // UI properties
     public $balanceVisible = true;
@@ -90,8 +90,8 @@ class Wallet extends Component
                 ->limit(10)
                 ->get();
 
-            // Load scheduled payments
-            $this->scheduledPayments = ScheduledPayment::where('user_id', $user->id)
+            // Load scheduled payment
+            $this->scheduledPayment = ScheduledPayment::where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->orderBy('scheduled_date', 'asc')
                 ->limit(5)

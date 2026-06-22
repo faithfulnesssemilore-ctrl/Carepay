@@ -3,6 +3,7 @@
 namespace App\Livewire\Security;
 
 use app\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
 class VerifyPin extends Component
@@ -26,7 +27,7 @@ class VerifyPin extends Component
             return;
         }
         // check pin
-        if (! \Illuminate\Support\Facades\Hash::check($this->pin, $user->pin)) {
+        if (! Hash::check($this->pin, $user->pin)) {
             session()->put('pin_attempts', $attempts + 1);
             $this->addError('pin', 'Invalid PIN');
 

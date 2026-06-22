@@ -2,7 +2,7 @@
 
 namespace App\Filament;
 
-use Filament\Facades\Filament;
+use App\Http\Middleware\RoleMiddleware;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -10,6 +10,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -17,7 +18,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Support\Enums\MaxWidth;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(fn () => redirect()->route('login'))
             ->colors([
                 'primary' => Color::Blue,
                 'success' => Color::Green,
@@ -59,12 +59,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->userMenuItems([
-                'profile' => MenuItem::make()
-                    ->label('Edit profile')
-                    ->url(fn () => AdminResource::getUrl('edit', ['record' => auth()->user()]))
-                    ->icon('heroicon-m-user-circle'),
+                RoleMiddleware::class,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(MaxWidth::Full)

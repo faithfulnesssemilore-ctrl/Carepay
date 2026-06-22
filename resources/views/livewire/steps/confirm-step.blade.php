@@ -1,9 +1,3 @@
-{{--
-    Transfer Confirmation Step
-    Displays transfer details to bank account for final review
-    UI Components: x-ui.card, x-ui.button
-    CSS Classes: text-primary-custom, text-muted-custom, fw-bold
---}}
 
 <div class="d-flex flex-column gap-4">
     <div>
@@ -45,7 +39,7 @@
             @if ($note)
                 <hr style="border-color: #2a2a3a; margin: 0;">
                 <div>
-                    <div class="text-muted-custom mb-1">Note</div>
+                    <div class="text-muted-custom mb-1">description</div>
                     <div class="small">{{ $note }}</div>
                 </div>
             @endif
@@ -55,7 +49,7 @@
 
             {{-- Fee Section --}}
             <div class="d-flex align-items-center justify-content-between">
-                <span class="text-muted-custom">Processing Fee</span>
+                <span class="text-muted-custom">Charges</span>
                 <span class="fw-medium">₦0.00</span>
             </div>
 
@@ -110,11 +104,11 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">4-Digit PIN</label>
+                            <label class="form-label">Enter PIN</label>
                             <input 
                                 type="password" 
                                 class="form-control bg-secondary-custom border-0 rounded-xl text-center fw-bold"
-                                placeholder="••••"
+                                placeholder="Enter Pin"
                                 wire:model="pinInput"
                                 maxlength="4"
                                 pattern="[0-9]*"

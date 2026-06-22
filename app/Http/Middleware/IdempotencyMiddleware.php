@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Transaction;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,7 +12,7 @@ class IdempotencyMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -21,7 +22,7 @@ class IdempotencyMiddleware
             return $next($request);
         }
         // Check if the idempotency key already exists in the database
-        $existingTransaction = \App\Models\Transaction::where('idempotency_key', $idempotencyKey)->first();
+        $existingTransaction = Transaction::where('idempotency_key', $idempotencyKey)->first();
         if ($existingTransaction) {
             // If a transaction with the same idempotency key exists, return the existing transaction response
             return response()->json([

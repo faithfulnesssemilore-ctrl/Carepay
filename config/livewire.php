@@ -1,5 +1,12 @@
 <?php
 
+use Livewire\Features\SupportDisablingBackButtonCache\SupportDisablingBackButtonCache;
+use Livewire\Features\SupportEntangle\SupportEntangle;
+use Livewire\Features\SupportEvents\SupportEvents;
+use Livewire\Features\SupportFileUploads\SupportFileUploads;
+use Livewire\Features\SupportLocales\SupportLocales;
+use Livewire\Features\SupportTeleport\SupportTeleport;
+
 return [
     'class_namespace' => 'App\\Livewire',
     'view_path' => resource_path('views/livewire'),
@@ -36,11 +43,11 @@ return [
     'legacy_model_binding' => false,
     'html_morph_anchors' => true,
     'features' => [
-        \Livewire\Features\SupportDisablingBackButtonCache\SupportDisablingBackButtonCache::class,
-        \Livewire\Features\SupportFileUploads\SupportFileUploads::class,
-        \Livewire\Features\SupportEntangle\SupportEntangle::class,
-        \Livewire\Features\SupportEvents\SupportEvents::class,
-        \Livewire\Features\SupportLocales\SupportLocales::class,
-        \Livewire\Features\SupportTeleport\SupportTeleport::class,
+        SupportDisablingBackButtonCache::class,
+        SupportFileUploads::class,
+        SupportEntangle::class,
+        SupportEvents::class,
+        SupportLocales::class,
+        SupportTeleport::class,
     ],
 ];

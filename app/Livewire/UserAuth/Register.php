@@ -2,6 +2,8 @@
 
 namespace App\Livewire\UserAuth;
 
+use App\Models\User;
+use App\Notifications\UserRegistered;
 use Carbon\Carbon;
 use Ichtrojan\Otp\Otp;
 use Illuminate\Http\File;
@@ -148,7 +150,7 @@ class Register extends Component
     public function sendOtp()
     {
         // Check if we can resend (60 seconds cooldown)
-        if ($this->lastOtpSentAt && Carbon::parse($this->lastOtpSentAt)->addSeconds(60)->isFuture()) {
+        if ($this->lastOtpSentAt && Carbon::parse($this->lastOtpSentAt)->addSeconds(30)->isFuture()) {
             $this->addError('verificationCode', 'Please wait before requesting a new code.');
 
             return;
@@ -180,7 +182,7 @@ class Register extends Component
         $this->otpVerified = false; // Reset verification status
         $this->canResendOtp = false;
 
-        // Re-enable resend after 60 seconds
+        // Re-enable resend after 30 seconds
         $this->canResendOtp = false;
         $this->lastOtpSentAt = now();
     }
@@ -231,7 +233,8 @@ class Register extends Component
     }
 
     public function create() // This create document
-    {$validate = $this->validate();
+    {
+        $validate = $this->validate();
         if ($this->idDocument) {
             $validate['id_document'] = $this->idDocument->store('id_documents', 'public');
         }
@@ -259,7 +262,7 @@ class Register extends Component
         ]);
 
         // 1. Create user first
-        $user = \App\Models\User::create([
+        $user = User::create([
             'first_name' => $this->firstName,
             'last_name' => $this->lastName,
             'email' => $this->email,
@@ -287,6 +290,7 @@ class Register extends Component
 
         // 4. Login
         Auth::login($user);
+        $user->notify(new UserRegistered);
 
         return redirect()->route('dashboard');
     }

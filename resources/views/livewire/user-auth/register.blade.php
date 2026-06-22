@@ -1,14 +1,10 @@
-<div>
-    {{-- Be present above all else. - Naval Ravikant --}}
-    <div class="d-flex align-items-center justify-content-center bg-dark-custom min-vh-100 p-4">
-        <div class="mx-auto" style="max-width: 900px; width: 100%;">
+<div class="d-flex align-items-center justify-content-center bg-dark-custom min-vh-100 p-4">
+    <div class="mx-auto" style="max-width: 900px; width: 100%;">
 
-            {{-- Header with logo --}}
-            <div class="text-center mb-4">
-               
-                <h1 class="display-6 fw-bold mb-2">Create Your Account</h1>
-                <p class="text-muted-custom">Complete the steps to get started</p>
-            </div>
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Create Your Account</h2>
+            <p class="text-muted small mb-0">Complete a few steps to get started</p>
+        </div>
 
             {{-- Progress Steps --}}
             <div class="mb-4">
@@ -63,12 +59,12 @@
                                 <div class="row g-3">
                                     <div class="col-sm-6">
                                         <label class="form-label">First Name</label>
-                                        <input type="text" wire:model="firstName" class="form-control bg-secondary-custom rounded-xl py-3 @error('firstName') is-invalid @enderror" placeholder="John" required>
+                                        <input type="text" wire:model="firstName" class="form-control bg-secondary-custom rounded-xl py-3 @error('firstName') is-invalid @enderror" placeholder="Enter your first name " required>
                                         @error('firstName') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                     <div class="col-sm-6">
                                         <label class="form-label">Last Name</label>
-                                        <input type="text" wire:model="lastName" class="form-control bg-secondary-custom rounded-xl py-3 @error('lastName') is-invalid @enderror" placeholder="Doe" required>
+                                        <input type="text" wire:model="lastName" class="form-control bg-secondary-custom rounded-xl py-3 @error('lastName') is-invalid @enderror" placeholder="Enter your second name" required>
                                         @error('lastName') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                 </div>
@@ -86,8 +82,7 @@
                                     <label class="form-label">Phone Number</label>
                                     <div class="position-relative">
                                         <x-icon name="lucide-phone" class="position-absolute text-muted-custom" style="left:1rem; top:50%; transform:translateY(-50%); width:20px; height:20px;" />
-                                        <input type="tel" wire:model="phone" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('phone') is-invalid @enderror" placeholder="+234 90xxxxx
-                                        " maxlength="11" required>
+                                        <input type="tel" wire:model="phone" class="form-control bg-secondary-custom rounded-xl py-3 ps-5 @error('phone') is-invalid @enderror" placeholder="Enter your phone number" maxlength="11" required>
                                     </div>
                                     @error('phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
@@ -153,9 +148,9 @@
 
                                 <div>
                                     <label class="form-label">ID Type</label>
-                                    <select wire:model="idType" class="form-select bg-secondary-custom rounded-xl py-3 @error('idType') is-invalid @enderror" required>
+                                    <select wire:model="idType" class="form-select bg-secondary-custom rounded-xl py-3 @error('idType') is-invalid @enderror"  maxlength="11" required>
                                         <option value="">Select ID type</option>
-                                        <option value="passport">Passport</option>
+                                        <option value="BVN">BVN</option>
                                         <option value="drivers_license">Driver's License</option>
                                         <option value="national_id">National ID Card</option>
                                     </select>
@@ -331,7 +326,7 @@
             <div class="text-center mt-4">
                 <p class="text-muted-custom small mb-0">
                     Already have an account?
-                    <a href="/login" class="text-primary-custom text-decoration-none">Sign in</a>
+                    <a href="{{ route('login') }}" class="text-primary-custom text-decoration-none">Sign in</a>
                 </p>
             </div>
         </div>

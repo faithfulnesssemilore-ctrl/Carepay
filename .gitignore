@@ -19,4 +19,10 @@
 !public/build/**
 !public/build/
 !public/build/**
+.ai/
+.cursor/
+.claude/
+agents/
+boost/
+memory/
 # keep build folder tracked but ignore old hashed files

@@ -1,8 +1,3 @@
-{{--
-    Bank Transfer Deposit Step
-    Displays virtual account details for bank transfer
-    User can copy account details and confirm transfer
---}}
 
 <x-ui.card variant="default" hover="lift" class="border">
     <div class="card-body p-4 p-md-5">

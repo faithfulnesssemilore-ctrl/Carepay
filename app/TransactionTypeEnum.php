@@ -2,10 +2,9 @@
 
 namespace App;
 
-enum TransactionType:string
+enum TransactionTypeEnum: string
 {
     //
-    
 
     case Credit = 'credit';
     case Debit = 'debit';

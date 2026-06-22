@@ -27,9 +27,15 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CeIUr_aH.js",
+    "file": "assets/app-BxqCLQYo.js",
     "name": "app",
     "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/notification-stream.js": {
+    "file": "assets/notification-stream-l0sNRNKZ.js",
+    "name": "notification-stream",
+    "src": "resources/js/notification-stream.js",
     "isEntry": true
   }
 }

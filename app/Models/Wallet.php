@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Casts\MoneyCast;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Wallet extends Model
@@ -30,17 +29,18 @@ class Wallet extends Model
 
     protected $casts = [
         'balance' => MoneyCast::class, // stored in kobo
-         'created_at' => 'datetime',
-         'updated_at' => 'datetime',
-         'status' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'status' => 'string',
         'locked' => 'boolean',
     ];
+
     protected function formattedBalance(): Attribute
-{
-    return Attribute::make(
-        get: fn () => number_format($this->balance, 2)
-    );
-}
+    {
+        return Attribute::make(
+            get: fn () => number_format($this->balance, 2)
+        );
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -62,5 +62,4 @@ class Wallet extends Model
     {
         return $this->hasMany(LedgerEntry::class);
     }
-
 }

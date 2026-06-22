@@ -4,107 +4,105 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Form;
+use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Components as SchemaComponents;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationLabel = 'Users';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Personal Information')
+        return $schema
+            ->components([
+                SchemaComponents\Section::make('Personal Information')
                     ->description('Basic user details')
-                    ->schema([
-                        Forms\Components\TextInput::make('first_name')
+                    ->components([
+                        FormComponents\TextInput::make('first_name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('last_name')
+                        FormComponents\TextInput::make('last_name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
+                        FormComponents\TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(User::class, 'email', ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('username')
+                        FormComponents\TextInput::make('username')
                             ->unique(User::class, 'username', ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('phone')
+                        FormComponents\TextInput::make('phone')
                             ->tel()
                             ->maxLength(20),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Security & Authentication')
+                SchemaComponents\Section::make('Security & Authentication')
                     ->description('Password and authentication settings')
-                    ->schema([
-                        Forms\Components\TextInput::make('password')
+                    ->components([
+                        FormComponents\TextInput::make('password')
                             ->password()
                             ->revealable()
                             ->dehydrateStateUsing(fn ($state) => $state ? bcrypt($state) : null)
                             ->required(fn (string $context): bool => $context === 'create'),
-                        Forms\Components\TextInput::make('pin')
+                        FormComponents\TextInput::make('pin')
                             ->label('Transaction PIN')
                             ->password()
                             ->revealable()
                             ->maxLength(6),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Identity & Compliance')
+                SchemaComponents\Section::make('Identity & Compliance')
                     ->description('KYC and identity verification')
-                    ->schema([
-                        Forms\Components\Select::make('id_type')
+                    ->components([
+                        FormComponents\Select::make('id_type')
                             ->options([
                                 'national_id' => 'National ID',
                                 'passport' => 'Passport',
                                 'drivers_license' => "Driver's License",
                                 'bvn' => 'BVN',
                             ]),
-                        Forms\Components\TextInput::make('id_number')
+                        FormComponents\TextInput::make('id_number')
                             ->maxLength(255),
-                        Forms\Components\Checkbox::make('kyc_verified')
+                        FormComponents\Checkbox::make('kyc_verified')
                             ->label('KYC Verified')
                             ->default(false),
-                        Forms\Components\Checkbox::make('registration_complete')
+                        FormComponents\Checkbox::make('registration_complete')
                             ->label('Registration Complete')
                             ->default(false),
-                        Forms\Components\Checkbox::make('terms_accepted')
+                        FormComponents\Checkbox::make('terms_accepted')
                             ->label('Terms & Conditions Accepted')
                             ->default(false),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Account Status')
+                SchemaComponents\Section::make('Account Status')
                     ->description('User account settings')
-                    ->schema([
-                        Forms\Components\Select::make('role')
+                    ->components([
+                        FormComponents\Select::make('role')
                             ->options([
                                 0 => 'User',
                                 1 => 'Moderator',
                                 2 => 'Admin',
                             ])
                             ->default(0),
-                        Forms\Components\Select::make('status')
+                        FormComponents\Select::make('status')
                             ->options([
                                 'active' => 'Active',
                                 'inactive' => 'Inactive',
@@ -151,7 +149,7 @@ class UserResource extends Resource
                     ]),
                 TextColumn::make('wallet.balance')
                     ->label('Wallet Balance')
-                    ->formatStateUsing(fn ($state) => '₦' . number_format($state / 100, 2))
+                    ->formatStateUsing(fn ($state) => '₦'.number_format($state ?? 0, 2))
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -177,6 +175,7 @@ class UserResource extends Resource
                 EditAction::make(),
                 DeleteAction::make(),
             ])
+
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -189,7 +188,6 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }

@@ -1,9 +1,3 @@
-{{--
-    Transfer Method Selection Step
-    Displays available transfer methods with descriptions
-    UI Components: x-ui.card with hover-lift effect
-    CSS Classes: hover-lift, text-primary-custom, text-muted-custom
---}}
 
 <div class="d-flex flex-column gap-4">
     <div>

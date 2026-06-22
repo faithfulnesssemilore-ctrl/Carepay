@@ -4,7 +4,7 @@
     <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
         <div>
             <h1 class="display-6 fw-bold mb-1">Wallet</h1>
-            <p class="text-muted-custom mb-0">Manage funds, scheduled payments, and quick actions in one place.</p>
+            <p class="text-muted-custom mb-0">Manage funds, scheduled payment, and quick actions in one place.</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
@@ -194,8 +194,8 @@
                                     <div class="fw-bold {{ $tx->type === 'credit' ? 'text-success' : 'text-primary-custom' }}">
                                         {{ $tx->type === 'credit' ? '+' : '-' }}₦{{ number_format(abs($tx->amount_naira), 2) }}
                                     </div>
-                                    <div class="small text-muted-custom">{{ ucfirst($tx->status) }}</div>
-                                </div>
+                                   <div class="small text-muted-custom">{{ ucfirst($tx->status->value) }}</div>
+
                             </div>
                         </div>
                     @empty
@@ -210,18 +210,18 @@
     </div>
 
     {{-- Scheduled Payments Section --}}
-    @if(count($scheduledPayments) > 0)
+    @if(count($scheduledPayment) > 0)
         <div class="card card-luxury p-4 border-0 shadow-sm">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h5 class="fw-bold mb-1">Scheduled Payments</h5>
+                    <h5 class="fw-bold mb-1">Scheduled Payment</h5>
                     <div class="small text-muted-custom">Upcoming payments due soon.</div>
                 </div>
-                <span class="badge bg-warning text-dark">{{ count($scheduledPayments) }}</span>
+                <span class="badge bg-warning text-dark">{{ count($scheduledPayment) }}</span>
             </div>
 
             <div class="row g-3">
-                @foreach($scheduledPayments as $payment)
+                @foreach($scheduledPayment as $payment)
                     <div class="col-12 col-md-6">
                         <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04); border-left: 4px solid #a855f7;">
                             <div class="d-flex justify-content-between align-items-start gap-3">

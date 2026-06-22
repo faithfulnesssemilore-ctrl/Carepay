@@ -119,12 +119,12 @@ class DashboardPage extends Component
             $prevIncome = Transaction::where('user_id', $userId)
                 ->where('type', 'credit')
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
-                ->sum('amount');
+                ->sum('amount') / 100; // convert kobo -> naira
 
             $prevExpenses = Transaction::where('user_id', $userId)
                 ->where('type', 'debit')
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
-                ->sum('amount');
+                ->sum('amount') / 100; // convert kobo -> naira
 
             $this->incomePercentage = $prevIncome > 0
                 ? round((($this->monthlyIncome - $prevIncome) / $prevIncome) * 100, 1)
@@ -142,7 +142,7 @@ class DashboardPage extends Component
                 $todaySpent = Transaction::where('user_id', $userId)
                     ->where('type', 'debit')
                     ->whereDate('created_at', today())
-                    ->sum('amount');
+                    ->sum('amount') / 100; // convert kobo -> naira
 
                 $this->dailyLimitTotal = round($dailyLimit, 2);
                 $this->dailyLimitUsed = round($todaySpent, 2);
@@ -166,7 +166,7 @@ class DashboardPage extends Component
                         ->where('type', 'credit')
                         ->whereYear('created_at', $m->year)
                         ->whereMonth('created_at', $m->month)
-                        ->sum('amount'),
+                        ->sum('amount') / 100,
                     2
                 );
 
@@ -175,7 +175,7 @@ class DashboardPage extends Component
                         ->where('type', 'debit')
                         ->whereYear('created_at', $m->year)
                         ->whereMonth('created_at', $m->month)
-                        ->sum('amount'),
+                        ->sum('amount') / 100,
                     2
                 );
             }

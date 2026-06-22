@@ -20,12 +20,13 @@ class WalletServiceTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        Wallet::create([
-            'user_id' => $user->id,
-            'balance' => $balance,
-            'currency' => 'NGN',
-            'status' => 'active',
-        ]);
+        // User boot creates wallet, update balance via model instance to apply casts
+        $wallet = $user->wallet;
+        $wallet->balance = $balance; // This applies MoneyCast set (multiply by 100)
+        $wallet->save();
+
+        // Reload to refresh the wallet after save
+        $user->refresh();
 
         return $user;
     }
@@ -36,93 +37,85 @@ class WalletServiceTest extends TestCase
 
         (new WalletService)->credit(
             $user->id,
-            10000,
+            1000000, // 10000 naira in kobo
             'REF-001',
             'Test credit'
         );
 
-        $this->assertDatabaseHas('wallet', [
-            'user_id' => $user->id,
-            'balance' => 10000,
-        ]);
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        $this->assertEquals(10000, $wallet->balance); // casted to naira
     }
 
     public function test_debit_reduces_wallet_balance(): void
     {
-        $user = $this->createUserWithWallet(20000);
+        $user = $this->createUserWithWallet(20000); // 20000 naira (will be stored as 2M kobo)
 
         // reload wallet to confirm balance was set correctly
         $wallet = Wallet::where('user_id', $user->id)->first();
-        $this->assertEquals(20000, $wallet->balance);
+        $this->assertEquals(20000, $wallet->balance); // casted to naira
 
         (new WalletService)->debit(
             $user->id,
-            5000,
+            500000, // 5000 naira in kobo
             'REF-002',
             'Test debit'
         );
 
-        $this->assertDatabaseHas('wallet', [
-            'user_id' => $user->id,
-            'balance' => 15000,
-        ]);
+        $wallet->refresh();
+        $this->assertEquals(15000, $wallet->balance); // 20000 - 5000 = 15000 naira
     }
 
     public function test_debit_fails_when_balance_is_insufficient(): void
     {
-        $user = $this->createUserWithWallet(5000);
+        $user = $this->createUserWithWallet(5000); // 5000 naira
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Insufficient balance');
 
         (new WalletService)->debit(
             $user->id,
-            10000,
+            1000000, // 10000 naira in kobo
             'REF-003',
             'Test debit'
         );
     }
 
     public function test_duplicate_credit_does_not_double_credit(): void
-{
-    $user = $this->createUserWithWallet(0);
+    {
+        $user = $this->createUserWithWallet(0);
 
-    (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'First');
+        (new WalletService)->credit($user->id, 1000000, 'SAME-REF', 'First'); // 10000 naira
 
-    // second call with same reference should throw but NOT credit again
-    try {
-        (new WalletService())->credit($user->id, 10000, 'SAME-REF', 'Duplicate');
-    } catch (\Exception $e) {
-        // expected - duplicate reference is rejected
+        // second call with same reference should throw but NOT credit again
+        try {
+            (new WalletService)->credit($user->id, 1000000, 'SAME-REF', 'Duplicate');
+        } catch (\Exception $e) {
+            // expected - duplicate reference is rejected
+        }
+
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        $this->assertEquals(10000, $wallet->balance); // still 10000 naira
     }
 
-    $this->assertDatabaseHas('wallet', [
-        'user_id' => $user->id,
-        'balance' => 10000,
-    ]);
-}
     public function test_transfer_debits_sender_and_credits_recipient(): void
     {
-        $sender = $this->createUserWithWallet(100000);
+        $sender = $this->createUserWithWallet(100000); // 100000 naira
         $recipient = $this->createUserWithWallet(0);
 
         // use correct parameter name from WalletService::transfer()
         (new WalletService)->transfer(
             $sender->id,
             $recipient->id,
-            50000,
+            5000000, // 50000 naira in kobo
             'Test transfer'
         );
 
-        $this->assertDatabaseHas('wallet', [
-            'user_id' => $sender->id,
-            'balance' => 50000,
-        ]);
+        // Reload wallets from database
+        $senderWallet = Wallet::where('user_id', $sender->id)->first();
+        $recipientWallet = Wallet::where('user_id', $recipient->id)->first();
 
-        $this->assertDatabaseHas('wallet', [
-            'user_id' => $recipient->id,
-            'balance' => 50000,
-        ]);
+        $this->assertEquals(50000, $senderWallet->balance); // 100000 - 50000 = 50000 naira
+        $this->assertEquals(50000, $recipientWallet->balance); // 0 + 50000 = 50000 naira
     }
 
     public function test_dashboard_requires_login(): void

@@ -5,7 +5,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'CarePay' }}</title>
-    @vite(['resources/css/app.css', 'resources/css/bootstrap.css', 'resources/css/custom.css', 'resources/js/app.js'])
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @vite(['resources/css/app.css', 'resources/css/bootstrap.css', 'resources/css/custom.css', 'resources/js/app.js', 'resources/js/notification-stream.js'])
    <script>
     document.addEventListener('livewire:init', () => {
     })
@@ -124,9 +125,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <button class="border-0 bg-transparent p-1" style="color:rgba(255,255,255,0.5);">
-                        <x-lucide-bell style="width:20px;height:20px;" />
-                    </button>
+                   
                     <a href="{{ route('profile') }}" class="text-decoration-none">
                         <div class="rounded-circle gradient-bg-primary d-flex align-items-center justify-content-center fw-bold text-white"
                              style="width:34px;height:34px;font-size:13px;">
@@ -158,10 +157,10 @@
                 </div>
                 <span class="gradient-text fw-bold" style="font-size:16px;">CarePay</span>
             </a>
-            <div class="d-flex align-items-center gap-2">
+         <!--   <div class="d-flex align-items-center gap-2">
                 <button class="border-0 bg-transparent p-1" style="color:rgba(255,255,255,0.5);">
                     <x-lucide-bell style="width:18px;height:18px;" />
-                </button>
+                </button>-->
                 <a href="{{ route('profile') }}" class="text-decoration-none">
                     <div class="rounded-circle gradient-bg-primary d-flex align-items-center justify-content-center fw-bold text-white"
                          style="width:30px;height:30px;font-size:11px;">
@@ -172,10 +171,10 @@
         </div>
     </div>
 
-    {{-- mobile page content --}}
+    {{-- mobile page content --
     <div style="padding:16px;padding-bottom:calc(72px + env(safe-area-inset-bottom));">
         {{ $slot }}
-    </div>
+    </div>}}
 
     {{-- mobile bottom nav --}}
     <nav style="position:fixed;bottom:0;left:0;right:0;z-index:200;
@@ -185,6 +184,7 @@
                 padding-bottom:env(safe-area-inset-bottom);">
         @foreach([
             ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Home'],
+            ['route' => 'wallet',        'icon' => 'wallet',           'label' => 'Wallet'],
             ['route' => 'send-money',  'icon' => 'send',             'label' => 'Send'],
             ['route' => 'add-money',   'icon' => 'plus-circle',      'label' => 'Add'],
             ['route' => 'transactions','icon' => 'list',             'label' => 'History'],
@@ -239,6 +239,15 @@ document.addEventListener('livewire:init', () => {
     to   { transform:translateX(0);opacity:1; }
 }
 </style>
-
+{{-- resources/views/layouts/app.blade.php --}}
+@push('scripts')
+    <script type="module">
+        import { startNotificationStream } from '/resources/js/notification-stream.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            startNotificationStream();
+        });
+    </script>
+@endpush
 </body>
 </html>

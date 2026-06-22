@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id(); 
+            $table->id();
             $table->uuid('reference')->unique();
 
             // Relational Fields
@@ -20,14 +20,14 @@ return new class extends Migration
             $table->foreignUuid('wallet_id')->constrained('wallet')->onDelete('cascade');
 
             // Financial Calculations Fields
-            $table->enum('type', ['credit', 'debit'])->index(); 
-            $table->string('category')->index(); 
-            
+            $table->enum('type', ['credit', 'debit'])->index();
+            $table->string('category')->index();
+
             // Amount & Currency
             $table->bigInteger('amount'); // Storing in cents/kobo
             $table->string('currency')->default('NGN');
             $table->enum('status', ['pending', 'completed', 'failed'])->default('pending')->index();
-            
+
             // Metadata & Context
             $table->string('description')->nullable();
             $table->text('metadata')->nullable(); // Changed to text for larger JSON payloads

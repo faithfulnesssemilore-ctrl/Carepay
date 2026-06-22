@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use App\Services\WalletService;
+use App\Models\User;
 use App\Services\PaymentService;
+use App\Services\WalletService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentCallbackController extends Controller
 {
@@ -13,14 +15,14 @@ class PaymentCallbackController extends Controller
     {
         $reference = $request->query('reference') ?? $request->query('trxref');
 
-        if (!$reference) {
+        if (! $reference) {
             return redirect()->route('add-money')
                 ->with('error', 'Invalid payment reference.');
         }
 
         try {
             // verify the payment with Paystack
-            $paymentService = new PaymentService();
+            $paymentService = new PaymentService;
             $data = $paymentService->verify($reference);
 
             if ($data['status'] !== 'success') {
@@ -29,54 +31,56 @@ class PaymentCallbackController extends Controller
             }
 
             $amountKobo = (int) $data['amount'];
-            $email      = $data['customer']['email'];
+            $email = $data['customer']['email'];
 
             // find the user by email
-            $user = \App\Models\User::where('email', $email)->first();
+            $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 Log::error('Payment callback: user not found', ['email' => $email, 'reference' => $reference]);
+
                 return redirect()->route('add-money')
                     ->with('error', 'Account not found. Contact support.');
             }
 
             // credit the wallet — idempotent so double callback is safe
             try {
-                (new WalletService())->credit(
-                    userId:      $user->id,
-                    amountKobo:  $amountKobo,
-                    reference:   $reference,
+                (new WalletService)->credit(
+                    userId: $user->id,
+                    amountKobo: $amountKobo,
+                    reference: $reference,
                     description: 'Card deposit'
                 );
 
                 // mark deposit as completed
-                \Illuminate\Support\Facades\DB::table('deposits')
+                DB::table('deposits')
                     ->where('reference_id', $reference)
                     ->update(['status' => 'completed', 'updated_at' => now()]);
 
             } catch (\Exception $e) {
                 // if reference already processed that is fine — just redirect to success
-                if (!str_contains($e->getMessage(), 'already been processed')) {
+                if (! str_contains($e->getMessage(), 'already been processed')) {
                     Log::error('Payment callback credit failed', [
                         'reference' => $reference,
-                        'error'     => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
+
                     return redirect()->route('add-money')
-                        ->with('error', 'Payment received but wallet credit failed. Contact support with ref: ' . $reference);
+                        ->with('error', 'Payment received but wallet credit failed. Contact support with ref: '.$reference);
                 }
             }
 
             return redirect()->route('wallet')
-                ->with('success', '₦' . number_format($amountKobo / 100, 2) . ' has been added to your wallet.');
+                ->with('success', '₦'.number_format($amountKobo / 100, 2).' has been added to your wallet.');
 
         } catch (\Exception $e) {
             Log::error('Payment callback error', [
                 'reference' => $reference,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('add-money')
-                ->with('error', 'Could not verify payment. If money was deducted contact support with ref: ' . $reference);
+                ->with('error', 'Could not verify payment. If money was deducted contact support with ref: '.$reference);
         }
     }
 }

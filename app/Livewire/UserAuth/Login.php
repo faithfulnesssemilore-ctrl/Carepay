@@ -40,6 +40,20 @@ class Login extends Component
 
         session()->regenerate();
 
+        $user = Auth::user();
+
+        if ($user->status !== 'active') {
+            Auth::logout();
+            $this->errorMessage = 'Account is not active. Contact support.';
+            $this->isLoading = false;
+
+            return;
+        }
+
+        if ($user->role >= 1) {
+            return redirect()->to('/admin');
+        }
+
         return redirect()->route('dashboard');
     }
 

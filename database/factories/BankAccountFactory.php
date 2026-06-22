@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\BankAccount;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,7 +24,7 @@ class BankAccountFactory extends Factory
             'bank_code' => $this->faker->bothify('????'),
             'account_number' => $this->faker->numerify('##########'), // Generates a 10-digit number
             'account_name' => $this->faker->name(),
-            'user_id' => \App\Models\User::factory(), // Create a user and associate
+            'user_id' => User::factory(), // Create a user and associate
         ];
     }
 }

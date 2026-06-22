@@ -49,6 +49,17 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
+    {{-- Receipt Download Button --}}
+    @if ($successTransactionId)
+        <a 
+            href="{{ route('transaction.receipt.download', ['transaction' => $successTransactionId]) }}"
+            class="btn btn-outline-primary w-100 py-3"
+        >
+            <x-lucide-download style="width: 18px; height: 18px; display: inline; margin-right: 8px;" />
+            Download Receipt
+        </a>
+    @endif
+
     {{-- Completion Button --}}
     <button 
         type="button"

@@ -4,10 +4,11 @@ namespace App\Livewire;
 
 use App\Models\Transaction;
 use App\Models\Wallet;
-use App\TransactionStatus;
 use App\Services\VtpassService;
 use App\Services\WalletService;
+use App\TransactionStatus;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class BillPayment extends Component
@@ -75,6 +76,8 @@ class BillPayment extends Component
     public string $errorMessage = '';
 
     public string $referenceNumber = '';
+
+    public ?int $successTransactionId = null;
 
     public string $token = ''; // for electricity
 
@@ -258,7 +261,7 @@ class BillPayment extends Component
 
             // check balance one more time before deducting
             $wallet = $user->wallet;
-            if (! $wallet || $wallet->balance < $amountKobo) {
+            if (! $wallet || $wallet->balance < $amountNaira) {
                 throw new \Exception('Insufficient balance.');
             }
 
@@ -266,15 +269,16 @@ class BillPayment extends Component
             $payload = $this->buildVtpassPayload($requestId, $amountNaira);
 
             // debit wallet BEFORE calling VTPass
-            $reference = 'BILL_'.strtoupper(\Illuminate\Support\Str::random(12));
+            $reference = 'BILL_'.strtoupper(Str::random(12));
             $description = $this->buildDescription();
 
-            $walletService->debit(
+            $transaction = $walletService->debit(
                 userId: $user->id,
                 amountKobo: $amountKobo,
                 reference: $reference,
                 description: $description
             );
+            $this->successTransactionId = $transaction->id;
 
             // call VTPass
             $result = $vtpass->processPayment(
@@ -297,6 +301,10 @@ class BillPayment extends Component
                     description: 'Refund: '.$description
                 );
 
+                if ($transaction) {
+                    $transaction->update(['status' => TransactionStatus::Failed]);
+                }
+
                 $errorMsg = $result['response_description'] ?? $result['message'] ?? 'Payment failed. Please try again.';
                 throw new \Exception($errorMsg);
             }
@@ -311,10 +319,10 @@ class BillPayment extends Component
                 $result['content']['transactions']['token'] ?? '';
 
             $this->referenceNumber = $requestId;
-            // balance is cast to naira, amountKobo is in kobo, need to compare properly
-            // subtract kobo amount and convert the result to naira
-            $remainingKobo = $wallet->balance * 100 - $amountKobo;  // convert naira back to kobo, subtract, get result in kobo
-            $this->currentBalance = round($remainingKobo / 100, 2);  // convert result back to naira
+
+            // Reload wallet to get updated balance from database (debit was done via WalletService)
+            $wallet->refresh();
+            $this->currentBalance = round($wallet->balance, 2);  // balance is cast to naira by MoneyCast
             $this->currentStep = 'success';
             $this->successMessage = 'Payment successful!';
 
@@ -386,6 +394,7 @@ class BillPayment extends Component
         $this->errorMessage = '';
         $this->referenceNumber = '';
         $this->token = '';
+        $this->successTransactionId = null;
         $this->loadBalance();
     }
 

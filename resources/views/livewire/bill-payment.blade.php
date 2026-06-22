@@ -12,6 +12,11 @@
     {{-- STEP: category --}}
     @if($currentStep === 'category')
 
+        <div class="mb-4">
+            <h2 class="fw-bold mb-1" style="font-size:1.5rem;">Pay bills quickly</h2>
+            <p class="text-muted-custom" style="font-size:0.95rem;">Choose a service and pay directly from your wallet.</p>
+        </div>
+
         {{-- balance pill --}}
         <div class="d-flex align-items-center gap-2 mb-4 p-3 rounded-xl"
              style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.15);">
@@ -50,38 +55,7 @@
             @endforeach
         </div>
 
-        {{-- recent bills --}}
-        @if($recentBills && $recentBills->count() > 0)
-        <div class="card-luxury p-4">
-            <h6 class="fw-bold mb-3" style="font-size:13px;text-transform:uppercase;
-                letter-spacing:0.5px;color:rgba(255,255,255,0.5);">Recent</h6>
-            <div class="d-flex flex-column gap-2">
-                @foreach($recentBills as $bill)
-                <div class="d-flex align-items-center justify-content-between p-3 rounded-xl"
-                     style="background:rgba(168,85,247,0.05);">
-                    <div class="d-flex align-items-center gap-3">
-                        <div style="width:36px;height:36px;border-radius:10px;
-                                    background:rgba(168,85,247,0.1);
-                                    display:flex;align-items:center;justify-content:center;">
-                            <x-lucide-receipt style="width:16px;height:16px;color:#a855f7;" />
-                        </div>
-                        <div>
-                            <div style="font-size:14px;font-weight:600;color:white;">
-                                {{ $bill->description ?? 'Bill payment' }}
-                            </div>
-                            <div style="font-size:11px;color:rgba(255,255,255,0.4);">
-                                {{ $bill->created_at->format('M d, Y') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="font-weight:700;color:#ef4444;">
-                        -₦{{ number_format($bill->amount, 2) }}
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-        @endif
+       
 
     @endif
 
@@ -273,7 +247,24 @@
 
         {{-- amount (not for data) --}}
         @if($selectedCategory !== 'data')
-        <div class="mb-5">
+        <div class="mb-4">
+            <div class="card-luxury p-3 mb-4" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="text-muted-custom small">Selected provider</div>
+                        <div class="fw-semibold">{{ $selectedProvider }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-muted-custom small">Category</div>
+                        <div class="fw-semibold">{{ ucfirst($selectedCategory) }}</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted-custom small">Available balance</div>
+                    <div class="fw-semibold">₦{{ number_format($currentBalance, 2) }}</div>
+                </div>
+            </div>
+
             <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);
                            text-transform:uppercase;letter-spacing:0.3px;">
                 Amount (₦)
@@ -436,10 +427,17 @@
             </div>
         </div>
 
-        <div class="d-flex gap-3">
+        <div class="d-flex gap-3 flex-column flex-sm-row">
             <button wire:click="resetForm" class="btn btn-outline-light flex-fill" style="border-radius:12px;padding:12px;">
                 Pay Another
             </button>
+            @if($successTransactionId)
+            <a href="{{ route('transaction.receipt.download', ['transaction' => $successTransactionId]) }}"
+               class="btn btn-light flex-fill"
+               style="border-radius:12px;padding:12px;">
+                Download Receipt
+            </a>
+            @endif
             <a href="{{ route('transactions') }}" class="btn btn-gradient flex-fill" style="border-radius:12px;padding:12px;">
                 View History
             </a>

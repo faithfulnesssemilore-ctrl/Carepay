@@ -7,10 +7,11 @@ use App\Http\Requests\TransferRequest;
 use App\Http\Requests\WithdrawRequest;
 use App\Models\AuditLog;
 use App\Models\Transaction;
-use App\TransactionStatus;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\PinService;
+use App\TransactionStatus;
+use App\TransactionTypeEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -110,7 +111,7 @@ class WalletController extends Controller
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
                 'amount' => $request->amount,
-                'type' => 'debit',
+                'type' => TransactionTypeEnum::Debit,
                 'category' => 'transfer',
                 'status' => TransactionStatus::Failed,
                 'reference' => 'TRF_FAIL-'.time().'-'.$user->id,
@@ -135,18 +136,18 @@ class WalletController extends Controller
 
         // use database transaction to make sure both sides succeed or both fail
         DB::transaction(function () use ($user, $wallet, $recipient, $request) {
-            // reduce sender balance
-            $wallet->decrement('balance', $request->amount);
+            // reduce sender balance (pass kobo to raw DB increment/decrement)
+            $wallet->decrement('balance', $request->amount * 100);
 
             // increase recipient balance
-            $recipient->wallet->increment('balance', $request->amount);
+            $recipient->wallet->increment('balance', $request->amount * 100);
 
             // create sender transaction record
             $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
                 'amount' => $request->amount,
-                'type' => 'debit',
+                'type' => TransactionTypeEnum::Debit,
                 'category' => 'transfer',
                 'status' => TransactionStatus::Completed,
                 'description' => $request->description ?? 'transfer sent',
@@ -159,7 +160,7 @@ class WalletController extends Controller
                 'user_id' => $recipient->id,
                 'wallet_id' => $recipient->wallet->id,
                 'amount' => $request->amount,
-                'type' => 'credit',
+                'type' => TransactionTypeEnum::Credit,
                 'category' => 'transfer',
                 'status' => TransactionStatus::Completed,
                 'description' => $request->description ?? 'transfer received',
@@ -215,15 +216,15 @@ class WalletController extends Controller
             ], 403);
         }
 
-        // convert to kobo (paystack uses kobo internally)
+        // convert to kobo for payment gateway, but Transaction expects naira
         $amountInKobo = $request->amount * 100;
 
-        // create transaction record
+        // create transaction record (pass naira - MoneyCast will convert to kobo)
         $transaction = Transaction::create([
             'user_id' => $user->id,
             'wallet_id' => $user->wallet->id,
-            'amount' => $amountInKobo,
-            'type' => 'credit',
+            'amount' => $request->amount,
+            'type' => TransactionTypeEnum::Deposit,
             'category' => 'deposit',
             'status' => TransactionStatus::Pending,
             'reference' => 'DEP-'.time().'-'.$user->id,
@@ -290,8 +291,8 @@ class WalletController extends Controller
 
         // use transaction for atomicity
         DB::transaction(function () use ($user, $wallet, $bankAccount, $request) {
-            // reduce balance
-            $wallet->decrement('balance', $request->amount);
+            // reduce balance (use kobo for raw DB update)
+            $wallet->decrement('balance', $request->amount * 100);
 
             // create transaction record
             $transaction = Transaction::create([
@@ -339,7 +340,7 @@ class WalletController extends Controller
         $user = Auth::user();
         $amount = $request->amount ?? 10000;
 
-        $user->wallet->increment('balance', $amount);
+        $user->wallet->increment('balance', $amount * 100);
 
         return response()->json([
             'success' => true,

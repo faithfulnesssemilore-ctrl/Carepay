@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',
         'username',
         'status',
-        'email_verified_at',    
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -166,8 +167,9 @@ class User extends Authenticatable implements MustVerifyEmail
         ])->save();
     }
 
-    public function sendEmailVerificationNotification()
+    public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new \App\Notifications\VerifyEmail);
+        $this->notify(new VerifyEmail)->delay(now());
+
     }
 }

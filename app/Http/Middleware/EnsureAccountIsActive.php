@@ -4,12 +4,13 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class EnsureAccountIsActive
 {
     private const INACTIVITY_SECONDS = 300; // 5 minutes
+
     public function handle(Request $request, Closure $next)
     {
         $user = Auth::user();

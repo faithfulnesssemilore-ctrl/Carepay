@@ -3,60 +3,59 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WalletResource\Pages;
-use App\Models\Wallet;
 use App\Models\Transaction;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Tables\Actions\Action;
+use App\Models\Wallet;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components as FormComponents;
 use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class WalletResource extends Resource
 {
     protected static ?string $model = Wallet::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-wallet';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-wallet';
 
     protected static ?string $navigationLabel = 'Wallets';
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Wallet Information')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
+        return $schema
+            ->components([
+                SchemaComponents\Section::make('Wallet Information')
+                    ->components([
+                        FormComponents\Select::make('user_id')
                             ->relationship('user', 'email')
                             ->searchable()
                             ->required()
                             ->disabled(fn (string $context): bool => $context === 'edit'),
-                        Forms\Components\TextInput::make('balance')
+                        FormComponents\TextInput::make('balance')
                             ->label('Balance (Kobo)')
                             ->numeric()
                             ->disabled()
                             ->helperText('Calculated in Kobo for precision'),
-                        Forms\Components\Select::make('currency')
+                        FormComponents\Select::make('currency')
                             ->options([
                                 'NGN' => 'Nigerian Naira (₦)',
-                                'USD' => 'US Dollar ($)',
-                                'GBP' => 'British Pound (£)',
+
                             ])
                             ->default('NGN'),
-                        Forms\Components\Select::make('status')
+                        FormComponents\Select::make('status')
                             ->options([
                                 'active' => 'Active',
                                 'frozen' => 'Frozen',
                                 'closed' => 'Closed',
                             ])
                             ->default('active'),
-                        Forms\Components\Checkbox::make('locked')
+                        FormComponents\Checkbox::make('locked')
                             ->label('Locked (Anti-fraud)')
                             ->default(false),
                     ]),
@@ -76,14 +75,14 @@ class WalletResource extends Resource
                     ->searchable(),
                 TextColumn::make('balance')
                     ->label('Balance')
-                    ->formatStateUsing(fn ($state) => '₦' . number_format(($state ?? 0) / 100, 2))
+                    ->formatStateUsing(fn ($state) => '₦'.number_format($state ?? 0, 2))
                     ->sortable(),
                 TextColumn::make('currency')
                     ->badge()
                     ->colors([
                         'primary' => 'NGN',
-                        'info' => 'USD',
-                        'secondary' => 'GBP',
+                        'info' => 'NGN',
+                        'secondary' => 'N/A',
                     ]),
                 TextColumn::make('status')
                     ->badge()
@@ -104,28 +103,29 @@ class WalletResource extends Resource
                     ->label('Fund Wallet')
                     ->icon('heroicon-m-plus-circle')
                     ->form([
-                        Forms\Components\TextInput::make('amount')
+                        FormComponents\TextInput::make('amount')
                             ->label('Amount (₦)')
                             ->numeric()
                             ->required()
                             ->minValue(100)
                             ->step(100),
-                        Forms\Components\TextInput::make('description')
+                        FormComponents\TextInput::make('description')
                             ->label('Reason')
                             ->default('Admin fund'),
                     ])
                     ->action(function (Wallet $record, array $data): void {
                         $amountInKobo = (int) ($data['amount'] * 100);
-                        $record->balance += $amountInKobo;
-                        $record->save();
+                        // increment raw DB balance (stored in kobo)
+                        $record->increment('balance', $amountInKobo);
 
                         // Log transaction
                         $record->transactions()->create([
                             'user_id' => $record->user_id,
                             'type' => 'credit',
-                            'amount' => $amountInKobo,
+                            // pass naira amount; MoneyCast will convert to kobo
+                            'amount' => $amountInKobo / 100,
                             'description' => $data['description'],
-                            'reference' => 'ADMIN-FUND-' . uniqid(),
+                            'reference' => 'ADMIN-FUND-'.uniqid(),
                             'status' => 'completed',
                         ]);
 
@@ -140,36 +140,39 @@ class WalletResource extends Resource
                     ->icon('heroicon-m-minus-circle')
                     ->color('danger')
                     ->form([
-                        Forms\Components\TextInput::make('amount')
+                        FormComponents\TextInput::make('amount')
                             ->label('Amount (₦)')
                             ->numeric()
                             ->required()
                             ->minValue(100)
                             ->step(100),
-                        Forms\Components\TextInput::make('description')
+                        FormComponents\TextInput::make('description')
                             ->label('Reason')
                             ->default('Admin debit'),
                     ])
                     ->action(function (Wallet $record, array $data): void {
                         $amountInKobo = (int) ($data['amount'] * 100);
-                        if ($record->balance < $amountInKobo) {
+                        // compare using raw stored value (kobo)
+                        if ($record->getRawOriginal('balance') < $amountInKobo) {
                             Notification::make()
                                 ->danger()
                                 ->title('Insufficient Balance')
                                 ->body('Wallet balance is insufficient for this debit')
                                 ->send();
+
                             return;
                         }
 
-                        $record->balance -= $amountInKobo;
-                        $record->save();
+                        // decrement raw DB balance (stored in kobo)
+                        $record->decrement('balance', $amountInKobo);
 
                         $record->transactions()->create([
                             'user_id' => $record->user_id,
                             'type' => 'debit',
-                            'amount' => $amountInKobo,
+                            // pass naira amount; MoneyCast will convert to kobo
+                            'amount' => $amountInKobo / 100,
                             'description' => $data['description'],
-                            'reference' => 'ADMIN-DEBIT-' . uniqid(),
+                            'reference' => 'ADMIN-DEBIT-'.uniqid(),
                             'status' => 'completed',
                         ]);
 

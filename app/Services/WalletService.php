@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\LedgerEntry;
 use App\Models\Transaction;
-use App\Models\AuditLog;
-use App\TransactionStatus;
 use App\Models\UserLimit;
 use App\Models\Wallet;
+use App\TransactionStatus;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -59,34 +59,35 @@ class WalletService
                 'wallet_id' => $wallet->id,
                 'type' => 'credit',
                 'category' => 'deposit',
-                'amount' => $amountKobo,
+                // Transaction expects naira (MoneyCast will convert to kobo)
+                'amount' => $amountKobo / 100,
                 'currency' => $wallet->currency,
                 'reference' => $reference,
                 'status' => TransactionStatus::Completed,
                 'description' => $description,
             ]);
 
-                // audit
-                AuditLog::record(
-                    $userId,
-                    'credit_processed',
-                    'Transaction',
-                    $transaction->id,
-                    ['amount' => $amountKobo]
-                );
+            // audit
+            AuditLog::record(
+                $userId,
+                'credit_processed',
+                'Transaction',
+                $transaction->id,
+                ['amount' => $amountKobo]
+            );
 
-           try {
-    LedgerEntry::create([
-        'wallet_id'      => $wallet->id,
-        'transaction_id' => $transaction->id,
-        'entry_type'     => 'credit',
-        'amount'         => $amountKobo,
-    ]);
-} catch (\Exception $e) {
-    \Log::warning('Ledger entry failed: ' . $e->getMessage());
-}
+            try {
+                LedgerEntry::create([
+                    'wallet_id' => $wallet->id,
+                    'transaction_id' => $transaction->id,
+                    'entry_type' => 'credit',
+                    'amount' => $amountKobo,
+                ]);
+            } catch (Exception $e) {
+                \Log::warning('Ledger entry failed: '.$e->getMessage());
+            }
 
-return $transaction;
+            return $transaction;
         });
     }
 
@@ -109,7 +110,7 @@ return $transaction;
                 throw new Exception('Wallet is not active.');
             }
 
-            if ($wallet->balance < $amountKobo) {
+            if ($wallet->getRawOriginal('balance') < $amountKobo) {
                 throw new Exception('Insufficient balance.');
             }
 
@@ -120,34 +121,34 @@ return $transaction;
                 'wallet_id' => $wallet->id,
                 'type' => 'debit',
                 'category' => 'withdrawal',
-                'amount' => $amountKobo,
+                'amount' => $amountKobo / 100,
                 'currency' => $wallet->currency,
                 'reference' => $reference,
                 'status' => TransactionStatus::Completed,
                 'description' => $description,
             ]);
 
-                // audit
-                AuditLog::record(
-                    $userId,
-                    'debit_processed',
-                    'Transaction',
-                    $transaction->id,
-                    ['amount' => $amountKobo]
-                );
+            // audit
+            AuditLog::record(
+                $userId,
+                'debit_processed',
+                'Transaction',
+                $transaction->id,
+                ['amount' => $amountKobo]
+            );
 
-         try {
-    LedgerEntry::create([
-        'wallet_id'      => $wallet->id,
-        'transaction_id' => $transaction->id,
-        'entry_type'     => 'debit',
-        'amount'         => $amountKobo,
-    ]);
-} catch (\Exception $e) {
-    \Log::warning('Ledger entry failed: ' . $e->getMessage());
-}
+            try {
+                LedgerEntry::create([
+                    'wallet_id' => $wallet->id,
+                    'transaction_id' => $transaction->id,
+                    'entry_type' => 'debit',
+                    'amount' => $amountKobo,
+                ]);
+            } catch (Exception $e) {
+                \Log::warning('Ledger entry failed: '.$e->getMessage());
+            }
 
-return $transaction;
+            return $transaction;
         });
     }
 
@@ -213,14 +214,14 @@ return $transaction;
                 throw new Exception('One or both wallets are not active.');
             }
 
-            if ($senderWallet->balance < $amountKobo) {
+            if ($senderWallet->getRawOriginal('balance') < $amountKobo) {
                 // record failed attempt
                 $failed = Transaction::create([
                     'user_id' => $senderId,
                     'wallet_id' => $senderWallet->id,
                     'type' => 'debit',
                     'category' => 'transfer',
-                    'amount' => $amountKobo,
+                    'amount' => $amountKobo / 100,
                     'currency' => $senderWallet->currency,
                     'reference' => $reference.'_FAIL',
                     'status' => TransactionStatus::Failed,
@@ -247,7 +248,7 @@ return $transaction;
                 'wallet_id' => $senderWallet->id,
                 'type' => 'debit',
                 'category' => 'transfer',
-                'amount' => $amountKobo,
+                'amount' => $amountKobo / 100,
                 'currency' => $senderWallet->currency,
                 'reference' => $reference,
                 'status' => TransactionStatus::Completed,
@@ -260,7 +261,7 @@ return $transaction;
                 'wallet_id' => $recipientWallet->id,
                 'type' => 'credit',
                 'category' => 'transfer',
-                'amount' => $amountKobo,
+                'amount' => $amountKobo / 100,
                 'currency' => $recipientWallet->currency,
                 'reference' => $reference.'_IN',
                 'status' => TransactionStatus::Completed,
@@ -279,6 +280,7 @@ return $transaction;
     public function getBalanceInNaira(int $userId): float
     {
         $wallet = $this->getWallet($userId);
+
         return $wallet->balance;
     }
 }

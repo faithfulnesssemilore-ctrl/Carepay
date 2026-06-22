@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Wallet;
 use App\Services\BankService;
+use App\Services\PaymentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -51,6 +52,8 @@ class AddMoney extends Component
     public $currentBalance = 0;
 
     public $virtualAccount;
+
+    public ?int $successTransactionId = null;
 
     public function mount()
     {
@@ -284,7 +287,7 @@ class AddMoney extends Component
         ]);
 
         try {
-            $paymentService = new \App\Services\PaymentService;
+            $paymentService = new PaymentService;
             $response = $paymentService->initialize(
                 email: $user->email,
                 amount: $amountInKobo,

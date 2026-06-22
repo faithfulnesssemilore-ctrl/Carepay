@@ -1,68 +1,31 @@
 <div class="container py-4">
 
-    <h4 class="mb-4 fw-bold">Transaction History</h4>
-
-    <!-- STATS -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <small>Total Transactions</small>
-                    <h4>{{ $totalTransactions }}</h4>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0 fw-bold">Transaction History</h4>
+            <small class="text-muted">Recent activity and statements</small>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <small>Money In</small>
-                    <h4 class="text-success">
-                        ₦{{ number_format($totalIn,2) }}
-                    </h4>
-                </div>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="text-end me-3">
+                <div class="small text-muted">Money In</div>
+                <div class="h5 text-success mb-0">₦{{ number_format($totalIn, 2) }}</div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <small>Money Out</small>
-                    <h4 class="text-danger">
-                        ₦{{ number_format($totalOut,2) }}
-                    </h4>
-                </div>
+            <div class="text-end me-3">
+                <div class="small text-muted">Money Out</div>
+                <div class="h5 text-danger mb-0">₦{{ number_format($totalOut, 2) }}</div>
             </div>
+            <button class="btn btn-primary btn-sm" wire:click="openExportModal">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
         </div>
     </div>
 
 
-    <!-- FILTER -->
-    <div class="card mb-3">
-        <div class="card-body d-flex gap-2">
-            <input 
-                type="text" 
-                class="form-control"
-                placeholder="Search..."
-                wire:model.live="searchQuery"
-            >
-
-            <select wire:model.live="filterStatus" class="form-control w-auto">
-                <option value="all">All</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-            </select>
-        </div>
-    </div>
-
-
-    <!-- TABLE -->
     <div class="card">
         <div class="table-responsive">
-            <table class="table mb-0">
-
-                <thead>
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
                     <tr>
                         <th>Type</th>
                         <th>Reference</th>
@@ -152,6 +115,73 @@
                     <p><strong>Date:</strong> {{ $selectedTransaction->created_at }}</p>
                     <p><strong>Description:</strong> {{ $selectedTransaction->description }}</p>
 
+                    @if($selectedTransaction->type === 'debit' || $selectedTransaction->type === 'credit')
+                        <hr>
+                        <a href="{{ route('transaction.receipt.download', $selectedTransaction->id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-file-pdf"></i> Download Receipt
+                        </a>
+                    @endif
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- EXPORT MODAL -->
+    @if($showExportModal)
+    <div class="modal fade show d-block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5>Export Statement of Account</h5>
+                    <button class="btn-close" wire:click="closeExportModal" {{ $isExporting ? 'disabled' : '' }}></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Start Date</label>
+                        <input 
+                            type="date" 
+                            class="form-control"
+                            wire:model="exportStartDate"
+                            {{ $isExporting ? 'disabled' : '' }}
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">End Date</label>
+                        <input 
+                            type="date" 
+                            class="form-control"
+                            wire:model="exportEndDate"
+                            {{ $isExporting ? 'disabled' : '' }}
+                        >
+                    </div>
+
+                    @if($exportMessage)
+                    <div class="alert alert-info mb-3">
+                        {{ $exportMessage }}
+                    </div>
+                    @endif
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" wire:click="closeExportModal" {{ $isExporting ? 'disabled' : '' }}>
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" wire:click="requestStatementExport" {{ $isExporting ? 'disabled' : '' }}>
+                        @if($isExporting)
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Processing...
+                        @else
+                        Export Statement
+                        @endif
+                    </button>
                 </div>
 
             </div>

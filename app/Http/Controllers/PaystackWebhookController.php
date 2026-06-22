@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Notifications\DepositSuccessful;
@@ -140,7 +141,7 @@ class PaystackWebhookController extends Controller
         }
 
         // mark the transaction as completed
-        \App\Models\Transaction::where('reference', $reference)
+        Transaction::where('reference', $reference)
             ->update(['status' => TransactionStatus::Completed]);
 
         Log::info('Transfer successful', ['reference' => $reference]);
@@ -154,7 +155,7 @@ class PaystackWebhookController extends Controller
         }
 
         // mark the transaction as failed and refund the wallet
-        $tx = \App\Models\Transaction::where('reference', $reference)->first();
+        $tx = Transaction::where('reference', $reference)->first();
 
         if ($tx && $tx->status !== TransactionStatus::Failed) {
             $tx->update(['status' => TransactionStatus::Failed]);
@@ -164,7 +165,7 @@ class PaystackWebhookController extends Controller
                 $refundRef = 'REFUND_'.$reference;
                 (new WalletService)->credit(
                     userId: $tx->user_id,
-                    amountKobo: $tx->amount,
+                    amountKobo: (int) round($tx->amount * 100),
                     reference: $refundRef,
                     description: 'Transfer failed - refund'
                 );

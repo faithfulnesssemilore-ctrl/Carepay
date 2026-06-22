@@ -4,48 +4,45 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
-use Filament\Forms;
-use Filament\Forms\Form;
+use BackedEnum;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components as FormComponents;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\BadgeColumn;
-use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-arrow-path';
 
     protected static ?string $navigationLabel = 'Transactions';
 
     protected static ?int $navigationSort = 3;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Transaction Details')
-                    ->schema([
-                        Forms\Components\TextInput::make('reference')
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\Select::make('type')
+        return $schema
+            ->components([
+                SchemaComponents\Section::make('Transaction Details')
+                    ->components([
+                        FormComponents\TextInput::make('reference')
+                            ->disabled(),
+                        FormComponents\Select::make('type')
                             ->options([
                                 'credit' => 'Credit (Incoming)',
                                 'debit' => 'Debit (Outgoing)',
                             ])
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\TextInput::make('amount')
+                            ->disabled(),
+                        FormComponents\TextInput::make('amount')
                             ->label('Amount (Kobo)')
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\Select::make('status')
+                            ->disabled(),
+                        FormComponents\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
                                 'processing' => 'Processing',
@@ -53,11 +50,9 @@ class TransactionResource extends Resource
                                 'failed' => 'Failed',
                                 'cancelled' => 'Cancelled',
                             ])
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\Textarea::make('description')
-                            ->disabled()
-                            ->dehydrated(false),
+                            ->disabled(),
+                        FormComponents\Textarea::make('description')
+                            ->disabled(),
                     ]),
             ]);
     }
@@ -89,7 +84,7 @@ class TransactionResource extends Resource
                     ]),
                 TextColumn::make('amount')
                     ->label('Amount')
-                    ->formatStateUsing(fn ($state) => '₦' . number_format(($state ?? 0) / 100, 2))
+                    ->formatStateUsing(fn ($state) => '₦'.number_format($state ?? 0, 2))
                     ->sortable(),
                 BadgeColumn::make('status')
                     ->colors([
@@ -124,9 +119,9 @@ class TransactionResource extends Resource
                     ]),
                 Filter::make('created_at')
                     ->form([
-                        Forms\Components\DatePicker::make('created_from')
+                        FormComponents\DatePicker::make('created_from')
                             ->label('From'),
-                        Forms\Components\DatePicker::make('created_until')
+                        FormComponents\DatePicker::make('created_until')
                             ->label('Until'),
                     ])
                     ->query(function ($query, array $data): void {

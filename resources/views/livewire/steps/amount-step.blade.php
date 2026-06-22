@@ -1,9 +1,3 @@
-{{--
-    Amount Input Step
-    Allows user to enter the transfer amount with preset buttons
-    UI Components: x-ui.input, x-ui.textarea, x-ui.button
-    CSS Classes: btn-gradient, text-primary-custom
---}}
 
 <div class="d-flex flex-column gap-4">
     <div>
@@ -57,28 +51,11 @@
         </div>
     </div>
 
-    {{-- Preset Amount Buttons --}}
-    <div>
-        <label class="form-label fw-medium d-block mb-2">Quick Amount</label>
-        <div class="row g-2">
-            @foreach([50, 100, 250, 500] as $preset)
-                <div class="col-3">
-                    <x-ui.button 
-                        variant="outline-light"
-                        class="w-100 rounded-xl"
-                        style="border-color: #2a2a3a;"
-                        wire:click="$set('amount', '{{ $preset }}')"
-                    >
-                        ₦{{ $preset }}
-                    </x-ui.button>
-                </div>
-            @endforeach
-        </div>
-    </div>
+   
 
     {{-- Note/Message Input --}}
     <div class="form-group">
-        <label class="form-label fw-medium">Note (Optional)</label>
+        <label class="form-label fw-medium">Description (Optional)</label>
         <x-ui.textarea 
             name="note"
             rows="3"
@@ -87,6 +64,29 @@
             wire:model="note"
         />
     </div>
+
+    @php
+        $remaining = max(0, $dailyLimit - $dailyUsed);
+        $entered = floatval($amount ?: 0);
+    @endphp
+
+    @if($entered > $remaining)
+        <div class="alert alert-warning small mt-3">
+            This amount would exceed your daily limit. You can send ₦{{ number_format($remaining, 2) }} more today.
+        </div>
+    @endif
+
+    @if($entered > $singleLimit)
+        <div class="alert alert-warning small mt-2">
+            Amount exceeds your single transaction limit of ₦{{ number_format($singleLimit, 2) }}.
+        </div>
+    @endif
+
+    @if($entered > $walletBalance)
+        <div class="alert alert-danger small mt-2">
+            Insufficient balance. Your balance is ₦{{ number_format($walletBalance, 2) }}.
+        </div>
+    @endif
 
     {{-- Navigation Buttons --}}
     <div class="row g-3">
@@ -106,6 +106,7 @@
                 type="button"
                 class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2"
                 wire:click="handleAmountSubmit"
+                @disabled($entered <= 0 || $entered > $remaining || $entered > $singleLimit || $entered > $walletBalance)
             >
                 Continue
                 <x-lucide-arrow-right style="width: 18px; height: 18px;" />

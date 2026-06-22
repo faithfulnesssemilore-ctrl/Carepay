@@ -9,8 +9,10 @@ export default defineConfig({
                 'resources/css/bootstrap.css',
                 'resources/css/custom.css',
                 'resources/js/app.js',
+                'resources/js/notification-stream.js',
             ],
             refresh: true,
         }),
     ],
 });
+

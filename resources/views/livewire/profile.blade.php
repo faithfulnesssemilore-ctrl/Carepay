@@ -217,5 +217,15 @@
             </div>
         </div>
     </div>
-
+ <form method="POST" action="/logout">
+                @csrf
+                <button type="submit"
+                        class="d-flex align-items-center gap-2 w-100 border-0 bg-transparent px-3 py-2 rounded-xl text-start"
+                        style="color:rgba(239,68,68,0.7);font-size:13px;transition:all 0.2s;"
+                        onmouseover="this.style.background='rgba(239,68,68,0.1)'"
+                        onmouseout="this.style.background='transparent'">
+                    <x-lucide-log-out style="width:16px;height:16px;" />
+                    Logout
+                </button>
+            </form>
 </div>

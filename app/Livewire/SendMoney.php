@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\BankService;
 use App\Services\PaymentService;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +59,8 @@ class SendMoney extends Component
 
     public string $transferReference = '';
 
+    public ?int $successTransactionId = null;
+
     public bool $isProcessing = false;
 
     protected $rules = [
@@ -90,10 +93,9 @@ class SendMoney extends Component
             $this->banks = [];
         }
 
-        // Always include an internal test bank option for development/demo transfers.
+        // I include a internal test bank option for development/demo transfers.
         $this->banks = collect($this->banks)
             ->push(['code' => 'CAREPAY', 'name' => 'CarePay'])
-            ->push(['code' => 'OPAY', 'name' => 'Opay'])
             ->unique('code')
             ->values()
             ->toArray();
@@ -115,33 +117,36 @@ class SendMoney extends Component
             Transaction::where('user_id', $user->id)
                 ->where('type', 'debit')
                 ->whereDate('created_at', today())
-                ->sum('amount'),
+                ->sum('amount') / 100,
             2
         );
 
         $this->loadRecentContacts();
     }
+
     // search for a CarePay user by username or email
-public function searchInternalUser(): void
-{
-    $query = trim($this->accountNumber);
-    if (empty($query)) return;
+    public function searchInternalUser(): void
+    {
+        $query = trim($this->accountNumber);
+        if (empty($query)) {
+            return;
+        }
 
-    $found = \App\Models\User::where('username', $query)
-        ->orWhere('email', $query)
-        ->where('status', 'active')
-        ->first();
+        $found = User::where('username', $query)
+            ->orWhere('email', $query)
+            ->where('status', 'active')
+            ->first();
 
-    if ($found) {
-        $this->resolvedAccountName = $found->first_name . ' ' . $found->last_name;
-        $this->selectedBankCode    = 'CAREPAY_INTERNAL';
-        $this->selectedBankName    = 'CarePay';
-        // store recipient id for internal transfer
-        $this->dispatch('internal-recipient-found', userId: $found->id);
-    } else {
-        $this->accountResolutionError = 'No CarePay user found with that username or email.';
+        if ($found) {
+            $this->resolvedAccountName = $found->first_name.' '.$found->last_name;
+            $this->selectedBankCode = 'CAREPAY_INTERNAL';
+            $this->selectedBankName = 'CarePay';
+            // store recipient id for internal transfer
+            $this->dispatch('internal-recipient-found', userId: $found->id);
+        } else {
+            $this->accountResolutionError = 'No CarePay user found with that username or email.';
+        }
     }
-}
 
     public function loadRecentContacts(): void
     {
@@ -379,7 +384,7 @@ public function searchInternalUser(): void
                 throw new \Exception('Wallet not found. Contact support.');
             }
 
-            if ($wallet->balance < $amountKobo) {
+            if ($wallet->balance < $amountNaira) {
                 throw new \Exception('Insufficient balance.');
             }
 
@@ -419,16 +424,16 @@ public function searchInternalUser(): void
                 $status = 'pending';
             }
 
-            // deduct from wallet regardless - funds are now reserved
+            // deduct from wallet regardless - funds are now reserved (kobo)
             $wallet->decrement('balance', $amountKobo);
 
-            // record the transaction
-            Transaction::create([
+            // record the transaction (pass naira amount - MoneyCast will convert)
+            $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
                 'type' => 'debit',
                 'category' => 'transfer',
-                'amount' => $amountKobo,
+                'amount' => $amountKobo / 100,
                 'reference' => $reference,
                 'status' => $status,
                 'description' => 'Transfer to '.$this->resolvedAccountName,
@@ -441,6 +446,7 @@ public function searchInternalUser(): void
                 ]),
             ]);
 
+            $this->successTransactionId = $transaction->id;
             $this->transferReference = $reference;
             $this->showPinModal = false;
             $this->successMessage = 'Transfer of ₦'.number_format($amountNaira, 2).' to '.$this->resolvedAccountName.' is being processed.';
@@ -448,8 +454,8 @@ public function searchInternalUser(): void
             // update daily used amount
             $this->dailyUsed += $amountNaira;
 
-            // update wallet balance display
-            // balance is cast to naira
+            // Refresh wallet to get updated balance with MoneyCast applied correctly
+            $wallet->refresh();
             $this->walletBalance = round($wallet->balance, 2);
 
             $this->setStep('success');
@@ -482,6 +488,7 @@ public function searchInternalUser(): void
         $this->successMessage = '';
         $this->errorMessage = '';
         $this->transferReference = '';
+        $this->successTransactionId = null;
         $this->isProcessing = false;
         $this->showPinModal = false;
         $this->pinInput = '';
