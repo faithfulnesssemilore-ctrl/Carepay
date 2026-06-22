@@ -144,7 +144,7 @@
 </div>
 
 {{-- mobile layout --}}
-<div class="d-md-none app-mobile-shell">
+<!--<div class="d-md-none app-mobile-shell">
 
     {{-- mobile top header --}}
     <div style="background:rgba(10,10,15,0.95);backdrop-filter:blur(10px);
@@ -160,7 +160,7 @@
          <!--   <div class="d-flex align-items-center gap-2">
                 <button class="border-0 bg-transparent p-1" style="color:rgba(255,255,255,0.5);">
                     <x-lucide-bell style="width:18px;height:18px;" />
-                </button>-->
+                </button>
                 <a href="{{ route('profile') }}" class="text-decoration-none">
                     <div class="rounded-circle gradient-bg-primary d-flex align-items-center justify-content-center fw-bold text-white"
                          style="width:30px;height:30px;font-size:11px;">
@@ -208,7 +208,7 @@
 <div id="toast-container"
      style="position:fixed;top:20px;right:20px;z-index:9999;
             display:flex;flex-direction:column;gap:8px;max-width:300px;">
-</div>
+</div>-->
 
 @livewireScripts
 @stack('scripts')
