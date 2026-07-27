@@ -5,11 +5,8 @@ services:
     region: us-oregon
     plan: free
     dockerfilePath: Dockerfile
-    buildCommand: |
-      docker build -t fintech-app .
-    startCommand: |
-      docker run -e PORT=${PORT:-8080} -p 8080:8080 fintech-app
-    
+    startCommand: /usr/local/bin/entrypoint.sh
+
     # Environment variables (set these in Render dashboard or via CLI)
     envVars:
       - key: APP_ENV

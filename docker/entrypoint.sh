@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-: "${PORT:=8080}"
+export PORT=${PORT:-8080}
 
 if [ -f /etc/nginx/nginx.conf.template ]; then
   envsubst '$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
