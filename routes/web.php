@@ -123,17 +123,6 @@ Route::get('/verify-email', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::get('/confirm-password', [ConfirmablePasswordController::class, 'show'])
-    ->middleware('auth')
-    ->name('password.confirm');
-
-Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store'])
-    ->middleware('auth');
-
-Route::put('/password', [PasswordController::class, 'update'])
-    ->middleware('auth')
-    ->name('password.update');
-
 Route::get('/email/verify/{user}/{hash}', [
     VerifyEmailController::class,
     'verify',

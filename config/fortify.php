@@ -95,6 +95,11 @@ return [
 
     'domain' => null,
 
+    'paths' => [
+        'password.confirm' => '/confirm-password',
+        'password.confirmation' => '/confirmed-password-status',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Fortify Routes Middleware
