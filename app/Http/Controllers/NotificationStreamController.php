@@ -9,11 +9,17 @@ class NotificationStreamController extends Controller
     public function __invoke()
     {
         $user = Auth::user();
-        $lastNotificationId = request()->query('last_id', 0);
+
+        if (! $user) {
+            abort(401);
+        }
+
+        $lastNotificationId = (int) request()->query('last_id', 0);
 
         return response()->stream(function () use ($user, $lastNotificationId) {
-            while (true) {
-                // Get new notifications since last check
+            $heartbeat = 0;
+
+            while (! connection_aborted()) {
                 $notifications = $user->unreadNotifications()
                     ->where('id', '>', $lastNotificationId)
                     ->latest()
@@ -30,13 +36,18 @@ class NotificationStreamController extends Controller
                         ]),
                     ])."\n\n";
                     flush();
-                    $lastNotificationId = $notifications->first()->id;
+                    $lastNotificationId = (int) $notifications->first()->id;
+                } elseif ($heartbeat >= 15) {
+                    echo "data: {\"type\":\"heartbeat\"}\n\n";
+                    flush();
+                    $heartbeat = 0;
                 }
 
-                sleep(1);
+                $heartbeat++;
+                usleep(1000000);
             }
         }, 200, [
-            'Cache-Control' => 'no-cache',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Content-Type' => 'text/event-stream',
             'Connection' => 'keep-alive',
             'X-Accel-Buffering' => 'no',

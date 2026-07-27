@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +27,7 @@ class Wallet extends Model
     ];
 
     protected $casts = [
-        'balance' => MoneyCast::class, // stored in kobo
+        'balance' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'status' => 'string',

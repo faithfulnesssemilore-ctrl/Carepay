@@ -20,6 +20,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // get wallet balance and info
     Route::get('/wallet', [WalletController::class, 'getBalance'])
         ->name('wallet.balance');
+    Route::get('/wallet/balance', [WalletController::class, 'getBalance'])
+        ->name('wallet.balance.alt');
 
     // get transaction history
     Route::get('/transactions', [WalletController::class, 'getTransactions'])

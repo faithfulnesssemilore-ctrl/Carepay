@@ -15,14 +15,12 @@
 </head>
 <body style="background:#0a0a0f;color:white;min-height:100vh;overflow-x:hidden;">
 
-{{-- desktop and tablet sidebar --}}
-<div class="d-none d-md-flex app-desktop-shell" style="min-height:100vh;">
+{{-- desktop sidebar --}}
+<div class="d-none d-lg-flex app-desktop-shell" style="min-height:100vh;">
 
     {{-- sidebar --}}
     <div class="d-flex flex-column app-sidebar"
-         style="background:#0f0f1a;border-right:1px solid rgba(168,85,247,0.12);
-                position:fixed;top:0;left:0;height:100vh;z-index:100;padding:24px 16px;overflow-y:auto;">
-
+             style="width:270px;min-width:270px;background:#0f0f1a;border-right:1px solid rgba(168,85,247,0.12);
         {{-- logo --}}
         <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none mb-5">
             <div class="icon-container icon-container-sm gradient-bg-primary">
@@ -113,10 +111,10 @@
     </div>
 
     {{-- main content area --}}
-    <div class="app-main-content">
+    <div class="app-main-content" style="flex:1;margin-left:270px;min-height:100vh;">
 
         {{-- top bar --}}
-        <div class="app-topbar" style="background:rgba(10,10,15,0.8);backdrop-filter:blur(10px);
+        <div class="app-topbar" style="background:rgba(10,10,15,0.88);backdrop-filter:blur(10px);
                     border-bottom:1px solid rgba(168,85,247,0.1);position:sticky;top:0;z-index:50;">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -143,62 +141,48 @@
     </div>
 </div>
 
-{{-- mobile layout --}}
-<!--<div class="d-md-none app-mobile-shell">
-
-    {{-- mobile top header --}}
-    <div style="background:rgba(10,10,15,0.95);backdrop-filter:blur(10px);
-                border-bottom:1px solid rgba(168,85,247,0.1);
-                padding:12px 16px;position:sticky;top:0;z-index:100;">
-        <div class="d-flex align-items-center justify-content-between">
-            <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none">
-                <div class="icon-container icon-container-sm gradient-bg-primary">
-                    <x-lucide-wallet style="width:14px;height:14px;color:white;" />
-                </div>
-                <span class="gradient-text fw-bold" style="font-size:16px;">CarePay</span>
-            </a>
-         <!--   <div class="d-flex align-items-center gap-2">
-                <button class="border-0 bg-transparent p-1" style="color:rgba(255,255,255,0.5);">
-                    <x-lucide-bell style="width:18px;height:18px;" />
-                </button>
-                <a href="{{ route('profile') }}" class="text-decoration-none">
-                    <div class="rounded-circle gradient-bg-primary d-flex align-items-center justify-content-center fw-bold text-white"
-                         style="width:30px;height:30px;font-size:11px;">
-                        {{ strtoupper(substr(Auth::user()->first_name ?? 'U', 0, 1)) }}
-                    </div>
-                </a>
+{{-- mobile and tablet layout --}}
+<div class="d-lg-none app-mobile-shell">
+    <div class="mobile-topbar">
+        <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none">
+            <div class="icon-container icon-container-sm gradient-bg-primary">
+                <x-lucide-wallet style="width:14px;height:14px;color:white;" />
             </div>
+            <div>
+                <div class="gradient-text fw-bold" style="font-size:15px;">CarePay</div>
+                <div class="text-white-50" style="font-size:11px;">Smart money flow</div>
+            </div>
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+            <livewire:notification-bell />
+            <a href="{{ route('profile') }}" class="text-decoration-none">
+                <div class="rounded-circle gradient-bg-primary d-flex align-items-center justify-content-center fw-bold text-white"
+                     style="width:34px;height:34px;font-size:12px;">
+                    {{ strtoupper(substr(Auth::user()->first_name ?? 'U', 0, 1)) }}
+                </div>
+            </a>
         </div>
     </div>
 
-    {{-- mobile page content --
-    <div style="padding:16px;padding-bottom:calc(72px + env(safe-area-inset-bottom));">
+    <main class="mobile-main-content">
         {{ $slot }}
-    </div>}}
+    </main>
 
-    {{-- mobile bottom nav --}}
-    <nav style="position:fixed;bottom:0;left:0;right:0;z-index:200;
-                background:rgba(10,10,15,0.97);backdrop-filter:blur(20px);
-                border-top:1px solid rgba(168,85,247,0.15);
-                display:flex;height:calc(64px + env(safe-area-inset-bottom));
-                padding-bottom:env(safe-area-inset-bottom);">
+    <nav class="mobile-bottom-nav">
         @foreach([
-            ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Home'],
-            ['route' => 'wallet',        'icon' => 'wallet',           'label' => 'Wallet'],
-            ['route' => 'send-money',  'icon' => 'send',             'label' => 'Send'],
-            ['route' => 'add-money',   'icon' => 'plus-circle',      'label' => 'Add'],
-            ['route' => 'transactions','icon' => 'list',             'label' => 'History'],
-            ['route' => 'profile',     'icon' => 'user',             'label' => 'Profile'],
+            ['route' => 'dashboard', 'icon' => 'layout-dashboard', 'label' => 'Home'],
+            ['route' => 'wallet', 'icon' => 'wallet', 'label' => 'Wallet'],
+            ['route' => 'send-money', 'icon' => 'send', 'label' => 'Send'],
+            ['route' => 'add-money', 'icon' => 'plus-circle', 'label' => 'Add'],
+            ['route' => 'transactions', 'icon' => 'list', 'label' => 'History'],
         ] as $item)
             @php $active = request()->routeIs($item['route']); @endphp
             <a href="{{ route($item['route']) }}"
-               class="flex-fill d-flex flex-column align-items-center justify-content-center text-decoration-none"
-               style="color:{{ $active ? '#a855f7' : '#555' }};">
+               class="mobile-nav-link {{ $active ? 'active' : '' }}">
                 <x-dynamic-component :component="'lucide-' . $item['icon']"
-                    style="width:20px;height:20px;margin-bottom:2px;" />
-                <span style="font-size:9px;font-weight:{{ $active ? '600' : '400' }};">
-                    {{ $item['label'] }}
-                </span>
+                    style="width:18px;height:18px;margin-bottom:2px;" />
+                <span>{{ $item['label'] }}</span>
             </a>
         @endforeach
     </nav>
@@ -208,7 +192,7 @@
 <div id="toast-container"
      style="position:fixed;top:20px;right:20px;z-index:9999;
             display:flex;flex-direction:column;gap:8px;max-width:300px;">
-</div>-->
+</div>
 
 @livewireScripts
 @stack('scripts')

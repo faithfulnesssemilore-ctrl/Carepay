@@ -148,9 +148,9 @@
 
                                 <div>
                                     <label class="form-label">ID Type</label>
-                                    <select wire:model="idType" class="form-select bg-secondary-custom rounded-xl py-3 @error('idType') is-invalid @enderror"  maxlength="11" required>
+                                    <select wire:model="idType" class="form-select bg-secondary-custom rounded-xl py-3 @error('idType') is-invalid @enderror"  required>
                                         <option value="">Select ID type</option>
-                                        <option value="BVN">BVN</option>
+                                        <option value="passport">BVN</option>
                                         <option value="drivers_license">Driver's License</option>
                                         <option value="national_id">National ID Card</option>
                                     </select>
@@ -159,7 +159,7 @@
 
                                 <div>
                                     <label class="form-label">ID Number</label>
-                                    <input type="text" wire:model="idNumber" class="form-control bg-secondary-custom rounded-xl py-3 @error('idNumber') is-invalid @enderror" placeholder="Enter your ID number" required>
+                                    <input type="text" wire:model="idNumber" class="form-control bg-secondary-custom rounded-xl py-3 @error('idNumber') is-invalid @enderror" placeholder="Enter your ID number" maxlength="11" required>
                                     @error('idNumber') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
 

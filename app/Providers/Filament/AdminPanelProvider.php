@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\EnsureAdminCanAccessPanel;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,7 +28,6 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login(fn () => redirect()->route('login'))
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -49,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
+                EnsureAdminCanAccessPanel::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])

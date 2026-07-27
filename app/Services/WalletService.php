@@ -40,8 +40,10 @@ class WalletService
         }
 
         return DB::transaction(function () use ($userId, $amountKobo, $reference, $description) {
-            if (Transaction::where('reference', $reference)->exists()) {
-                throw new Exception('This transaction has already been processed.');
+            $existing = Transaction::where('reference', $reference)->first();
+
+            if ($existing) {
+                return $existing;
             }
 
             $wallet = Wallet::where('user_id', $userId)
@@ -53,6 +55,8 @@ class WalletService
             }
 
             $wallet->increment('balance', $amountKobo);
+            $wallet->refresh();
+            $wallet->refresh();
 
             $transaction = Transaction::create([
                 'user_id' => $userId,
@@ -98,8 +102,10 @@ class WalletService
         }
 
         return DB::transaction(function () use ($userId, $amountKobo, $reference, $description) {
-            if (Transaction::where('reference', $reference)->exists()) {
-                throw new Exception('This transaction has already been processed.');
+            $existing = Transaction::where('reference', $reference)->first();
+
+            if ($existing) {
+                return $existing;
             }
 
             $wallet = Wallet::where('user_id', $userId)
@@ -110,11 +116,12 @@ class WalletService
                 throw new Exception('Wallet is not active.');
             }
 
-            if ($wallet->getRawOriginal('balance') < $amountKobo) {
+            if ((int) $wallet->getRawOriginal('balance') < $amountKobo) {
                 throw new Exception('Insufficient balance.');
             }
 
             $wallet->decrement('balance', $amountKobo);
+            $wallet->refresh();
 
             $transaction = Transaction::create([
                 'user_id' => $userId,

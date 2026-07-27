@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Database\Eloquent\MissingAttributeException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,13 @@ class EnsureAccountIsActive
         $user = Auth::user();
 
         if ($user) {
-            if ($user->status !== 'active') {
+            try {
+                $status = $user->getAttribute('status');
+            } catch (MissingAttributeException $e) {
+                $status = null;
+            }
+
+            if ($status !== null && $status !== 'active') {
                 Auth::logout();
 
                 return redirect()->route('login')

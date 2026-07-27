@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignUuid('wallet_id')->constrained('wallet')->onDelete('cascade');
-            $table->foreignId('bank_account_id')->nullable()->constrained('bank_account')->onDelete('set null');
+            $table->foreignId('bank_account_id')->nullable()->constrained('bank_accounts')->onDelete('set null');
             $table->foreignId('recipient_id')->nullable()->constrained('users')->onDelete('set null');
             $table->bigInteger('amount');
             $table->string('currency')->default('NGN');

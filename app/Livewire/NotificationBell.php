@@ -21,6 +21,13 @@ class NotificationBell extends Component
 
     public function loadNotifications(): void
     {
+        if (! Auth::check()) {
+            $this->notifications = [];
+            $this->unreadCount = 0;
+
+            return;
+        }
+
         $user = Auth::user();
         $this->notifications = $user->notifications()
             ->latest()

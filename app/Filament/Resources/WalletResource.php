@@ -102,27 +102,29 @@ class WalletResource extends Resource
                 Action::make('fund')
                     ->label('Fund Wallet')
                     ->icon('heroicon-m-plus-circle')
+                    ->modalHeading('Fund user wallet')
+                    ->modalSubheading('Add funds directly to the selected wallet with a transaction record.')
                     ->form([
                         FormComponents\TextInput::make('amount')
                             ->label('Amount (₦)')
+                            ->placeholder('Enter amount in Naira')
                             ->numeric()
                             ->required()
                             ->minValue(100)
-                            ->step(100),
+                            ->step(100)
+                            ->helperText('Minimum funding amount is ₦100.'),
                         FormComponents\TextInput::make('description')
                             ->label('Reason')
+                            ->placeholder('Admin fund')
                             ->default('Admin fund'),
                     ])
                     ->action(function (Wallet $record, array $data): void {
                         $amountInKobo = (int) ($data['amount'] * 100);
-                        // increment raw DB balance (stored in kobo)
                         $record->increment('balance', $amountInKobo);
 
-                        // Log transaction
                         $record->transactions()->create([
                             'user_id' => $record->user_id,
                             'type' => 'credit',
-                            // pass naira amount; MoneyCast will convert to kobo
                             'amount' => $amountInKobo / 100,
                             'description' => $data['description'],
                             'reference' => 'ADMIN-FUND-'.uniqid(),
@@ -139,20 +141,24 @@ class WalletResource extends Resource
                     ->label('Debit Wallet')
                     ->icon('heroicon-m-minus-circle')
                     ->color('danger')
+                    ->modalHeading('Debit user wallet')
+                    ->modalSubheading('Remove funds from the selected wallet and log a debit transaction.')
                     ->form([
                         FormComponents\TextInput::make('amount')
                             ->label('Amount (₦)')
+                            ->placeholder('Enter amount in Naira')
                             ->numeric()
                             ->required()
                             ->minValue(100)
-                            ->step(100),
+                            ->step(100)
+                            ->helperText('Debits cannot exceed the current balance.'),
                         FormComponents\TextInput::make('description')
                             ->label('Reason')
+                            ->placeholder('Admin debit')
                             ->default('Admin debit'),
                     ])
                     ->action(function (Wallet $record, array $data): void {
                         $amountInKobo = (int) ($data['amount'] * 100);
-                        // compare using raw stored value (kobo)
                         if ($record->getRawOriginal('balance') < $amountInKobo) {
                             Notification::make()
                                 ->danger()
@@ -163,13 +169,11 @@ class WalletResource extends Resource
                             return;
                         }
 
-                        // decrement raw DB balance (stored in kobo)
                         $record->decrement('balance', $amountInKobo);
 
                         $record->transactions()->create([
                             'user_id' => $record->user_id,
                             'type' => 'debit',
-                            // pass naira amount; MoneyCast will convert to kobo
                             'amount' => $amountInKobo / 100,
                             'description' => $data['description'],
                             'reference' => 'ADMIN-DEBIT-'.uniqid(),

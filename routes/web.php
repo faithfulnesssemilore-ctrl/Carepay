@@ -16,9 +16,11 @@ use App\Livewire\Transactions;
 use App\Livewire\UserAuth\Login;
 use App\Livewire\UserAuth\Register;
 use App\Livewire\Wallet as WalletComponent;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
+use Laravel\Fortify\Http\Controllers\PasswordController;
+use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +39,11 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
     Route::get('/register', Register::class)->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store']);
+    Route::get('/admin/login', function () {
+        return view('auth.admin-login');
+    })->name('admin.login');
+    Route::redirect('/admin', '/admin/login');
 });
 
 // LOGOUT - Use POST to prevent CSRF attacks
@@ -65,6 +72,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/bill-payment', BillPayment::class)->name('bill-payment');
 
     Route::get('/profile', Profile::class)->name('profile');
+    Route::patch('/profile', [Profile::class, 'updateProfile'])->name('profile.update');
+    Route::delete('/profile', [Profile::class, 'deleteAccount'])->name('profile.delete');
 
     Route::get('/settings', Settings::class)->name('settings');
 
@@ -110,6 +119,21 @@ Route::middleware('auth')->group(function () {
 
 // user clicks verification link in email
 // link looks like: /email/verify/user-id/hash
+Route::get('/verify-email', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/confirm-password', [ConfirmablePasswordController::class, 'show'])
+    ->middleware('auth')
+    ->name('password.confirm');
+
+Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store'])
+    ->middleware('auth');
+
+Route::put('/password', [PasswordController::class, 'update'])
+    ->middleware('auth')
+    ->name('password.update');
+
 Route::get('/email/verify/{user}/{hash}', [
     VerifyEmailController::class,
     'verify',

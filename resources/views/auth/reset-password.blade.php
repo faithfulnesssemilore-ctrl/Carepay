@@ -11,14 +11,19 @@
                     <form method="POST" action="{{ route('password.update') }}">
                         @csrf
 
-                        <input type="hidden" name="token" value="{{ $request->route('token') ?? old('token') }}">
+                        @php
+                            $token = request()->route('token') ?? request()->input('token') ?? old('token');
+                            $email = request()->input('email') ?? old('email');
+                        @endphp
+
+                        <input type="hidden" name="token" value="{{ $token }}">
 
                         <div class="mb-3">
                             <label class="form-label">Email Address</label>
                             <input
                                 type="email"
                                 name="email"
-                                value="{{ old('email', $request->email) }}"
+                                value="{{ old('email', $email) }}"
                                 class="form-control bg-secondary-custom border-0 rounded-xl py-3"
                                 required
                                 autofocus

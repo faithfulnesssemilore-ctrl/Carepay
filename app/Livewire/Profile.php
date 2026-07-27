@@ -2,7 +2,10 @@
 
 namespace App\Livewire;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Profile extends Component
@@ -60,9 +63,33 @@ class Profile extends Component
     /**
      * Update user profile
      */
-    public function updateProfile()
+    public function updateProfile(): RedirectResponse
     {
-        // Validate input
+        $user = Auth::user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        $request = request();
+        $name = trim((string) $request->input('name', $this->firstName.' '.$this->lastName));
+        $firstName = trim((string) $request->input('firstName', $request->input('first_name', $this->firstName)));
+        $lastName = trim((string) $request->input('lastName', $request->input('last_name', $this->lastName)));
+
+        if ($firstName === '' && $lastName === '') {
+            $parts = preg_split('/\s+/', $name, 2) ?: [];
+            $firstName = $parts[0] ?? '';
+            $lastName = $parts[1] ?? '';
+        }
+
+        $email = (string) $request->input('email', $this->email);
+        $phone = (string) $request->input('phone', $this->phone);
+
+        $this->firstName = $firstName;
+        $this->lastName = $lastName;
+        $this->email = $email;
+        $this->phone = $phone;
+
         $this->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
@@ -74,14 +101,17 @@ class Profile extends Component
         $this->successMessage = '';
 
         try {
-            $user = Auth::user();
-            if ($user) {
-                $user->first_name = $this->firstName;
-                $user->last_name = $this->lastName;
-                $user->phone = $this->phone;
-                $user->save();
-            }
+            $user->forceFill([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
+                'phone' => $phone,
+            ])->save();
 
+            $this->firstName = $firstName;
+            $this->lastName = $lastName;
+            $this->email = $email;
+            $this->phone = $phone;
             $this->successMessage = 'Profile updated successfully!';
             $this->isEditing = false;
 
@@ -90,6 +120,38 @@ class Profile extends Component
         }
 
         $this->isProcessing = false;
+
+        return redirect()->route('profile');
+    }
+
+    public function deleteAccount(): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        $password = request('password');
+
+        if (! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'userDeletion.password' => ['The provided password is incorrect.'],
+            ])->errorBag('userDeletion');
+        }
+
+        $user->bankAccounts()->delete();
+        $user->virtualAccount()->delete();
+        $user->wallet()->delete();
+        $user->limits()->delete();
+        $user->transactions()->delete();
+        $user->delete();
+
+        Auth::logout();
+        session()->invalidate();
+        session()->regenerateToken();
+
+        return redirect('/');
     }
 
     public function render()

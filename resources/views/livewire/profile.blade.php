@@ -190,8 +190,8 @@
                         KYC Status
                     </div>
                     <div style="font-size:14px;font-weight:700;
-                                color:{{ $user->kyc_verified ? '#22c55e' : '#f59e0b' }};">
-                        {{ $user->kyc_verified ? 'Verified' : 'Pending' }}
+                                color:{{ ($user->getAttributes()['kyc_verified'] ?? false) ? '#22c55e' : '#f59e0b' }};">
+                        {{ ($user->getAttributes()['kyc_verified'] ?? false) ? 'Verified' : 'Pending' }}
                     </div>
                 </div>
             </div>
