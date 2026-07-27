@@ -96,8 +96,10 @@ return [
     'domain' => null,
 
     'paths' => [
-        'password.confirm' => '/confirm-password',
-        'password.confirmation' => '/confirmed-password-status',
+        'password' => [
+            'confirm' => '/confirm-password',
+            'confirmation' => '/confirmed-password-status',
+        ],
     ],
 
     /*
