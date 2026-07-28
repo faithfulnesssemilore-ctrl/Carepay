@@ -14,7 +14,7 @@
 
         <div class="mb-4">
             <h2 class="fw-bold mb-1" style="font-size:1.5rem;">Pay bills quickly</h2>
-            <p class="text-muted-custom" style="font-size:0.95rem;">Choose a service and pay directly from your wallet.</p>
+            <p class="text-muted-custom" style="font-size:0.95rem;">Choose a service and pay directly from your wallet in a safe sandbox flow.</p>
         </div>
 
         {{-- balance pill --}}

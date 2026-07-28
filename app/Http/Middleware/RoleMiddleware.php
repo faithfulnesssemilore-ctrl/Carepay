@@ -4,16 +4,31 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string $role = 'admin'): Response
     {
-        $user = auth()->user();
+        $user = $request->user() ?: Auth::user();
 
         if (! $user) {
             return redirect()->route('admin.login');
+        }
+
+        $configuredAdminEmails = array_filter([
+            config('app.admin_email'),
+            env('ADMIN_EMAIL'),
+            env('APP_ADMIN_EMAIL'),
+        ]);
+
+        $normalizedConfiguredAdmins = array_map(fn ($email) => strtolower(trim((string) $email)), $configuredAdminEmails);
+        $isConfiguredAdmin = in_array(strtolower(trim((string) $user->email)), $normalizedConfiguredAdmins, true);
+
+        if ($isConfiguredAdmin && (int) $user->role < 1) {
+            $user->forceFill(['role' => 1])->save();
+            $user->refresh();
         }
 
         // Account suspended check (FINTECH CRITICAL)

@@ -9,9 +9,15 @@
     <div class="d-flex flex-column gap-4">
         
         {{-- Header Section --}}
-        <div>
-            <h1 class="display-5 fw-bold mb-2">Send Money</h1>
-            <p class="text-muted-custom">Transfer money to anyone, anywhere</p>
+        <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Send Money</h1>
+                <p class="text-muted-custom">Transfer money to anyone, anywhere with a polished, sandbox-safe experience.</p>
+            </div>
+            <div class="px-3 py-2 rounded-pill border" style="background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.25); color: #fbbf24;">
+                <span class="fw-semibold">Sandbox mode</span>
+                <span class="ms-2 text-white-50">demo transactions only</span>
+            </div>
         </div>
 
         {{-- Progress Steps Indicator (4 steps) --}}
