@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\CleanupOldStatements;
+use App\Console\Commands\CreateAdminUserCommand;
 use App\Console\Commands\FundUserWalletCommand;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureAdmin;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('statements:cleanup')->dailyAt('02:00');
     })
     ->withCommands([
+        CreateAdminUserCommand::class,
         FundUserWalletCommand::class,
         CleanupOldStatements::class,
     ])
