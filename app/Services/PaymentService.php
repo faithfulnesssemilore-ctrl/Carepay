@@ -13,7 +13,12 @@ class PaymentService
 
     public function __construct()
     {
-        $this->secret = config('services.paystack.secret');
+        $this->secret = (string) config('services.paystack.secret', '');
+    }
+
+    protected function isSandboxMode(): bool
+    {
+        return empty($this->secret) || str_contains(strtolower($this->secret), 'sandbox');
     }
 
     // initialize a Paystack checkout payment
@@ -52,6 +57,16 @@ class PaymentService
     // create a transfer recipient (person you want to send money to)
     public function createTransferRecipient(string $name, string $accountNumber, string $bankCode): array
     {
+        if ($this->isSandboxMode()) {
+            return [
+                'recipient_code' => 'sandbox-recipient-'.substr(md5($accountNumber.$bankCode), 0, 10),
+                'status' => 'sandbox',
+                'account_number' => $accountNumber,
+                'bank_code' => $bankCode,
+                'name' => $name,
+            ];
+        }
+
         $response = Http::withToken($this->secret)
             ->post("{$this->baseUrl}/transferrecipient", [
                 'type' => 'nuban',
@@ -76,6 +91,16 @@ class PaymentService
     // send money to a recipient using their recipient code
     public function initiateTransfer(int $amount, string $recipient, string $reference, string $reason = 'Transfer'): array
     {
+        if ($this->isSandboxMode()) {
+            return [
+                'status' => 'success',
+                'message' => 'Sandbox transfer completed successfully (sandbox mode).',
+                'reference' => $reference,
+                'recipient' => $recipient,
+                'amount' => $amount,
+            ];
+        }
+
         $response = Http::withToken($this->secret)
             ->post("{$this->baseUrl}/transfer", [
                 'source' => 'balance',

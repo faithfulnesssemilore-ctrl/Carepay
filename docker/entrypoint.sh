@@ -21,4 +21,11 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     --phone="${ADMIN_PHONE:-09000000000}"
 fi
 
+if [ -n "$APP_ADMIN_EMAIL" ] && [ -n "$APP_ADMIN_PASSWORD" ]; then
+  php artisan admin:create "$APP_ADMIN_EMAIL" "$APP_ADMIN_PASSWORD" \
+    --first_name="${APP_ADMIN_FIRST_NAME:-Admin}" \
+    --last_name="${APP_ADMIN_LAST_NAME:-User}" \
+    --phone="${APP_ADMIN_PHONE:-09000000000}"
+fi
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

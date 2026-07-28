@@ -46,6 +46,26 @@ Route::middleware('guest')->group(function () {
     Route::redirect('/admin', '/admin/login');
 });
 
+Route::post('/admin/login', function (
+    \Illuminate\Http\Request $request
+) {
+    $credentials = $request->only('email', 'password');
+
+    if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $user = Auth::user();
+
+        if ($user->status === 'active' && $user->role >= 1) {
+            $request->session()->regenerate();
+
+            return redirect()->intended('/admin');
+        }
+
+        Auth::logout();
+    }
+
+    return back()->withErrors(['email' => 'Invalid admin credentials.']);
+})->middleware('guest')->name('admin.authenticate');
+
 // LOGOUT - Use POST to prevent CSRF attacks
 Route::middleware('auth')->post('/logout', function () {
     Auth::logout();
